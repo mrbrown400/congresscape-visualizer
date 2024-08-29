@@ -1,8 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+
+const API_KEY = 'YOUR_API_KEY_HERE'; // Replace this with your actual API key
 
 const fetchHouseMembers = async () => {
-  const response = await fetch('https://api.congress.gov/v3/member?chamber=house&api_key=YOUR_API_KEY_HERE');
+  if (API_KEY === 'YOUR_API_KEY_HERE') {
+    throw new Error('Please replace the API key in the HouseSeatingChart component');
+  }
+  const response = await fetch(`https://api.congress.gov/v3/member?chamber=house&api_key=${API_KEY}`);
   if (!response.ok) {
     throw new Error('Failed to fetch House members');
   }
@@ -15,10 +22,26 @@ const HouseSeatingChart = () => {
     queryFn: fetchHouseMembers,
   });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
+        {[...Array(435)].map((_, index) => (
+          <Skeleton key={index} className="w-4 h-4 rounded-full" />
+        ))}
+      </div>
+    );
+  }
 
-  const members = data.members || [];
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  const members = data?.members || [];
 
   return (
     <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
