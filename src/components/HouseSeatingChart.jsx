@@ -18,7 +18,7 @@ const fetchHouseMembers = async () => {
 };
 
 const HouseSeatingChart = () => {
-  const { data: members, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['houseMembers'],
     queryFn: fetchHouseMembers,
   });
@@ -41,6 +41,8 @@ const HouseSeatingChart = () => {
       </Alert>
     );
   }
+
+  const members = Array.isArray(data) ? data : [];
 
   return (
     <TooltipProvider>
