@@ -17,6 +17,19 @@ const fetchHouseMembers = async () => {
   return data.members;
 };
 
+const getPartyColor = (party) => {
+  switch (party) {
+    case 'D':
+      return 'bg-blue-500';
+    case 'R':
+      return 'bg-red-500';
+    case 'I':
+      return 'bg-yellow-500';
+    default:
+      return 'bg-gray-500';
+  }
+};
+
 const HouseSeatingChart = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['houseMembers'],
@@ -51,11 +64,7 @@ const HouseSeatingChart = () => {
           <Tooltip key={member.bioguideId || index}>
             <TooltipTrigger>
               <div
-                className={`w-4 h-4 rounded-full ${
-                  member.party === 'D' ? 'bg-blue-500' :
-                  member.party === 'R' ? 'bg-red-500' :
-                  'bg-gray-500'
-                }`}
+                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)}`}
               />
             </TooltipTrigger>
             <TooltipContent>
