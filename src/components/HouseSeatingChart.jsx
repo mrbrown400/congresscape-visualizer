@@ -3,13 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const API_KEY = 'YOUR_API_KEY_HERE'; // Replace this with your actual API key
-
 const fetchHouseMembers = async () => {
-  if (API_KEY === 'YOUR_API_KEY_HERE') {
-    throw new Error('Please replace the API key in the HouseSeatingChart component');
+  const apiKey = import.meta.env.VITE_CONGRESS_API_KEY;
+  if (!apiKey) {
+    throw new Error('Congress API key not found. Please add it to your .env file.');
   }
-  const response = await fetch(`https://api.congress.gov/v3/member?chamber=house&api_key=${API_KEY}`);
+  const response = await fetch(`https://api.congress.gov/v3/member?chamber=house&api_key=${apiKey}`);
   if (!response.ok) {
     throw new Error('Failed to fetch House members');
   }

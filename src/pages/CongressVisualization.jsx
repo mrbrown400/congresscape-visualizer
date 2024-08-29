@@ -9,8 +9,10 @@ const CongressVisualization = () => {
       <Alert className="mb-4">
         <AlertTitle>Important</AlertTitle>
         <AlertDescription>
-          To use this visualization, you need to add your Congress.gov API key to the HouseSeatingChart component.
-          Replace 'YOUR_API_KEY_HERE' with your actual API key in the src/components/HouseSeatingChart.jsx file.
+          To use this visualization, you need to add your Congress.gov API key to the .env file in the root of your project.
+          Create a file named .env and add the following line:
+          VITE_CONGRESS_API_KEY=your_actual_api_key_here
+          Replace 'your_actual_api_key_here' with your Congress.gov API key.
         </AlertDescription>
       </Alert>
       <HouseSeatingChart />
