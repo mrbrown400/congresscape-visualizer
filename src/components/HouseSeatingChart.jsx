@@ -14,7 +14,23 @@ const fetchHouseMembers = async () => {
     throw new Error('Failed to fetch House members');
   }
   const data = await response.json();
-  return data.members;
+  return data.members.map(member => ({
+    ...member,
+    party: member.partyHistory[0]?.partyName || 'Unknown'
+  }));
+};
+
+const getPartyColor = (party) => {
+  switch (party) {
+    case 'Democratic':
+      return 'bg-blue-500';
+    case 'Republican':
+      return 'bg-red-500';
+    case 'Independent':
+      return 'bg-yellow-500';
+    default:
+      return 'bg-gray-500';
+  }
 };
 
 const getPartyColor = (party) => {
