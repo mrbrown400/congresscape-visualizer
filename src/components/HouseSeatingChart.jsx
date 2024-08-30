@@ -16,7 +16,9 @@ const fetchHouseMembers = async () => {
   const data = await response.json();
   return data.members.map(member => ({
     ...member,
-    party: member.partyHistory[0]?.partyName || 'Unknown'
+    party: member.partyHistory && member.partyHistory.length > 0
+      ? member.partyHistory[0].partyName
+      : member.party || 'Unknown'
   }));
 };
 
