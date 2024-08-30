@@ -18,7 +18,9 @@ const fetchHouseMembers = async () => {
     ...member,
     party: member.partyName || 
            (member.parties && member.parties[0] && member.parties[0].name) || 
-           'Unknown'
+           'Unknown',
+    isLeader: member.leadership && member.leadership.length > 0,
+    isSpeaker: member.leadership && member.leadership.some(role => role.toLowerCase().includes('speaker'))
   }));
 };
 
@@ -64,20 +66,36 @@ const HouseSeatingChart = () => {
   }
 
   const members = Array.isArray(data) ? data : [];
+  const speaker = members.find(member => member.isSpeaker);
 
   return (
     <TooltipProvider>
       <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
-        {members.slice(0, 435).map((member, index) => (
+        {speaker && (
+          <div className="col-span-25 flex justify-center mb-4">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{speaker.name} ({speaker.party})</p>
+                <p>{speaker.state}</p>
+                <p>Speaker of the House</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+        {members.filter(m => !m.isSpeaker).map((member, index) => (
           <Tooltip key={member.bioguideId || index}>
             <TooltipTrigger>
               <div
-                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)}`}
+                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
               />
             </TooltipTrigger>
             <TooltipContent>
               <p>{member.name} ({member.party})</p>
               <p>{member.state}</p>
+              {member.isLeader && <p>Party Leader</p>}
             </TooltipContent>
           </Tooltip>
         ))}
