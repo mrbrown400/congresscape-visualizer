@@ -23,22 +23,12 @@ const fetchHouseMembers = async () => {
 const getPartyColor = (party) => {
   switch (party) {
     case 'Democratic':
-      return 'bg-blue-500';
-    case 'Republican':
-      return 'bg-red-500';
-    case 'Independent':
-      return 'bg-yellow-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
-
-const getPartyColor = (party) => {
-  switch (party) {
     case 'D':
       return 'bg-blue-500';
+    case 'Republican':
     case 'R':
       return 'bg-red-500';
+    case 'Independent':
     case 'I':
       return 'bg-yellow-500';
     default:
