@@ -1,6 +1,7 @@
-import { HomeIcon, PieChartIcon } from "lucide-react";
+import { HomeIcon, PieChartIcon, UsersIcon } from "lucide-react";
 import Index from "./pages/Index.jsx";
 import CongressVisualization from "./pages/CongressVisualization.jsx";
+import SenateVisualization from "./pages/SenateVisualization.jsx";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -13,9 +14,15 @@ export const navItems = [
     page: <Index />,
   },
   {
-    title: "Congress Visualization",
-    to: "/congress",
+    title: "House Visualization",
+    to: "/house",
     icon: <PieChartIcon className="h-4 w-4" />,
     page: <CongressVisualization />,
+  },
+  {
+    title: "Senate Visualization",
+    to: "/senate",
+    icon: <UsersIcon className="h-4 w-4" />,
+    page: <SenateVisualization />,
   },
 ];
