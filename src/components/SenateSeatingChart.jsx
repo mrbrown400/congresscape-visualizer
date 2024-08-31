@@ -23,6 +23,8 @@ const fetchSenateMembers = async () => {
   const vpData = await vpResponse.json();
   const vicePresident = vpData.members[0];
 
+  console.log('Vice President Data:', vicePresident);
+
   return {
     senators: data.members.map(member => ({
       ...member,
