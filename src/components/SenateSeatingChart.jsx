@@ -35,7 +35,7 @@ const fetchSenateMembers = async () => {
       )
     })),
     vicePresident: {
-      name: vicePresident.name,
+      name: `${vicePresident.firstName} ${vicePresident.lastName}`,
       party: vicePresident.partyName || 'Unknown'
     }
   };
