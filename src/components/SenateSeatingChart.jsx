@@ -82,6 +82,15 @@ const SenateSeatingChart = () => {
     );
   }
 
+  if (!data || !data.senators) {
+    return (
+      <Alert>
+        <AlertTitle>No Data</AlertTitle>
+        <AlertDescription>No senate data available.</AlertDescription>
+      </Alert>
+    );
+  }
+
   const { senators, vicePresident } = data;
   const isEvenlySplit = senators.filter(m => m.party === 'D').length === senators.filter(m => m.party === 'R').length;
 
