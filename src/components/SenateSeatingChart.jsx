@@ -14,13 +14,31 @@ const fetchSenateMembers = async () => {
     throw new Error('Failed to fetch Senate members');
   }
   const data = await response.json();
-  return data.members.map(member => ({
-    ...member,
-    party: member.partyName || 
-           (member.parties && member.parties[0] && member.parties[0].name) || 
-           'Unknown',
-    isLeader: member.leadership && member.leadership.length > 0
-  }));
+  
+  // Fetch Vice President information
+  const vpResponse = await fetch(`https://api.congress.gov/v3/member?position=vice-president&api_key=${apiKey}`);
+  if (!vpResponse.ok) {
+    throw new Error('Failed to fetch Vice President information');
+  }
+  const vpData = await vpResponse.json();
+  const vicePresident = vpData.members[0];
+
+  return {
+    senators: data.members.map(member => ({
+      ...member,
+      party: member.partyName || 
+             (member.parties && member.parties[0] && member.parties[0].name) || 
+             'Unknown',
+      isLeader: member.leadership && member.leadership.some(role => 
+        role.toLowerCase().includes('majority leader') || 
+        role.toLowerCase().includes('minority leader')
+      )
+    })),
+    vicePresident: {
+      name: vicePresident.name,
+      party: vicePresident.partyName || 'Unknown'
+    }
+  };
 };
 
 const getPartyColor = (party) => {
@@ -64,35 +82,36 @@ const SenateSeatingChart = () => {
     );
   }
 
-  const members = Array.isArray(data) ? data : [];
-  const isEvenlySplit = members.filter(m => m.party === 'D').length === members.filter(m => m.party === 'R').length;
+  const { senators, vicePresident } = data;
+  const isEvenlySplit = senators.filter(m => m.party === 'D').length === senators.filter(m => m.party === 'R').length;
 
   return (
     <TooltipProvider>
       <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
-        {isEvenlySplit && (
+        {isEvenlySplit && vicePresident && (
           <div className="col-span-10 flex justify-center mb-4">
             <Tooltip>
               <TooltipTrigger>
-                <div className="w-12 h-12 rounded-full bg-purple-500 border-4 border-yellow-400" />
+                <div className={`w-12 h-12 rounded-full ${getPartyColor(vicePresident.party)} border-4 border-yellow-400`} />
               </TooltipTrigger>
               <TooltipContent>
+                <p>{vicePresident.name} ({vicePresident.party})</p>
                 <p>Vice President (Tie-breaking vote)</p>
               </TooltipContent>
             </Tooltip>
           </div>
         )}
-        {members.map((member, index) => (
-          <Tooltip key={member.bioguideId || index}>
+        {senators.map((senator, index) => (
+          <Tooltip key={senator.bioguideId || index}>
             <TooltipTrigger>
               <div
-                className={`w-8 h-8 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-4 border-purple-500' : ''}`}
+                className={`w-8 h-8 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
               />
             </TooltipTrigger>
             <TooltipContent>
-              <p>{member.name} ({member.party})</p>
-              <p>{member.state}</p>
-              {member.isLeader && <p>Party Leader</p>}
+              <p>{senator.name} ({senator.party})</p>
+              <p>{senator.state}</p>
+              {senator.isLeader && <p>Party Leader</p>}
             </TooltipContent>
           </Tooltip>
         ))}

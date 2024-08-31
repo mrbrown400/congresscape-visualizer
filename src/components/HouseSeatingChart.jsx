@@ -19,7 +19,10 @@ const fetchHouseMembers = async () => {
     party: member.partyName || 
            (member.parties && member.parties[0] && member.parties[0].name) || 
            'Unknown',
-    isLeader: member.leadership && member.leadership.length > 0,
+    isLeader: member.leadership && member.leadership.some(role => 
+      role.toLowerCase().includes('majority leader') || 
+      role.toLowerCase().includes('minority leader')
+    ),
     isSpeaker: member.leadership && member.leadership.some(role => role.toLowerCase().includes('speaker'))
   }));
 };
