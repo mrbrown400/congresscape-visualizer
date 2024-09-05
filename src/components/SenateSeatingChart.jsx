@@ -21,9 +21,9 @@ const fetchSenateMembers = async () => {
     throw new Error('Failed to fetch Vice President information');
   }
   const vpData = await vpResponse.json();
-  const vicePresident = vpData.members[0];
+  console.log('Full Vice President API Response:', vpData);
 
-  console.log('Vice President Data:', vicePresident);
+  const vicePresident = vpData.members[0];
 
   return {
     senators: data.members.map(member => ({
@@ -36,10 +36,10 @@ const fetchSenateMembers = async () => {
         role.toLowerCase().includes('minority leader')
       )
     })),
-    vicePresident: {
+    vicePresident: vicePresident ? {
       name: `${vicePresident.firstName} ${vicePresident.lastName}`,
       party: vicePresident.partyName || 'Unknown'
-    }
+    } : null
   };
 };
 
