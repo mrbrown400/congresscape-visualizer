@@ -65,6 +65,12 @@ const SenateSeatingChart = () => {
     queryFn: fetchSenateMembers,
   });
 
+  React.useEffect(() => {
+    if (data && data.vicePresident) {
+      console.log('Vice President Data:', data.vicePresident);
+    }
+  }, [data]);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
