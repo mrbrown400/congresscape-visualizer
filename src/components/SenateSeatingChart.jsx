@@ -24,6 +24,7 @@ const fetchSenateMembers = async () => {
   console.log('Full Vice President API Response:', vpData);
 
   const vicePresident = vpData.members[0];
+  console.log('Vice President Data:', vicePresident);
 
   return {
     senators: data.members.map(member => ({
@@ -67,7 +68,7 @@ const SenateSeatingChart = () => {
 
   React.useEffect(() => {
     if (data && data.vicePresident) {
-      console.log('Vice President Data:', data.vicePresident);
+      console.log('Vice President Data in component:', data.vicePresident);
     }
   }, [data]);
 
