@@ -15,14 +15,12 @@ const fetchHouseMembers = async () => {
   }
   const data = await response.json();
   return data.members.map(member => ({
-    ...member,
-    party: member.partyName || 
-           (member.parties && member.parties[0] && member.parties[0].name) || 
-           'Unknown',
-    isLeader: member.leadership && member.leadership.some(role => 
-      role.toLowerCase().includes('majority leader') || 
-      role.toLowerCase().includes('minority leader')
-    ),
+    name: `${member.firstName} ${member.lastName}`,
+    party: member.partyName || 'Unknown',
+    state: member.state,
+    district: member.district,
+    leadership: member.leadership || [],
+    isLeader: member.leadership && member.leadership.length > 0,
     isSpeaker: member.leadership && member.leadership.some(role => role.toLowerCase().includes('speaker'))
   }));
 };
@@ -82,14 +80,14 @@ const HouseSeatingChart = () => {
               </TooltipTrigger>
               <TooltipContent>
                 <p>{speaker.name} ({speaker.party})</p>
-                <p>{speaker.state}</p>
+                <p>{speaker.state} - District {speaker.district}</p>
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
           </div>
         )}
         {members.filter(m => !m.isSpeaker).map((member, index) => (
-          <Tooltip key={member.bioguideId || index}>
+          <Tooltip key={index}>
             <TooltipTrigger>
               <div
                 className={`w-4 h-4 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
@@ -97,8 +95,8 @@ const HouseSeatingChart = () => {
             </TooltipTrigger>
             <TooltipContent>
               <p>{member.name} ({member.party})</p>
-              <p>{member.state}</p>
-              {member.isLeader && <p>Party Leader</p>}
+              <p>{member.state} - District {member.district}</p>
+              {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
             </TooltipContent>
           </Tooltip>
         ))}

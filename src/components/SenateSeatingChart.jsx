@@ -15,41 +15,13 @@ const fetchSenateMembers = async () => {
   }
   const data = await response.json();
   
-  // Fetch Vice President information
-  const vpResponse = await fetch(`https://api.congress.gov/v3/member?position=vice-president&api_key=${apiKey}`);
-  if (!vpResponse.ok) {
-    throw new Error('Failed to fetch Vice President information');
-  }
-  const vpData = await vpResponse.json();
-  console.log('Full Vice President API Response:', vpData);
-
-  const vicePresident = vpData.members[0];
-  console.log('Vice President Data:', {
-    name: `${vicePresident.firstName} ${vicePresident.lastName}`,
-    party: vicePresident.partyName || 'Unknown',
-    state: vicePresident.state,
-    position: vicePresident.position,
-    terms: vicePresident.terms
-  });
-
-  return {
-    senators: data.members.map(member => ({
-      ...member,
-      party: member.partyName || 
-             (member.parties && member.parties[0] && member.parties[0].name) || 
-             'Unknown',
-      isLeader: member.leadership && member.leadership.some(role => 
-        role.toLowerCase().includes('majority leader') || 
-        role.toLowerCase().includes('minority leader')
-      )
-    })),
-    vicePresident: vicePresident ? {
-      name: `${vicePresident.firstName} ${vicePresident.lastName}`,
-      party: vicePresident.partyName || 'Unknown',
-      state: vicePresident.state,
-      position: vicePresident.position
-    } : null
-  };
+  return data.members.map(member => ({
+    name: `${member.firstName} ${member.lastName}`,
+    party: member.partyName || 'Unknown',
+    state: member.state,
+    leadership: member.leadership || [],
+    isLeader: member.leadership && member.leadership.length > 0
+  }));
 };
 
 const getPartyColor = (party) => {
@@ -74,12 +46,6 @@ const SenateSeatingChart = () => {
     queryFn: fetchSenateMembers,
   });
 
-  React.useEffect(() => {
-    if (data && data.vicePresident) {
-      console.log('Vice President Data in component:', data.vicePresident);
-    }
-  }, [data]);
-
   if (isLoading) {
     return (
       <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
@@ -99,7 +65,7 @@ const SenateSeatingChart = () => {
     );
   }
 
-  if (!data || !data.senators) {
+  if (!data) {
     return (
       <Alert>
         <AlertTitle>No Data</AlertTitle>
@@ -108,28 +74,26 @@ const SenateSeatingChart = () => {
     );
   }
 
-  const { senators, vicePresident } = data;
-  const isEvenlySplit = senators.filter(m => m.party === 'D').length === senators.filter(m => m.party === 'R').length;
+  const senators = data;
+  const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
 
   return (
     <TooltipProvider>
       <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
-        {isEvenlySplit && vicePresident && (
+        {isEvenlySplit && (
           <div className="col-span-10 flex justify-center mb-4">
             <Tooltip>
               <TooltipTrigger>
-                <div className={`w-12 h-12 rounded-full ${getPartyColor(vicePresident.party)} border-4 border-yellow-400`} />
+                <div className="w-12 h-12 rounded-full bg-blue-500 border-4 border-yellow-400" />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{vicePresident.name} ({vicePresident.party})</p>
-                <p>{vicePresident.state}</p>
-                <p>{vicePresident.position}</p>
+                <p>Vice President (Tie-breaking vote)</p>
               </TooltipContent>
             </Tooltip>
           </div>
         )}
         {senators.map((senator, index) => (
-          <Tooltip key={senator.bioguideId || index}>
+          <Tooltip key={index}>
             <TooltipTrigger>
               <div
                 className={`w-8 h-8 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
@@ -138,7 +102,7 @@ const SenateSeatingChart = () => {
             <TooltipContent>
               <p>{senator.name} ({senator.party})</p>
               <p>{senator.state}</p>
-              {senator.isLeader && <p>Party Leader</p>}
+              {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
             </TooltipContent>
           </Tooltip>
         ))}
