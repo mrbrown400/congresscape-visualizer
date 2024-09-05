@@ -24,7 +24,13 @@ const fetchSenateMembers = async () => {
   console.log('Full Vice President API Response:', vpData);
 
   const vicePresident = vpData.members[0];
-  console.log('Vice President Data:', vicePresident);
+  console.log('Vice President Data:', {
+    name: `${vicePresident.firstName} ${vicePresident.lastName}`,
+    party: vicePresident.partyName || 'Unknown',
+    state: vicePresident.state,
+    position: vicePresident.position,
+    terms: vicePresident.terms
+  });
 
   return {
     senators: data.members.map(member => ({
@@ -39,7 +45,9 @@ const fetchSenateMembers = async () => {
     })),
     vicePresident: vicePresident ? {
       name: `${vicePresident.firstName} ${vicePresident.lastName}`,
-      party: vicePresident.partyName || 'Unknown'
+      party: vicePresident.partyName || 'Unknown',
+      state: vicePresident.state,
+      position: vicePresident.position
     } : null
   };
 };
@@ -114,7 +122,8 @@ const SenateSeatingChart = () => {
               </TooltipTrigger>
               <TooltipContent>
                 <p>{vicePresident.name} ({vicePresident.party})</p>
-                <p>Vice President (Tie-breaking vote)</p>
+                <p>{vicePresident.state}</p>
+                <p>{vicePresident.position}</p>
               </TooltipContent>
             </Tooltip>
           </div>
