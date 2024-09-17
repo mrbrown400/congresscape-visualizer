@@ -17,7 +17,7 @@ const fetchSenateMembers = async () => {
   
   return data.members.map(member => ({
     name: `${member.name || ''} `,
-    party: member.party ? member.partyHistory[0].partyCode : 'Unknown',
+    party: member.partyHistory[0]?.partyName || 'Unknown',
     state: member.state,
     leadership: member.leadershipRole || [],
     isLeader: member.leadershipRole ? true : false
@@ -25,12 +25,12 @@ const fetchSenateMembers = async () => {
 };
 
 const getPartyColor = (party) => {
-  switch (party.toUpperCase()) {
-    case 'D':
+  switch (party) {
+    case 'Democratic':
       return 'bg-blue-500';
-    case 'R':
+    case 'Republican':
       return 'bg-red-500';
-    case 'I':
+    case 'Independent':
       return 'bg-yellow-500';
     default:
       return 'bg-gray-500';
@@ -62,7 +62,7 @@ const SenateSeatingChart = () => {
     );
   }
 
-  const isEvenlySplit = senators.filter(m => m.party === 'D').length === senators.filter(m => m.party === 'R').length;
+  const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
 
   return (
     <TooltipProvider>
