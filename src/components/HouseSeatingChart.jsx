@@ -16,7 +16,7 @@ const fetchHouseMembers = async () => {
   const data = await response.json();
   return data.members.map(member => ({
     name: `${member.name || ''}`,
-    party: member.party ? member.partyHistory[0].partyCode : 'Unknown',
+    party: member.party || 'Unknown',
     state: member.state,
     district: member.district,
     leadership: member.leadershipRole || [],
@@ -26,15 +26,28 @@ const fetchHouseMembers = async () => {
 };
 
 const getPartyColor = (party) => {
-  switch (party.toUpperCase()) {
-    case 'D':
+  switch (party) {
+    case 'Democrat':
       return 'bg-blue-500';
-    case 'R':
+    case 'Republican':
       return 'bg-red-500';
-    case 'I':
+    case 'Independent':
       return 'bg-yellow-500';
     default:
       return 'bg-gray-500';
+  }
+};
+
+const getPartyAbbreviation = (party) => {
+  switch (party) {
+    case 'Democrat':
+      return 'D';
+    case 'Republican':
+      return 'R';
+    case 'Independent':
+      return 'I';
+    default:
+      return 'U';
   }
 };
 
@@ -76,7 +89,7 @@ const HouseSeatingChart = () => {
               </TooltipTrigger>
               <TooltipContent>
                 <p>{speaker.name}</p>
-                <p>{speaker.party} - {speaker.state}, District {speaker.district}</p>
+                <p>{getPartyAbbreviation(speaker.party)} - {speaker.state}, District {speaker.district}</p>
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
@@ -92,7 +105,7 @@ const HouseSeatingChart = () => {
               </TooltipTrigger>
               <TooltipContent>
                 <p>{member.name}</p>
-                <p>{member.party} - {member.state}, District {member.district}</p>
+                <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
                 {member.isLeader && <p>Leadership: {member.leadership}</p>}
               </TooltipContent>
             </Tooltip>
