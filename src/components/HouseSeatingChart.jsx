@@ -42,7 +42,7 @@ const getPartyColor = (party) => {
 };
 
 const HouseSeatingChart = () => {
-  const { data, isLoading, error } = useQuery({
+  const { data: members, isLoading, error } = useQuery({
     queryKey: ['houseMembers'],
     queryFn: fetchHouseMembers,
   });
@@ -66,7 +66,6 @@ const HouseSeatingChart = () => {
     );
   }
 
-  const members = Array.isArray(data) ? data : [];
   const speaker = members.find(member => member.isSpeaker);
 
   return (

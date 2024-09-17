@@ -41,7 +41,7 @@ const getPartyColor = (party) => {
 };
 
 const SenateSeatingChart = () => {
-  const { data, isLoading, error } = useQuery({
+  const { data: senators, isLoading, error } = useQuery({
     queryKey: ['senateMembers'],
     queryFn: fetchSenateMembers,
   });
@@ -65,16 +65,6 @@ const SenateSeatingChart = () => {
     );
   }
 
-  if (!data) {
-    return (
-      <Alert>
-        <AlertTitle>No Data</AlertTitle>
-        <AlertDescription>No senate data available.</AlertDescription>
-      </Alert>
-    );
-  }
-
-  const senators = data;
   const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
 
   return (
