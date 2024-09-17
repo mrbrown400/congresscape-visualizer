@@ -48,8 +48,10 @@ const SenateSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] bg-gray-100 rounded-lg">
-        <Skeleton className="w-full h-full" />
+      <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
+        {[...Array(100)].map((_, index) => (
+          <Skeleton key={index} className="w-8 h-8 rounded-full" />
+        ))}
       </div>
     );
   }
@@ -75,62 +77,34 @@ const SenateSeatingChart = () => {
   const senators = data;
   const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
 
-  const createSemiCircleLayout = (senators) => {
-    const layout = [];
-    const rows = 5;
-    const seatsPerRow = Math.ceil(senators.length / rows);
-
-    for (let row = 0; row < rows; row++) {
-      const rowSeats = senators.slice(row * seatsPerRow, (row + 1) * seatsPerRow);
-      layout.push(rowSeats);
-    }
-
-    return layout;
-  };
-
-  const semiCircleLayout = createSemiCircleLayout(senators);
-
   return (
     <TooltipProvider>
-      <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg p-8">
-        <div className="mb-8">
-          {isEvenlySplit && (
+      <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
+        {isEvenlySplit && (
+          <div className="col-span-10 flex justify-center mb-4">
             <Tooltip>
               <TooltipTrigger>
-                <div className="w-8 h-8 rounded-full bg-blue-500 border-4 border-yellow-400" />
+                <div className="w-12 h-12 rounded-full bg-blue-500 border-4 border-yellow-400" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Vice President (Tie-breaking vote)</p>
               </TooltipContent>
             </Tooltip>
-          )}
-        </div>
-        {semiCircleLayout.map((row, rowIndex) => (
-          <div
-            key={rowIndex}
-            className="flex justify-center"
-            style={{
-              transform: `rotate(${(rowIndex - 2) * 5}deg)`,
-              marginBottom: `-${rowIndex * 4}px`,
-            }}
-          >
-            {row.map((senator, seatIndex) => (
-              <Tooltip key={`${rowIndex}-${seatIndex}`}>
-                <TooltipTrigger>
-                  <div
-                    className={`w-4 h-4 rounded-full ${getPartyColor(senator.party)} ${
-                      senator.isLeader ? 'border-2 border-purple-500' : ''
-                    } mx-1`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{senator.name} ({senator.party})</p>
-                  <p>{senator.state}</p>
-                  {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
           </div>
+        )}
+        {senators.map((senator, index) => (
+          <Tooltip key={index}>
+            <TooltipTrigger>
+              <div
+                className={`w-8 h-8 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{senator.name} ({senator.party})</p>
+              <p>{senator.state}</p>
+              {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
+            </TooltipContent>
+          </Tooltip>
         ))}
       </div>
     </TooltipProvider>
