@@ -49,10 +49,8 @@ const HouseSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
-        {[...Array(435)].map((_, index) => (
-          <Skeleton key={index} className="w-4 h-4 rounded-full" />
-        ))}
+      <div className="w-full h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+        <Skeleton className="w-4/5 h-4/5 rounded-full" />
       </div>
     );
   }
@@ -68,12 +66,27 @@ const HouseSeatingChart = () => {
 
   const members = Array.isArray(data) ? data : [];
   const speaker = members.find(member => member.isSpeaker);
+  const otherMembers = members.filter(member => !member.isSpeaker);
+
+  const createCurvedLayout = (members, rows) => {
+    const seatsPerRow = Math.ceil(members.length / rows);
+    const layout = [];
+
+    for (let i = 0; i < rows; i++) {
+      const row = members.slice(i * seatsPerRow, (i + 1) * seatsPerRow);
+      layout.push(row);
+    }
+
+    return layout;
+  };
+
+  const curvedLayout = createCurvedLayout(otherMembers, 9);
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
+      <div className="relative w-full h-[600px] bg-gray-100 rounded-lg overflow-hidden">
         {speaker && (
-          <div className="col-span-25 flex justify-center mb-4">
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
             <Tooltip>
               <TooltipTrigger>
                 <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
@@ -86,20 +99,38 @@ const HouseSeatingChart = () => {
             </Tooltip>
           </div>
         )}
-        {members.filter(m => !m.isSpeaker).map((member, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger>
-              <div
-                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{member.name} ({member.party})</p>
-              <p>{member.state} - District {member.district}</p>
-              {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-3/4">
+          {curvedLayout.map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="absolute w-full"
+              style={{
+                bottom: `${(rowIndex / curvedLayout.length) * 100}%`,
+                transform: `rotate(${-10 + (rowIndex * 2.5)}deg)`,
+                transformOrigin: 'bottom center',
+              }}
+            >
+              {row.map((member, seatIndex) => (
+                <Tooltip key={`${rowIndex}-${seatIndex}`}>
+                  <TooltipTrigger>
+                    <div
+                      className={`absolute w-3 h-3 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                      style={{
+                        left: `${((seatIndex + 0.5) / row.length) * 100}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{member.name} ({member.party})</p>
+                    <p>{member.state} - District {member.district}</p>
+                    {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </TooltipProvider>
   );

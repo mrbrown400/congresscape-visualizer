@@ -48,10 +48,8 @@ const SenateSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
-        {[...Array(100)].map((_, index) => (
-          <Skeleton key={index} className="w-8 h-8 rounded-full" />
-        ))}
+      <div className="w-full h-[400px] bg-gray-100 rounded-lg flex items-center justify-center">
+        <Skeleton className="w-4/5 h-4/5 rounded-full" />
       </div>
     );
   }
@@ -65,26 +63,32 @@ const SenateSeatingChart = () => {
     );
   }
 
-  if (!data) {
-    return (
-      <Alert>
-        <AlertTitle>No Data</AlertTitle>
-        <AlertDescription>No senate data available.</AlertDescription>
-      </Alert>
-    );
-  }
-
-  const senators = data;
+  const senators = Array.isArray(data) ? data : [];
   const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
+
+  const createSemiCircleLayout = (senators) => {
+    const rows = 5;
+    const seatsPerRow = Math.ceil(senators.length / rows);
+    const layout = [];
+
+    for (let i = 0; i < rows; i++) {
+      const row = senators.slice(i * seatsPerRow, (i + 1) * seatsPerRow);
+      layout.push(row);
+    }
+
+    return layout;
+  };
+
+  const semiCircleLayout = createSemiCircleLayout(senators);
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-10 gap-2 p-4 bg-gray-100 rounded-lg">
+      <div className="relative w-full h-[400px] bg-gray-100 rounded-lg overflow-hidden">
         {isEvenlySplit && (
-          <div className="col-span-10 flex justify-center mb-4">
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10">
             <Tooltip>
               <TooltipTrigger>
-                <div className="w-12 h-12 rounded-full bg-blue-500 border-4 border-yellow-400" />
+                <div className="w-8 h-8 rounded-full bg-blue-500 border-4 border-yellow-400" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>Vice President (Tie-breaking vote)</p>
@@ -92,20 +96,38 @@ const SenateSeatingChart = () => {
             </Tooltip>
           </div>
         )}
-        {senators.map((senator, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger>
-              <div
-                className={`w-8 h-8 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{senator.name} ({senator.party})</p>
-              <p>{senator.state}</p>
-              {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-full h-4/5">
+          {semiCircleLayout.map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="absolute w-full"
+              style={{
+                bottom: `${(rowIndex / semiCircleLayout.length) * 100}%`,
+                transform: `rotate(${-30 + (rowIndex * 15)}deg)`,
+                transformOrigin: 'bottom center',
+              }}
+            >
+              {row.map((senator, seatIndex) => (
+                <Tooltip key={`${rowIndex}-${seatIndex}`}>
+                  <TooltipTrigger>
+                    <div
+                      className={`absolute w-4 h-4 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-2 border-purple-500' : ''}`}
+                      style={{
+                        left: `${((seatIndex + 0.5) / row.length) * 100}%`,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{senator.name} ({senator.party})</p>
+                    <p>{senator.state}</p>
+                    {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </TooltipProvider>
   );
