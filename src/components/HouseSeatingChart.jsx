@@ -49,10 +49,8 @@ const HouseSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
-        {[...Array(435)].map((_, index) => (
-          <Skeleton key={index} className="w-4 h-4 rounded-full" />
-        ))}
+      <div className="flex flex-col items-center justify-center h-[600px] bg-gray-100 rounded-lg">
+        <Skeleton className="w-full h-full" />
       </div>
     );
   }
@@ -69,11 +67,33 @@ const HouseSeatingChart = () => {
   const members = Array.isArray(data) ? data : [];
   const speaker = members.find(member => member.isSpeaker);
 
+  const createCurvedLayout = (members, rows, seatsPerRow) => {
+    const layout = [];
+    let memberIndex = 0;
+
+    for (let row = 0; row < rows; row++) {
+      const rowSeats = [];
+      const actualSeatsInRow = Math.min(seatsPerRow, members.length - memberIndex);
+      
+      for (let seat = 0; seat < actualSeatsInRow; seat++) {
+        if (memberIndex < members.length) {
+          rowSeats.push(members[memberIndex]);
+          memberIndex++;
+        }
+      }
+      layout.push(rowSeats);
+    }
+
+    return layout;
+  };
+
+  const curvedLayout = createCurvedLayout(members.filter(m => !m.isSpeaker), 9, 50);
+
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
-        {speaker && (
-          <div className="col-span-25 flex justify-center mb-4">
+      <div className="flex flex-col items-center justify-center bg-gray-100 rounded-lg p-8">
+        <div className="mb-8">
+          {speaker && (
             <Tooltip>
               <TooltipTrigger>
                 <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
@@ -84,21 +104,34 @@ const HouseSeatingChart = () => {
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
+          )}
+        </div>
+        {curvedLayout.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="flex justify-center"
+            style={{
+              transform: `rotate(${(rowIndex - 4) * 3}deg)`,
+              marginBottom: `-${rowIndex * 2}px`,
+            }}
+          >
+            {row.map((member, seatIndex) => (
+              <Tooltip key={`${rowIndex}-${seatIndex}`}>
+                <TooltipTrigger>
+                  <div
+                    className={`w-3 h-3 rounded-full ${getPartyColor(member.party)} ${
+                      member.isLeader ? 'border border-purple-500' : ''
+                    } mx-0.5`}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{member.name} ({member.party})</p>
+                  <p>{member.state} - District {member.district}</p>
+                  {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
-        )}
-        {members.filter(m => !m.isSpeaker).map((member, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger>
-              <div
-                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{member.name} ({member.party})</p>
-              <p>{member.state} - District {member.district}</p>
-              {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
-            </TooltipContent>
-          </Tooltip>
         ))}
       </div>
     </TooltipProvider>
