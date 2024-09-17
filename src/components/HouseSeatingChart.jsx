@@ -15,25 +15,22 @@ const fetchHouseMembers = async () => {
   }
   const data = await response.json();
   return data.members.map(member => ({
-    name: `${member.firstName} ${member.lastName}`,
-    party: member.partyName || 'Unknown',
+    name: `${member.name || ''} ${member.bioguideId ? `(${member.bioguideId})` : ''}`,
+    party: member.party || 'Unknown',
     state: member.state,
     district: member.district,
-    leadership: member.leadership || [],
-    isLeader: member.leadership && member.leadership.length > 0,
-    isSpeaker: member.leadership && member.leadership.some(role => role.toLowerCase().includes('speaker'))
+    leadership: member.leadershipRole || [],
+    isLeader: member.leadershipRole ? true : false,
+    isSpeaker: member.leadershipRole && member.leadershipRole.toLowerCase().includes('speaker')
   }));
 };
 
 const getPartyColor = (party) => {
   switch (party) {
-    case 'Democratic':
     case 'D':
       return 'bg-blue-500';
-    case 'Republican':
     case 'R':
       return 'bg-red-500';
-    case 'Independent':
     case 'I':
       return 'bg-yellow-500';
     default:
@@ -96,7 +93,7 @@ const HouseSeatingChart = () => {
               <TooltipContent>
                 <p>{member.name}</p>
                 <p>{member.party} - {member.state}, District {member.district}</p>
-                {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
+                {member.isLeader && <p>Leadership: {member.leadership}</p>}
               </TooltipContent>
             </Tooltip>
           ))}

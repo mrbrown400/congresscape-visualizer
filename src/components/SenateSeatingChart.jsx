@@ -16,23 +16,20 @@ const fetchSenateMembers = async () => {
   const data = await response.json();
   
   return data.members.map(member => ({
-    name: `${member.firstName} ${member.lastName}`,
-    party: member.partyName || 'Unknown',
+    name: `${member.name || ''} ${member.bioguideId ? `(${member.bioguideId})` : ''}`,
+    party: member.party || 'Unknown',
     state: member.state,
-    leadership: member.leadership || [],
-    isLeader: member.leadership && member.leadership.length > 0
+    leadership: member.leadershipRole || [],
+    isLeader: member.leadershipRole ? true : false
   }));
 };
 
 const getPartyColor = (party) => {
   switch (party) {
-    case 'Democratic':
     case 'D':
       return 'bg-blue-500';
-    case 'Republican':
     case 'R':
       return 'bg-red-500';
-    case 'Independent':
     case 'I':
       return 'bg-yellow-500';
     default:
@@ -65,7 +62,7 @@ const SenateSeatingChart = () => {
     );
   }
 
-  const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
+  const isEvenlySplit = senators.filter(m => m.party === 'D').length === senators.filter(m => m.party === 'R').length;
 
   return (
     <TooltipProvider>
@@ -93,7 +90,7 @@ const SenateSeatingChart = () => {
               <TooltipContent>
                 <p>{senator.name}</p>
                 <p>{senator.party} - {senator.state}</p>
-                {senator.isLeader && <p>Leadership: {senator.leadership.join(', ')}</p>}
+                {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
               </TooltipContent>
             </Tooltip>
           ))}
