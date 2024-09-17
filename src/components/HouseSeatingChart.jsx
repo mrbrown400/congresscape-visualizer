@@ -16,7 +16,7 @@ const fetchHouseMembers = async () => {
   const data = await response.json();
   return data.members.map(member => ({
     name: `${member.name || ''} ${member.bioguideId ? `(${member.bioguideId})` : ''}`,
-    party: member.party || 'Unknown',
+    party: member.partyHistory ? member.partyHistory[0].partyCode : 'Unknown',
     state: member.state,
     district: member.district,
     leadership: member.leadershipRole || [],
