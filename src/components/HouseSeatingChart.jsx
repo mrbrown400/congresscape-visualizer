@@ -26,7 +26,7 @@ const fetchHouseMembers = async () => {
 };
 
 const getPartyColor = (party) => {
-  switch (party) {
+  switch (party.toUpperCase()) {
     case 'D':
       return 'bg-blue-500';
     case 'R':
