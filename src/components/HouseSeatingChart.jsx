@@ -71,35 +71,37 @@ const HouseSeatingChart = () => {
 
   return (
     <TooltipProvider>
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
-        {speaker && (
-          <div className="col-span-25 flex justify-center mb-4">
+      <div className="flex flex-col items-center">
+        <div className="mb-4">
+          {speaker && (
             <Tooltip>
               <TooltipTrigger>
                 <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
               </TooltipTrigger>
               <TooltipContent>
-                <p>{speaker.name} ({speaker.party})</p>
-                <p>{speaker.state} - District {speaker.district}</p>
+                <p>{speaker.name}</p>
+                <p>{speaker.party} - {speaker.state}, District {speaker.district}</p>
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
-          </div>
-        )}
-        {members.filter(m => !m.isSpeaker).map((member, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger>
-              <div
-                className={`w-4 h-4 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{member.name} ({member.party})</p>
-              <p>{member.state} - District {member.district}</p>
-              {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
-            </TooltipContent>
-          </Tooltip>
-        ))}
+          )}
+        </div>
+        <div className="flex flex-wrap justify-center max-w-4xl">
+          {members.filter(m => !m.isSpeaker).map((member, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger>
+                <div
+                  className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{member.name}</p>
+                <p>{member.party} - {member.state}, District {member.district}</p>
+                {member.isLeader && <p>Leadership: {member.leadership.join(', ')}</p>}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
       </div>
     </TooltipProvider>
   );
