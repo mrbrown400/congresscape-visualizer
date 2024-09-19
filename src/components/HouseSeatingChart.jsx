@@ -79,10 +79,19 @@ const HouseSeatingChart = () => {
   const speaker = members.find(member => member.isSpeaker);
   const sortedMembers = members.sort((a, b) => {
     if (a.party === b.party) {
-      return a.state.localeCompare(b.state) || a.district.localeCompare(b.district);
+      if (a.state === b.state) {
+        // Convert district to string and use localeCompare, or fallback to string comparison
+        const districtA = String(a.district || '');
+        const districtB = String(b.district || '');
+        return districtA.localeCompare(districtB);
+      }
+      return a.state.localeCompare(b.state);
     }
     return a.party === 'Republican' ? -1 : 1;
   });
+
+  const republicans = sortedMembers.filter(m => m.party === 'Republican' && !m.isSpeaker);
+  const democrats = sortedMembers.filter(m => m.party !== 'Republican' && !m.isSpeaker);
 
   return (
     <TooltipProvider>
@@ -95,7 +104,7 @@ const HouseSeatingChart = () => {
               </TooltipTrigger>
               <TooltipContent>
                 <p>{speaker.name}</p>
-                <p>{getPartyAbbreviation(speaker.party)} - {speaker.state}, District {speaker.district}</p>
+                <p>{getPartyAbbreviation(speaker.party)} - {speaker.state}, District {speaker.district || 'At-Large'}</p>
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
@@ -103,7 +112,7 @@ const HouseSeatingChart = () => {
         </div>
         <div className="flex justify-center w-full">
           <div className="flex flex-wrap justify-end w-1/2 pr-2">
-            {sortedMembers.filter(m => m.party === 'Republican' && !m.isSpeaker).map((member, index) => (
+            {republicans.map((member, index) => (
               <Tooltip key={index}>
                 <TooltipTrigger>
                   <div
@@ -112,14 +121,14 @@ const HouseSeatingChart = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{member.name}</p>
-                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
+                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
                   {member.isLeader && <p>Leadership: {member.leadership}</p>}
                 </TooltipContent>
               </Tooltip>
             ))}
           </div>
           <div className="flex flex-wrap justify-start w-1/2 pl-2">
-            {sortedMembers.filter(m => m.party !== 'Republican' && !m.isSpeaker).map((member, index) => (
+            {democrats.map((member, index) => (
               <Tooltip key={index}>
                 <TooltipTrigger>
                   <div
@@ -128,7 +137,7 @@ const HouseSeatingChart = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{member.name}</p>
-                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
+                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
                   {member.isLeader && <p>Leadership: {member.leadership}</p>}
                 </TooltipContent>
               </Tooltip>
