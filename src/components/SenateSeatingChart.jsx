@@ -85,39 +85,21 @@ const SenateSeatingChart = () => {
   return (
     <TooltipProvider>
       <div className="flex flex-col items-center">
-        <div className="flex justify-center w-full">
-          <div className="flex flex-wrap justify-end w-1/2 pr-2">
-            {sortedSenators.filter(s => s.party === 'Republican').map((senator, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger>
-                  <div
-                    className={`w-8 h-8 m-1 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{senator.name}</p>
-                  <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
-                  {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="flex flex-wrap justify-start w-1/2 pl-2">
-            {sortedSenators.filter(s => s.party !== 'Republican').map((senator, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger>
-                  <div
-                    className={`w-8 h-8 m-1 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{senator.name}</p>
-                  <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
-                  {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
+        <div className="flex flex-wrap justify-center w-full max-w-4xl">
+          {sortedSenators.map((senator, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger>
+                <div
+                  className={`w-8 h-8 m-1 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{senator.name}</p>
+                <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
+                {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </div>
     </TooltipProvider>
