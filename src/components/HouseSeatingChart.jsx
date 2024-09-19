@@ -80,7 +80,6 @@ const HouseSeatingChart = () => {
   const sortedMembers = members.sort((a, b) => {
     if (a.party === b.party) {
       if (a.state === b.state) {
-        // Convert district to string and use localeCompare, or fallback to string comparison
         const districtA = String(a.district || '');
         const districtB = String(b.district || '');
         return districtA.localeCompare(districtB);
@@ -100,7 +99,7 @@ const HouseSeatingChart = () => {
           {speaker && (
             <Tooltip>
               <TooltipTrigger>
-                <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
+                <div className={`w-6 h-6 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{speaker.name}</p>
@@ -110,39 +109,21 @@ const HouseSeatingChart = () => {
             </Tooltip>
           )}
         </div>
-        <div className="flex justify-center w-full">
-          <div className="flex flex-wrap justify-end w-1/2 pr-2">
-            {republicans.map((member, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger>
-                  <div
-                    className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{member.name}</p>
-                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
-                  {member.isLeader && <p>Leadership: {member.leadership}</p>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-          <div className="flex flex-wrap justify-start w-1/2 pl-2">
-            {democrats.map((member, index) => (
-              <Tooltip key={index}>
-                <TooltipTrigger>
-                  <div
-                    className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{member.name}</p>
-                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
-                  {member.isLeader && <p>Leadership: {member.leadership}</p>}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
+        <div className="flex flex-wrap justify-center w-full max-w-4xl">
+          {republicans.concat(democrats).map((member, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger>
+                <div
+                  className={`w-6 h-6 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{member.name}</p>
+                <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
+                {member.isLeader && <p>Leadership: {member.leadership}</p>}
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </div>
     </TooltipProvider>
