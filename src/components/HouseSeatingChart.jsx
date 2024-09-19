@@ -77,7 +77,9 @@ const HouseSeatingChart = () => {
   const speaker = members.find(member => member.isSpeaker);
   const sortedMembers = members.sort((a, b) => {
     if (a.party !== b.party) return a.party.localeCompare(b.party);
-    return a.state.localeCompare(b.state) || a.district.localeCompare(b.district);
+    if (a.state !== b.state) return a.state.localeCompare(b.state);
+    // Convert district to string and use localeCompare, or fallback to 0 if district is undefined
+    return (a.district?.toString() || '').localeCompare(b.district?.toString() || '');
   });
 
   return (
@@ -112,7 +114,7 @@ const HouseSeatingChart = () => {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{member.name}</p>
-                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
+                  <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
                   {member.isLeader && <p>Leadership: {member.leadership}</p>}
                 </TooltipContent>
               </Tooltip>
