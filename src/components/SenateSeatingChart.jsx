@@ -58,8 +58,10 @@ const SenateSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <Skeleton className="w-full h-full rounded-lg" />
+      <div className="flex flex-wrap justify-center max-w-2xl mx-auto">
+        {[...Array(100)].map((_, index) => (
+          <Skeleton key={index} className="w-8 h-8 m-1 rounded-full" />
+        ))}
       </div>
     );
   }
@@ -72,11 +74,6 @@ const SenateSeatingChart = () => {
       </Alert>
     );
   }
-
-  const sortedSenators = senators.sort((a, b) => {
-    if (a.party !== b.party) return a.party.localeCompare(b.party);
-    return a.state.localeCompare(b.state);
-  });
 
   const isEvenlySplit = senators.filter(m => m.party === 'Democratic').length === senators.filter(m => m.party === 'Republican').length;
 
@@ -95,27 +92,21 @@ const SenateSeatingChart = () => {
             </Tooltip>
           </div>
         )}
-        <div className="relative w-[600px] h-[300px] bg-gray-100 rounded-[50%] overflow-hidden">
-          {sortedSenators.map((senator, index) => {
-            const angle = (index / senators.length) * Math.PI;
-            const x = 300 + Math.cos(angle) * (250 - Math.random() * 30);
-            const y = 150 + Math.sin(angle) * (125 - Math.random() * 15);
-            return (
-              <Tooltip key={index}>
-                <TooltipTrigger>
-                  <div
-                    className={`absolute w-6 h-6 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-2 border-purple-500' : ''}`}
-                    style={{ left: `${x}px`, top: `${y}px` }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{senator.name}</p>
-                  <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
-                  {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+        <div className="flex flex-wrap justify-center max-w-2xl">
+          {senators.map((senator, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger>
+                <div
+                  className={`w-8 h-8 m-1 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{senator.name}</p>
+                <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
+                {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
+              </TooltipContent>
+            </Tooltip>
+          ))}
         </div>
       </div>
     </TooltipProvider>
