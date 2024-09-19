@@ -77,6 +77,15 @@ const HouseSeatingChart = () => {
   }
 
   const speaker = members.find(member => member.isSpeaker);
+  const groupedByState = members.reduce((acc, member) => {
+    if (!acc[member.state]) {
+      acc[member.state] = [];
+    }
+    acc[member.state].push(member);
+    return acc;
+  }, {});
+
+  const sortedStates = Object.keys(groupedByState).sort();
 
   return (
     <TooltipProvider>
@@ -95,20 +104,27 @@ const HouseSeatingChart = () => {
             </Tooltip>
           )}
         </div>
-        <div className="flex flex-wrap justify-center max-w-4xl">
-          {members.filter(m => !m.isSpeaker).map((member, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger>
-                <div
-                  className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{member.name}</p>
-                <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
-                {member.isLeader && <p>Leadership: {member.leadership}</p>}
-              </TooltipContent>
-            </Tooltip>
+        <div className="flex flex-wrap justify-center max-w-6xl">
+          {sortedStates.map(state => (
+            <div key={state} className="m-2 p-2 border-2 border-gray-300 rounded">
+              <div className="text-xs font-bold mb-1">{state}</div>
+              <div className="flex flex-wrap">
+                {groupedByState[state].map((member, index) => (
+                  <Tooltip key={index}>
+                    <TooltipTrigger>
+                      <div
+                        className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{member.name}</p>
+                      <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
+                      {member.isLeader && <p>Leadership: {member.leadership}</p>}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </div>
