@@ -58,9 +58,9 @@ const SenateSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-wrap justify-center max-w-2xl mx-auto">
+      <div className="grid grid-cols-5 gap-1 p-4 bg-gray-100 rounded-lg">
         {[...Array(100)].map((_, index) => (
-          <Skeleton key={index} className="w-8 h-8 m-1 rounded-full" />
+          <Skeleton key={index} className="w-8 h-8 rounded-full" />
         ))}
       </div>
     );
@@ -82,23 +82,29 @@ const SenateSeatingChart = () => {
     return a.party === 'Republican' ? -1 : 1;
   });
 
+  const seatsPerColumn = Math.ceil(sortedSenators.length / 5);
+
   return (
     <TooltipProvider>
       <div className="flex flex-col items-center">
-        <div className="flex flex-wrap justify-center w-full max-w-4xl">
-          {sortedSenators.map((senator, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger>
-                <div
-                  className={`w-8 h-8 m-1 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{senator.name}</p>
-                <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
-                {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
-              </TooltipContent>
-            </Tooltip>
+        <div className="grid grid-flow-col auto-cols-fr gap-1">
+          {[...Array(5)].map((_, colIndex) => (
+            <div key={colIndex} className="flex flex-col gap-1">
+              {sortedSenators.slice(colIndex * seatsPerColumn, (colIndex + 1) * seatsPerColumn).map((senator, index) => (
+                <Tooltip key={index}>
+                  <TooltipTrigger>
+                    <div
+                      className={`w-8 h-8 rounded-full ${getPartyColor(senator.party)} ${senator.isLeader ? 'border-4 border-purple-500' : ''}`}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{senator.name}</p>
+                    <p>{getPartyAbbreviation(senator.party)} - {senator.state}</p>
+                    {senator.isLeader && <p>Leadership: {senator.leadership}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
           ))}
         </div>
       </div>

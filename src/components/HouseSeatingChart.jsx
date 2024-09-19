@@ -59,7 +59,7 @@ const HouseSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
+      <div className="grid grid-cols-11 gap-1 p-4 bg-gray-100 rounded-lg">
         {[...Array(435)].map((_, index) => (
           <Skeleton key={index} className="w-4 h-4 rounded-full" />
         ))}
@@ -87,10 +87,9 @@ const HouseSeatingChart = () => {
       return a.state.localeCompare(b.state);
     }
     return a.party === 'Republican' ? -1 : 1;
-  });
+  }).filter(member => !member.isSpeaker);
 
-  const republicans = sortedMembers.filter(m => m.party === 'Republican' && !m.isSpeaker);
-  const democrats = sortedMembers.filter(m => m.party !== 'Republican' && !m.isSpeaker);
+  const seatsPerColumn = Math.ceil(sortedMembers.length / 11);
 
   return (
     <TooltipProvider>
@@ -109,20 +108,24 @@ const HouseSeatingChart = () => {
             </Tooltip>
           )}
         </div>
-        <div className="flex flex-wrap justify-center w-full max-w-4xl">
-          {republicans.concat(democrats).map((member, index) => (
-            <Tooltip key={index}>
-              <TooltipTrigger>
-                <div
-                  className={`w-6 h-6 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{member.name}</p>
-                <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
-                {member.isLeader && <p>Leadership: {member.leadership}</p>}
-              </TooltipContent>
-            </Tooltip>
+        <div className="grid grid-flow-col auto-cols-fr gap-1">
+          {[...Array(11)].map((_, colIndex) => (
+            <div key={colIndex} className="flex flex-col gap-1">
+              {sortedMembers.slice(colIndex * seatsPerColumn, (colIndex + 1) * seatsPerColumn).map((member, index) => (
+                <Tooltip key={index}>
+                  <TooltipTrigger>
+                    <div
+                      className={`w-6 h-6 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{member.name}</p>
+                    <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
+                    {member.isLeader && <p>Leadership: {member.leadership}</p>}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </div>
           ))}
         </div>
       </div>
