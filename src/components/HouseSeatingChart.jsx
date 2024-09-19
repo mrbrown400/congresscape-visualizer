@@ -59,7 +59,7 @@ const HouseSeatingChart = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-11 gap-1 p-4 bg-gray-100 rounded-lg">
+      <div className="grid grid-cols-25 gap-1 p-4 bg-gray-100 rounded-lg">
         {[...Array(435)].map((_, index) => (
           <Skeleton key={index} className="w-4 h-4 rounded-full" />
         ))}
@@ -77,19 +77,6 @@ const HouseSeatingChart = () => {
   }
 
   const speaker = members.find(member => member.isSpeaker);
-  const sortedMembers = members.sort((a, b) => {
-    if (a.party === b.party) {
-      if (a.state === b.state) {
-        const districtA = String(a.district || '');
-        const districtB = String(b.district || '');
-        return districtA.localeCompare(districtB);
-      }
-      return a.state.localeCompare(b.state);
-    }
-    return a.party === 'Republican' ? -1 : 1;
-  }).filter(member => !member.isSpeaker);
-
-  const seatsPerColumn = Math.ceil(sortedMembers.length / 11);
 
   return (
     <TooltipProvider>
@@ -98,34 +85,30 @@ const HouseSeatingChart = () => {
           {speaker && (
             <Tooltip>
               <TooltipTrigger>
-                <div className={`w-6 h-6 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
+                <div className={`w-8 h-8 rounded-full ${getPartyColor(speaker.party)} border-4 border-green-400`} />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{speaker.name}</p>
-                <p>{getPartyAbbreviation(speaker.party)} - {speaker.state}, District {speaker.district || 'At-Large'}</p>
+                <p>{getPartyAbbreviation(speaker.party)} - {speaker.state}, District {speaker.district}</p>
                 <p>Speaker of the House</p>
               </TooltipContent>
             </Tooltip>
           )}
         </div>
-        <div className="grid grid-flow-col auto-cols-fr gap-1">
-          {[...Array(11)].map((_, colIndex) => (
-            <div key={colIndex} className="flex flex-col gap-1">
-              {sortedMembers.slice(colIndex * seatsPerColumn, (colIndex + 1) * seatsPerColumn).map((member, index) => (
-                <Tooltip key={index}>
-                  <TooltipTrigger>
-                    <div
-                      className={`w-6 h-6 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{member.name}</p>
-                    <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district || 'At-Large'}</p>
-                    {member.isLeader && <p>Leadership: {member.leadership}</p>}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+        <div className="flex flex-wrap justify-center max-w-4xl">
+          {members.filter(m => !m.isSpeaker).map((member, index) => (
+            <Tooltip key={index}>
+              <TooltipTrigger>
+                <div
+                  className={`w-4 h-4 m-1 rounded-full ${getPartyColor(member.party)} ${member.isLeader ? 'border-2 border-purple-500' : ''}`}
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{member.name}</p>
+                <p>{getPartyAbbreviation(member.party)} - {member.state}, District {member.district}</p>
+                {member.isLeader && <p>Leadership: {member.leadership}</p>}
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
       </div>
