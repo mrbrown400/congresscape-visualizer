@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Chuck Schumer",
+    "party": "Democratic",
+    "state": "NY",
+    "leadership": "Majority Leader",
+    "isLeader": true
+  },
+  {
+    "name": "Mitch McConnell",
+    "party": "Republican",
+    "state": "KY",
+    "leadership": "Minority Leader",
+    "isLeader": true
+  }
+]

@@ -7,22 +7,34 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const fetchHouseMembers = async () => {
   const apiKey = import.meta.env.VITE_CONGRESS_API_KEY;
   if (!apiKey) {
-    throw new Error('Congress API key not found. Please add it to your .env file.');
+    console.warn('Congress API key not found. Falling back to sample data.');
+    const sample = await import('../data/house-sample.json');
+    return sample.default;
   }
-  const response = await fetch(`https://api.congress.gov/v3/member?chamber=house&api_key=${apiKey}&limit=450`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch House members');
+  try {
+    const response = await fetch(
+      `https://api.congress.gov/v3/member?chamber=house&api_key=${apiKey}&limit=450`
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch House members');
+    }
+    const data = await response.json();
+    return data.members.map(member => ({
+      name: `${member.name || ''}`,
+      party: member.partyName || 'Unknown',
+      state: member.state,
+      district: member.district,
+      leadership: member.leadershipRole || [],
+      isLeader: !!member.leadershipRole,
+      isSpeaker:
+        member.leadershipRole &&
+        member.leadershipRole.toLowerCase().includes('speaker')
+    }));
+  } catch (err) {
+    console.error('Using sample House data due to fetch error:', err.message);
+    const sample = await import('../data/house-sample.json');
+    return sample.default;
   }
-  const data = await response.json();
-  return data.members.map(member => ({
-    name: `${member.name || ''}`,
-    party: member.partyName || 'Unknown',
-    state: member.state,
-    district: member.district,
-    leadership: member.leadershipRole || [],
-    isLeader: member.leadershipRole ? true : false,
-    isSpeaker: member.leadershipRole && member.leadershipRole.toLowerCase().includes('speaker')
-  }));
 };
 
 const getPartyColor = (party) => {
