@@ -1,67 +1,49 @@
-# Welcome to your GPT Engineer project
+# Congresscape Visualizer
 
-## Project info
+Congresscape Visualizer is a full-stack platform delivering a personalized, real-time feed of U.S. government activity across Congress, the Supreme Court, and the Executive Branch. This repository contains the FastAPI backend, PostgreSQL schema, data ingestion modules, and React Native mobile client that powers the experience.
 
-**Project**: congresscape-visualizer
+## Repository Layout
+- `backend/` – FastAPI app, PostgreSQL models (pgvector), ingestion services, and LLM summarization helpers.
+- `frontend/` – React Native (Expo) mobile app with a TikTok-style feed UI.
+- `docker-compose.yml` – Local stack for Postgres + backend service.
+- `docs/` – Architectural overview.
 
-**URL**: https://run.gptengineer.app/projects/53b104e1-fe3c-4287-a3e0-f41625ed797c/improve
+## Quick Start
+1. **Launch infrastructure**
+   ```bash
+   docker compose up -d db
+   ```
+2. **Backend**
+   ```bash
+   cd backend
+   poetry install
+   cp .env.example .env
+   poetry run python -m app.db.init_db
+   poetry run uvicorn app.main:app --reload
+   ```
+3. **Mobile App**
+   ```bash
+   cd frontend
+   npm install
+   EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 npm run start
+   ```
 
-## How can I edit this code?
+## Key Features
+- **Unified Update Schema** – `government_updates` table captures id, timestamps, branch/source, headline, summary, full text, tags/entities, vector embedding, and metadata for future RAG experiences.
+- **Modular Ingestion** – Source-specific modules for Congress (GPO, Congress.gov), Supreme Court (Juriscraper), and Executive sources (Federal Register, White House, agency `data.json`).
+- **Summarization & Embeddings** – OpenAI-powered services produce snackable summaries and pgvector embeddings for personalization and semantic search.
+- **Mobile Feed Experience** – Vertical cards with branch color-coding, tabs for Trending/Urgent/Branches, onboarding interest selection, and mock data fallback for offline dev.
 
-There are several ways of editing your application.
+## Extensibility Roadmap
+- Add Celery/Redis worker for scheduled ingestion and notifications.
+- Implement vector similarity search and “Full Coverage” exploration endpoints.
+- Expand entity graph using SAM.gov hierarchy & knowledge graph linking.
+- Introduce user accounts, saved feeds, and notification preferences.
+- Share component library with web via React Native Web.
 
-**Use GPT Engineer**
+## Accessibility & Design Guardrails
+- High contrast color palette with branch-level accents.
+- Large tap targets and VoiceOver-friendly copy.
+- Expandable cards and future audio/video support for accessibility parity.
 
-Simply visit the GPT Engineer project at [GPT Engineer](https://gptengineer.app/projects/53b104e1-fe3c-4287-a3e0-f41625ed797c/improve) and start prompting.
-
-Changes made via gptengineer.app will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in the GPT Engineer UI.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-git clone https://github.com/GPT-Engineer-App/congresscape-visualizer.git
-cd congresscape-visualizer
-npm i
-
-# This will run a dev server with auto reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-All GPT Engineer projects can be deployed directly via the GPT Engineer app.
-
-Simply visit your project at [GPT Engineer](https://gptengineer.app/projects/53b104e1-fe3c-4287-a3e0-f41625ed797c/improve) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify or GitHub pages. Visit our docs for more details: [Custom domains](https://docs.gptengineer.app/tips-tricks/custom-domain/)
+Refer to `docs/architecture.md` for system-level details and next-step considerations.
