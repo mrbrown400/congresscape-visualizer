@@ -26,7 +26,7 @@ celery = "^5.3.6"
 loguru = "^0.7.2"
 tenacity = "^8.2.3"
 requests-cache = "^1.1.1"
-juriscraper = "^4.3.5"
+juriscraper = "^2.6.92"
 lxml = "^5.1.0"
 
 [tool.poetry.group.dev.dependencies]
