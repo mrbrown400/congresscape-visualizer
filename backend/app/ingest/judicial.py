@@ -4,7 +4,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import AsyncIterator
 
-from juriscraper.opinions.united_states import scotus
+try:
+    from juriscraper.opinions.united_states.federal_appellate import scotus_slip as scotus_module
+except ImportError:  # pragma: no cover - fallback for older package versions
+    try:
+        from juriscraper.opinions.united_states import scotus as scotus_module  # type: ignore[misc]
+    except ImportError:  # pragma: no cover - optional dependency layout can change
+        scotus_module = None  # type: ignore[assignment]
 
 from app.ingest.base import NormalizedUpdate
 
@@ -19,7 +25,14 @@ def parse_date(value: str) -> datetime:
 async def fetch_supreme_court_updates() -> AsyncIterator[NormalizedUpdate]:
     """Yield recent Supreme Court opinions."""
 
-    scraper = scotus.Site()
+    if scotus_module is None:
+        raise RuntimeError(
+            "Juriscraper SCOTUS scraper is unavailable. Ensure juriscraper exposes "
+            "`juriscraper.opinions.united_states.federal_appellate.scotus_slip` (or legacy "
+            "`juriscraper.opinions.united_states.scotus`)."
+        )
+
+    scraper = scotus_module.Site()
     opinions = scraper.parse()
     for opinion in opinions[:5]:
         docket = opinion.get("docket", "unknown")

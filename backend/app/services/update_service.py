@@ -33,7 +33,7 @@ class UpdateService:
             published_at=payload.published_at,
             url=str(payload.url) if payload.url else None,
             tags=payload.tags,
-            metadata=payload.metadata or {},
+            metadata_json=payload.metadata or {},
             embedding=payload.embedding,
             entities=entities,
         )
@@ -56,14 +56,10 @@ class UpdateService:
             existing.published_at = payload.published_at
             existing.url = str(payload.url) if payload.url else None
             existing.tags = payload.tags
-            existing.metadata = payload.metadata or {}
+            existing.metadata_json = payload.metadata or {}
             existing.embedding = payload.embedding
             existing.entities = await self._resolve_entities(payload.entity_ids)
             await self.session.flush()
             return existing
 
         return await self.create_update(payload)
-
-
-async def get_update_service(session: AsyncSession) -> UpdateService:
-    return UpdateService(session)

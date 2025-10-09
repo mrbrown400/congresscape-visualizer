@@ -6,7 +6,7 @@ from app.api.deps import get_db
 from app.schemas.update import GovernmentUpdateCreate, GovernmentUpdateRead
 from app.services.embedding import EmbeddingService, get_embedding_service
 from app.services.summarization import SummarizationService, get_summarization_service
-from app.services.update_service import UpdateService, get_update_service
+from app.services.update_service import UpdateService
 
 router = APIRouter()
 
@@ -15,7 +15,6 @@ router = APIRouter()
 async def ingest_update(
     payload: GovernmentUpdateCreate,
     session: AsyncSession = Depends(get_db),
-    updater: UpdateService = Depends(get_update_service),
     summarizer: SummarizationService = Depends(get_summarization_service),
     embedder: EmbeddingService = Depends(get_embedding_service),
 ) -> GovernmentUpdateRead:
@@ -36,6 +35,7 @@ async def ingest_update(
             raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     enriched_payload = payload.model_copy(update={"summary": summary, "embedding": embedding})
+    updater = UpdateService(session)
     update = await updater.upsert_update(enriched_payload)
     await session.commit()
     await session.refresh(update)

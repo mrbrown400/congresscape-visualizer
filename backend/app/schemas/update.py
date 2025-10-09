@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, HttpUrl
+from pydantic import AliasChoices, BaseModel, Field, HttpUrl
 
 from app.models.update import BranchEnum
 
@@ -30,7 +30,7 @@ class GovernmentUpdateBase(BaseModel):
     published_at: datetime
     url: Optional[HttpUrl]
     tags: List[str] = []
-    metadata: dict | None = None
+    metadata: dict | None = Field(default=None, validation_alias=AliasChoices("metadata", "metadata_json"))
 
 
 class GovernmentUpdateCreate(GovernmentUpdateBase):

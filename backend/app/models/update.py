@@ -4,7 +4,17 @@ from enum import Enum
 from typing import List, Optional
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import ARRAY, DateTime, Enum as PgEnum, ForeignKey, Index, String, Table, Text
+from sqlalchemy import (
+    ARRAY,
+    Column,
+    DateTime,
+    Enum as PgEnum,
+    ForeignKey,
+    Index,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONBMixin, PrimaryKeyMixin, TimestampMixin
@@ -24,8 +34,8 @@ class BranchEnum(str, Enum):
 update_entity_association = Table(
     "update_entities",
     Base.metadata,
-    mapped_column("update_id", ForeignKey("government_updates.id", ondelete="CASCADE"), primary_key=True),
-    mapped_column("entity_id", ForeignKey("entities.id", ondelete="CASCADE"), primary_key=True),
+    Column("update_id", ForeignKey("government_updates.id", ondelete="CASCADE"), primary_key=True),
+    Column("entity_id", ForeignKey("entities.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
@@ -44,7 +54,7 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     url: Mapped[Optional[str]] = mapped_column(String(500))
 
     tags: Mapped[List[str]] = mapped_column(ARRAY(String(100)), default=list)
-    metadata: Mapped[dict | None] = JSONBMixin.jsonb_column(default=dict)
+    metadata_json: Mapped[dict | None] = JSONBMixin.jsonb_column(default=dict)
 
     embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(dim=1536), nullable=True)
 
@@ -73,7 +83,7 @@ class Entity(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     name: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    metadata: Mapped[dict | None] = JSONBMixin.jsonb_column(default=dict)
+    metadata_json: Mapped[dict | None] = JSONBMixin.jsonb_column(default=dict)
 
     updates: Mapped[List[GovernmentUpdate]] = relationship(
         back_populates="entities", secondary=update_entity_association, lazy="selectin"

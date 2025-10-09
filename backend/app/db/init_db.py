@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import engine
 from app.db.base import Base
+from app import models  # noqa: F401  # Ensure models are registered before table creation
 
 
 async def init_models() -> None:

@@ -12,7 +12,9 @@ Congresscape Visualizer is a full-stack platform delivering a personalized, real
 1. **Launch infrastructure**
    ```bash
    docker compose up -d db
+   docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF NOT EXISTS vector"
    ```
+   The `pgvector` extension must be enabled before initializing the schema. If you are using a local PostgreSQL instance instead of Docker, install the extension (via `CREATE EXTENSION vector;`) on the `congresscape` database manually.
 2. **Backend**
    ```bash
    cd backend
