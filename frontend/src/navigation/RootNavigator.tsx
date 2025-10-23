@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import FeedTabs from './FeedTabs';
+import DailyBriefScreen from '@features/dailyBrief/screens/DailyBriefScreen';
 import OnboardingScreen from '../features/onboarding/screens/OnboardingScreen';
 
 export type RootStackParamList = {
@@ -20,7 +20,7 @@ const RootNavigator = () => {
       {!hasCompletedOnboarding && (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       )}
-      <Stack.Screen name="Main" component={FeedTabs} />
+      <Stack.Screen name="Main" component={DailyBriefScreen} />
     </Stack.Navigator>
   );
 };

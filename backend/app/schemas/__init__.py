@@ -1,4 +1,6 @@
 """Pydantic schemas."""
+from .notification import PushTokenCreate, PushTokenRead
+from .summary import DailyBriefHighlight, DailyBriefResponse
 from .update import (
     EntityRead,
     FeedQueryParams,
@@ -15,4 +17,8 @@ __all__ = [
     "GovernmentUpdateBase",
     "GovernmentUpdateCreate",
     "GovernmentUpdateRead",
+    "DailyBriefHighlight",
+    "DailyBriefResponse",
+    "PushTokenCreate",
+    "PushTokenRead",
 ]
