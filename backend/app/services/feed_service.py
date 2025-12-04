@@ -29,6 +29,10 @@ class FeedService:
             # Placeholder for vector search; fallback to case-insensitive headline match.
             pattern = f"%{params.search.lower()}%"
             query = query.where(func.lower(GovernmentUpdate.headline).like(pattern))
+        if params.start_date:
+            query = query.where(GovernmentUpdate.published_at >= params.start_date)
+        if params.end_date:
+            query = query.where(GovernmentUpdate.published_at <= params.end_date)
         return query
 
     async def list_updates(self, params: FeedQueryParams) -> tuple[List[GovernmentUpdate], int]:

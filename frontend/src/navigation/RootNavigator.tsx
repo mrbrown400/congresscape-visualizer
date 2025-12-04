@@ -3,10 +3,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import DailyBriefScreen from '@features/dailyBrief/screens/DailyBriefScreen';
 import OnboardingScreen from '../features/onboarding/screens/OnboardingScreen';
+import CalendarScreen from '../features/calendar/screens/CalendarScreen';
 
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
+  Calendar: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -16,7 +18,8 @@ const RootNavigator = () => {
   const hasCompletedOnboarding = false;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Calendar">
+      <Stack.Screen name="Calendar" component={CalendarScreen} />
       {!hasCompletedOnboarding && (
         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       )}

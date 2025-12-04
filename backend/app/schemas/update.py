@@ -51,6 +51,8 @@ class FeedQueryParams(BaseModel):
     source: Optional[str] = None
     tag: Optional[str] = None
     search: Optional[str] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     limit: int = 20
     offset: int = 0
 
