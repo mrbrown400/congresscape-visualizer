@@ -27,10 +27,10 @@ const OnboardingScreen = ({ navigation }: Props) => {
   return (
     <LinearGradient colors={['#0F172A', '#020617']} style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tailor Your Government Feed</Text>
+        <Text style={styles.title}>Tailor Your Daily Briefing</Text>
         <Text style={styles.subtitle}>
-          Follow the branches, agencies, and topics you care about. We will personalize your feed with real-time
-          summaries and urgent alerts.
+          Follow the branches, agencies, and topics you care about. We will personalize your daily briefing with timely
+          highlights and urgent alerts.
         </Text>
       </View>
 
@@ -44,7 +44,7 @@ const OnboardingScreen = ({ navigation }: Props) => {
       </View>
 
       <Pressable style={styles.cta} onPress={handleContinue} accessibilityRole="button">
-        <Text style={styles.ctaText}>Continue to Feed</Text>
+        <Text style={styles.ctaText}>Continue to Briefing</Text>
       </Pressable>
     </LinearGradient>
   );

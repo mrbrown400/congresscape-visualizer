@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str = "gpt-4.1-mini"
 
+    # Congress.gov / data.gov API key
+    congress_api_key: Optional[str] = Field(default=None, alias="CONGRESS_API_KEY")
+
     # CORS and client apps
     backend_cors_origins: List[AnyHttpUrl] = []
 

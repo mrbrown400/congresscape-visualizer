@@ -34,7 +34,7 @@ class UpdateService:
             url=str(payload.url) if payload.url else None,
             tags=payload.tags,
             metadata_json=payload.metadata or {},
-            embedding=payload.embedding,
+            # embedding=payload.embedding, # Removed for SQLite
             entities=entities,
         )
         self.session.add(update)
@@ -57,7 +57,7 @@ class UpdateService:
             existing.url = str(payload.url) if payload.url else None
             existing.tags = payload.tags
             existing.metadata_json = payload.metadata or {}
-            existing.embedding = payload.embedding
+            # existing.embedding = payload.embedding # Removed for SQLite
             existing.entities = await self._resolve_entities(payload.entity_ids)
             await self.session.flush()
             return existing

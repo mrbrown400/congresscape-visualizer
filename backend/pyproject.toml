@@ -29,6 +29,7 @@ tenacity = "^8.2.3"
 requests-cache = "^1.1.1"
 juriscraper = "^2.6.92"
 lxml = "^5.1.0"
+aiosqlite = "^0.21.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
