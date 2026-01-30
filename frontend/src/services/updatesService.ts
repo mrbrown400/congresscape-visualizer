@@ -37,7 +37,7 @@ export const fetchUpdates = async (
         if (startDate) params.start_date = startDate;
         if (endDate) params.end_date = endDate;
 
-        const response = await axios.get<FeedResponse>(`${API_BASE_URL}/feeds/`, { params });
+        const response = await axios.get<FeedResponse>(`${API_BASE_URL}/feed/`, { params });
         return response.data.items;
     } catch (error) {
         console.error('Error fetching updates:', error);

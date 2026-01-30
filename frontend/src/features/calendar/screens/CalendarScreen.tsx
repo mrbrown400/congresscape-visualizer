@@ -6,6 +6,7 @@ import { useTheme } from '@theme/ThemeProvider';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { fetchUpdates, GovernmentUpdate } from '@services/updatesService';
+import YearView from './YearView';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Calendar'>;
 
@@ -17,24 +18,33 @@ const CalendarScreen = ({ navigation }: Props) => {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [updates, setUpdates] = useState<GovernmentUpdate[]>([]);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
 
   const startOfMonth = currentDate.startOf('month');
   const endOfMonth = currentDate.endOf('month');
   const startDayOfWeek = startOfMonth.day(); // 0-6
   const daysInMonth = currentDate.daysInMonth();
 
-  // Fetch updates when month changes
+  // Fetch updates when month/year changes
   useEffect(() => {
     const loadUpdates = async () => {
       setLoading(true);
-      const start = startOfMonth.toISOString();
-      const end = endOfMonth.toISOString();
-      const data = await fetchUpdates(start, end, 200); // Fetch enough for the whole month
+      let start, end;
+
+      if (viewMode === 'month') {
+        start = startOfMonth.toISOString();
+        end = endOfMonth.toISOString();
+      } else {
+        start = currentDate.startOf('year').toISOString();
+        end = currentDate.endOf('year').toISOString();
+      }
+
+      const data = await fetchUpdates(start, end, 500);
       setUpdates(data);
       setLoading(false);
     };
     loadUpdates();
-  }, [currentDate]);
+  }, [currentDate, viewMode]);
 
   // Generate calendar grid
   const calendarDays = useMemo(() => {
@@ -119,54 +129,79 @@ const CalendarScreen = ({ navigation }: Props) => {
     <LinearGradient colors={['#0F172A', '#020617']} style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => setCurrentDate(currentDate.subtract(1, 'month'))}>
-          <Text style={styles.navArrow}>{'<'}</Text>
+        <View style={styles.navContainer}>
+          <Pressable onPress={() => setCurrentDate(viewMode === 'month' ? currentDate.subtract(1, 'month') : currentDate.subtract(1, 'year'))}>
+            <Text style={styles.navArrow}>{'<'}</Text>
+          </Pressable>
+          <Text style={styles.monthTitle}>
+            {viewMode === 'month' ? currentDate.format('MMMM YYYY') : currentDate.format('YYYY')}
+          </Text>
+          <Pressable onPress={() => setCurrentDate(viewMode === 'month' ? currentDate.add(1, 'month') : currentDate.add(1, 'year'))}>
+            <Text style={styles.navArrow}>{'>'}</Text>
+          </Pressable>
+        </View>
+
+        <Pressable
+          style={styles.viewToggle}
+          onPress={() => setViewMode(viewMode === 'month' ? 'year' : 'month')}
+        >
+          <Text style={styles.viewToggleText}>{viewMode === 'month' ? 'Year' : 'Month'}</Text>
         </Pressable>
-        <Text style={styles.monthTitle}>{currentDate.format('MMMM YYYY')}</Text>
-        <Pressable onPress={() => setCurrentDate(currentDate.add(1, 'month'))}>
-          <Text style={styles.navArrow}>{'>'}</Text>
-        </Pressable>
       </View>
 
-      {/* Weekday Headers */}
-      <View style={styles.weekRow}>
-        {DAYS_OF_WEEK.map(day => (
-          <Text key={day} style={styles.weekDayText}>{day}</Text>
-        ))}
-      </View>
+      {viewMode === 'month' ? (
+        <>
+          {/* Weekday Headers */}
+          <View style={styles.weekRow}>
+            {DAYS_OF_WEEK.map(day => (
+              <Text key={day} style={styles.weekDayText}>{day}</Text>
+            ))}
+          </View>
 
-      {/* Calendar Grid */}
-      <View style={styles.calendarGrid}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#F59E0B" style={{ margin: 20 }} />
-        ) : (
-          calendarDays.map((date, index) => renderDay(date, index))
-        )}
-      </View>
+          {/* Calendar Grid */}
+          <View style={styles.calendarGrid}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#F59E0B" style={{ margin: 20 }} />
+            ) : (
+              calendarDays.map((date, index) => renderDay(date, index))
+            )}
+          </View>
 
-      {/* Selected Day Summary */}
-      <View style={styles.summaryContainer}>
-        <Text style={styles.summaryTitle}>
-          Updates for {selectedDate.format('MMM D, YYYY')}
-        </Text>
-        <ScrollView style={styles.feed}>
-          {selectedDayUpdates.length > 0 ? (
-            selectedDayUpdates.map(update => (
-              <View key={update.id} style={[styles.card, { borderLeftColor: getBranchColor(update.branch) }]}>
-                <Text style={styles.cardTag}>{update.branch}</Text>
-                <Text style={styles.cardHeadline}>{update.headline}</Text>
-                {update.summary ? (
-                  <Text style={styles.cardSummary} numberOfLines={3}>
-                    {update.summary}
-                  </Text>
-                ) : null}
-              </View>
-            ))
-          ) : (
-            <Text style={styles.emptyState}>No activity recorded for this date.</Text>
-          )}
-        </ScrollView>
-      </View>
+          {/* Selected Day Summary */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryTitle}>
+              Updates for {selectedDate.format('MMM D, YYYY')}
+            </Text>
+            <ScrollView style={styles.feed}>
+              {selectedDayUpdates.length > 0 ? (
+                selectedDayUpdates.map(update => (
+                  <View key={update.id} style={[styles.card, { borderLeftColor: getBranchColor(update.branch) }]}>
+                    <Text style={styles.cardTag}>{update.branch}</Text>
+                    <Text style={styles.cardHeadline}>{update.headline}</Text>
+                    {update.summary ? (
+                      <Text style={styles.cardSummary} numberOfLines={3}>
+                        {update.summary}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.emptyState}>No activity recorded for this date.</Text>
+              )}
+            </ScrollView>
+          </View>
+        </>
+      ) : (
+        <YearView
+          year={currentDate.year()}
+          updates={updates}
+          onMonthSelect={(month) => {
+            setCurrentDate(currentDate.month(month));
+            setSelectedDate(currentDate.month(month)); // Also update selectedDate to the first day of the selected month
+            setViewMode('month');
+          }}
+        />
+      )}
     </LinearGradient>
   );
 };
@@ -183,10 +218,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  navContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewToggle: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  viewToggleText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   monthTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#F8FAFC',
+    marginHorizontal: 10,
   },
   navArrow: {
     fontSize: 24,

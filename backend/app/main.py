@@ -2,6 +2,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import api_router
 from app.core.config import settings
@@ -15,6 +16,16 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.project_name, debug=settings.debug, lifespan=lifespan)
+
+    # Enable CORS for local development
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:8081", "http://127.0.0.1:8081", "*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(api_router, prefix=settings.api_v1_prefix)
     return app
 

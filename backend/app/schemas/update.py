@@ -30,7 +30,7 @@ class GovernmentUpdateBase(BaseModel):
     published_at: datetime
     url: Optional[HttpUrl]
     tags: List[str] = []
-    metadata: dict | None = Field(default=None, validation_alias=AliasChoices("metadata", "metadata_json"))
+    metadata: dict | None = Field(default=None, alias="metadata_json")
 
 
 class GovernmentUpdateCreate(GovernmentUpdateBase):
@@ -44,6 +44,7 @@ class GovernmentUpdateRead(GovernmentUpdateBase):
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 
 class FeedQueryParams(BaseModel):
