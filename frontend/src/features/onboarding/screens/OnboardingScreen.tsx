@@ -1,51 +1,174 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useTheme } from '@theme/ThemeProvider';
+import { useUserPreferences } from '../../../context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
 
 const interestGroups = [
-  { key: 'legislative', title: 'Congress (House & Senate)' },
-  { key: 'judicial', title: 'Supreme Court & Courts' },
-  { key: 'executive', title: 'Executive Orders & Agencies' },
-  { key: 'budget', title: 'Budget & Appropriations' },
-  { key: 'oversight', title: 'Oversight & Investigations' }
+  {
+    key: 'legislative',
+    title: 'Congress',
+    subtitle: 'House & Senate bills, votes, and hearings',
+    icon: 'business' as keyof typeof Ionicons.glyphMap,
+  },
+  {
+    key: 'judicial',
+    title: 'Courts',
+    subtitle: 'Supreme Court decisions and federal rulings',
+    icon: 'scale' as keyof typeof Ionicons.glyphMap,
+  },
+  {
+    key: 'executive',
+    title: 'Executive',
+    subtitle: 'Executive orders and White House actions',
+    icon: 'document-text' as keyof typeof Ionicons.glyphMap,
+  },
+  {
+    key: 'budget',
+    title: 'Budget',
+    subtitle: 'Appropriations and spending bills',
+    icon: 'cash' as keyof typeof Ionicons.glyphMap,
+  },
+  {
+    key: 'oversight',
+    title: 'Oversight',
+    subtitle: 'Investigations and committee hearings',
+    icon: 'eye' as keyof typeof Ionicons.glyphMap,
+  },
 ];
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 const OnboardingScreen = ({ navigation }: Props) => {
-  const { neutral } = useTheme();
+  const { neutral, branch: branchColors } = useTheme();
+  const { preferences, setInterests, completeOnboarding, hasCompletedOnboarding } = useUserPreferences();
 
-  const handleContinue = () => {
-    // TODO: Persist selection and mark onboarding as complete
-    navigation.replace('Main');
-  };
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(preferences.interests);
+
+  const toggleInterest = useCallback((key: string) => {
+    setSelectedInterests(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  }, []);
+
+  const handleContinue = useCallback(() => {
+    setInterests(selectedInterests);
+    completeOnboarding();
+    navigation.replace('MainTabs');
+  }, [selectedInterests, setInterests, completeOnboarding, navigation]);
+
+  const handleSkip = useCallback(() => {
+    completeOnboarding();
+    navigation.replace('MainTabs');
+  }, [completeOnboarding, navigation]);
+
+  const isEditing = hasCompletedOnboarding;
 
   return (
     <LinearGradient colors={['#0F172A', '#020617']} style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Tailor Your Daily Briefing</Text>
-        <Text style={styles.subtitle}>
-          Follow the branches, agencies, and topics you care about. We will personalize your daily briefing with timely
-          highlights and urgent alerts.
-        </Text>
-      </View>
-
-      <View style={styles.list}>
-        {interestGroups.map(group => (
-          <Pressable key={group.key} style={[styles.card, { backgroundColor: neutral.card }]}> 
-            <Text style={styles.cardTitle}>{group.title}</Text>
-            <Text style={styles.cardSubtitle}>Tap to follow</Text>
+        {isEditing && (
+          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={neutral.textPrimary} />
           </Pressable>
-        ))}
+        )}
+        <View style={styles.titleContainer}>
+          <Text style={[styles.title, { color: neutral.textPrimary }]}>
+            {isEditing ? 'Edit Your Interests' : 'Tailor Your Briefing'}
+          </Text>
+          <Text style={[styles.subtitle, { color: neutral.textSecondary }]}>
+            {isEditing
+              ? 'Update the topics you want to follow'
+              : 'Follow the branches and topics you care about. We\'ll personalize your daily briefing.'}
+          </Text>
+        </View>
       </View>
 
-      <Pressable style={styles.cta} onPress={handleContinue} accessibilityRole="button">
-        <Text style={styles.ctaText}>Continue to Briefing</Text>
-      </Pressable>
+      {/* Interest Cards */}
+      <View style={styles.list}>
+        {interestGroups.map(group => {
+          const isSelected = selectedInterests.includes(group.key);
+          const accentColor = branchColors[group.key as keyof typeof branchColors] || branchColors.agency;
+
+          return (
+            <Pressable
+              key={group.key}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: isSelected ? accentColor + '15' : neutral.card,
+                  borderColor: isSelected ? accentColor : 'transparent',
+                  borderWidth: 2,
+                }
+              ]}
+              onPress={() => toggleInterest(group.key)}
+            >
+              <View style={[styles.cardIcon, { backgroundColor: accentColor + '20' }]}>
+                <Ionicons name={group.icon} size={24} color={accentColor} />
+              </View>
+              <View style={styles.cardContent}>
+                <Text style={[styles.cardTitle, { color: neutral.textPrimary }]}>
+                  {group.title}
+                </Text>
+                <Text style={[styles.cardSubtitle, { color: neutral.textSecondary }]}>
+                  {group.subtitle}
+                </Text>
+              </View>
+              <View style={[
+                styles.checkbox,
+                {
+                  backgroundColor: isSelected ? accentColor : 'transparent',
+                  borderColor: isSelected ? accentColor : neutral.textMuted,
+                }
+              ]}>
+                {isSelected && (
+                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                )}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Pressable
+          style={[
+            styles.cta,
+            {
+              backgroundColor: selectedInterests.length > 0 ? branchColors.agency : neutral.divider,
+            }
+          ]}
+          onPress={handleContinue}
+          disabled={selectedInterests.length === 0 && !isEditing}
+        >
+          <Text style={[
+            styles.ctaText,
+            { color: selectedInterests.length > 0 ? '#0B1D3A' : neutral.textMuted }
+          ]}>
+            {isEditing ? 'Save Changes' : 'Continue to Briefing'}
+          </Text>
+        </Pressable>
+
+        {!isEditing && (
+          <Pressable style={styles.skipButton} onPress={handleSkip}>
+            <Text style={[styles.skipText, { color: neutral.textMuted }]}>
+              Skip for now
+            </Text>
+          </Pressable>
+        )}
+
+        {selectedInterests.length > 0 && (
+          <Text style={[styles.selectionCount, { color: neutral.textMuted }]}>
+            {selectedInterests.length} topic{selectedInterests.length !== 1 ? 's' : ''} selected
+          </Text>
+        )}
+      </View>
     </LinearGradient>
   );
 };
@@ -54,48 +177,92 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingVertical: 48,
-    justifyContent: 'space-between'
+    paddingTop: 60,
+    paddingBottom: 40,
   },
   header: {
-    gap: 16
+    gap: 16,
+    marginBottom: 24,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    padding: 4,
+    marginBottom: 8,
+  },
+  titleContainer: {
+    gap: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#F8FAFC'
+    lineHeight: 40,
   },
   subtitle: {
     fontSize: 16,
-    color: '#CBD5F5'
+    lineHeight: 24,
   },
   list: {
-    gap: 16
+    flex: 1,
+    gap: 12,
   },
   card: {
-    borderRadius: 20,
-    padding: 20
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 16,
+    gap: 14,
+  },
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
   },
   cardTitle: {
-    color: '#F8FAFC',
-    fontSize: 18,
-    fontWeight: '600'
+    fontSize: 17,
+    fontWeight: '600',
   },
   cardSubtitle: {
-    color: '#C7D2FE',
-    marginTop: 4
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footer: {
+    gap: 12,
+    paddingTop: 20,
   },
   cta: {
-    backgroundColor: '#F59E0B',
     borderRadius: 999,
     paddingVertical: 16,
-    alignItems: 'center'
+    alignItems: 'center',
   },
   ctaText: {
-    color: '#0B1D3A',
     fontSize: 16,
-    fontWeight: '700'
-  }
+    fontWeight: '700',
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipText: {
+    fontSize: 15,
+  },
+  selectionCount: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
 });
 
 export default OnboardingScreen;
