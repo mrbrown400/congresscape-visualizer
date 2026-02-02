@@ -28,6 +28,7 @@ class GovernmentUpdateBase(BaseModel):
     summary: Optional[str]
     full_text: Optional[str]
     published_at: datetime
+    event_date: Optional[datetime] = None
     url: Optional[HttpUrl]
     tags: List[str] = []
     metadata: dict | None = Field(default=None, alias="metadata_json")

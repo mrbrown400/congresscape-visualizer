@@ -108,11 +108,26 @@ const TodayScreen = () => {
 
         {/* Hero Headline Card */}
         <View style={[styles.heroCard, { backgroundColor: neutral.card }]}>
-          <View style={styles.heroLabel}>
-            <Ionicons name="newspaper" size={16} color={branchColors.agency} />
-            <Text style={[styles.heroLabelText, { color: branchColors.agency }]}>
-              TODAY'S HEADLINE
-            </Text>
+          <View style={styles.heroLabelRow}>
+            <View style={styles.heroLabel}>
+              <Ionicons name="newspaper" size={16} color={branchColors.agency} />
+              <Text style={[styles.heroLabelText, { color: branchColors.agency }]}>
+                TOP STORY
+              </Text>
+            </View>
+            {brief.top_updates?.[0]?.branch && (
+              <View style={[
+                styles.heroBranchChip,
+                { backgroundColor: (branchColors[brief.top_updates[0].branch as Branch] || branchColors.agency) + '20' }
+              ]}>
+                <Text style={[
+                  styles.heroBranchText,
+                  { color: branchColors[brief.top_updates[0].branch as Branch] || branchColors.agency }
+                ]}>
+                  {brief.top_updates[0].branch.toUpperCase()}
+                </Text>
+              </View>
+            )}
           </View>
           <Text style={[styles.heroHeadline, { color: neutral.textPrimary }]}>
             {brief.headline}
@@ -242,6 +257,52 @@ const TodayScreen = () => {
             })}
           </View>
         )}
+
+        {/* Coming Up Section */}
+        {brief.upcoming_events && brief.upcoming_events.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="calendar" size={18} color={branchColors.agency} />
+                <Text style={[styles.sectionTitle, { color: branchColors.agency }]}>COMING UP</Text>
+              </View>
+            </View>
+
+            {brief.upcoming_events.slice(0, 5).map((event, idx) => {
+              const color = branchColors[event.branch as Branch] || branchColors.executive;
+              return (
+                <View
+                  key={`upcoming-${idx}`}
+                  style={[styles.upcomingCard, { backgroundColor: neutral.card }]}
+                >
+                  <View style={[styles.upcomingDateBadge, { backgroundColor: branchColors.agency }]}>
+                    <Text style={styles.upcomingDateMonth}>
+                      {dayjs(event.event_date).format('MMM')}
+                    </Text>
+                    <Text style={styles.upcomingDateDay}>
+                      {dayjs(event.event_date).format('D')}
+                    </Text>
+                  </View>
+                  <View style={styles.upcomingContent}>
+                    <Text style={[styles.upcomingHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
+                      {event.headline}
+                    </Text>
+                    <View style={styles.upcomingMeta}>
+                      <View style={[styles.upcomingChip, { backgroundColor: color + '30' }]}>
+                        <Text style={[styles.upcomingChipText, { color }]}>
+                          {event.branch.toUpperCase()}
+                        </Text>
+                      </View>
+                      <Text style={[styles.upcomingType, { color: neutral.textMuted }]}>
+                        {event.event_type.replace('_', ' ')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </View>
     );
   }, [brief, error, loading, groupedUpdates, urgentItems, branchColors, neutral, semantic, isSaved, toggleSave, handleItemPress, reload]);
@@ -332,6 +393,11 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 12,
   },
+  heroLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   heroLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -341,6 +407,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  heroBranchChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  heroBranchText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   heroHeadline: {
     fontSize: 24,
@@ -480,6 +556,58 @@ const styles = StyleSheet.create({
   highlightSummary: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  upcomingCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 12,
+    gap: 12,
+    alignItems: 'center',
+  },
+  upcomingDateBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  upcomingDateMonth: {
+    color: '#0B1D3A',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  upcomingDateDay: {
+    color: '#0B1D3A',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  upcomingContent: {
+    flex: 1,
+    gap: 6,
+  },
+  upcomingHeadline: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  upcomingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  upcomingChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+  },
+  upcomingChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  upcomingType: {
+    fontSize: 12,
+    textTransform: 'capitalize',
   },
 });
 

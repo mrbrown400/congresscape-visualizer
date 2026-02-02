@@ -50,6 +50,8 @@ const mapContextToParams = (contextKey: string) => {
       return { branch: 'legislative', limit: 30 };
     case 'executive':
       return { branch: 'executive', limit: 30 };
+    case 'judicial':
+      return { branch: 'judicial', limit: 30 };
     default:
       return { limit: 20 };
   }

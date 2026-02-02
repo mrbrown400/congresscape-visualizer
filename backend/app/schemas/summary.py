@@ -16,6 +16,19 @@ class DailyBriefHighlight(BaseModel):
     summary: Optional[str] = None
     branch: str
     published_at: datetime
+    event_date: Optional[datetime] = None
+    url: Optional[HttpUrl] = None
+    tags: List[str] = []
+
+
+class UpcomingEvent(BaseModel):
+    """A future event (effective date, comment deadline, hearing, etc.)."""
+
+    headline: str
+    summary: Optional[str] = None
+    branch: str
+    event_date: datetime
+    event_type: str  # "effective_date", "comment_deadline", "hearing", etc.
     url: Optional[HttpUrl] = None
     tags: List[str] = []
 
@@ -29,3 +42,4 @@ class DailyBriefResponse(BaseModel):
     narrative: str
     highlights: List[DailyBriefHighlight]
     top_updates: List[GovernmentUpdateRead]
+    upcoming_events: List[UpcomingEvent] = []

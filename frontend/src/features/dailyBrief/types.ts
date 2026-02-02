@@ -5,6 +5,17 @@ export type BriefHighlight = {
   summary?: string | null;
   branch: string;
   published_at: string;
+  event_date?: string | null;
+  url?: string | null;
+  tags: string[];
+};
+
+export type UpcomingEvent = {
+  headline: string;
+  summary?: string | null;
+  branch: string;
+  event_date: string;
+  event_type: string;
   url?: string | null;
   tags: string[];
 };
@@ -16,4 +27,5 @@ export type DailyBrief = {
   narrative: string;
   highlights: BriefHighlight[];
   top_updates: FeedItem[];
+  upcoming_events: UpcomingEvent[];
 };

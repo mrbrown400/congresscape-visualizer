@@ -31,6 +31,7 @@ class UpdateService:
             summary=payload.summary,
             full_text=payload.full_text,
             published_at=payload.published_at,
+            event_date=payload.event_date,
             url=str(payload.url) if payload.url else None,
             tags=payload.tags,
             metadata_json=payload.metadata or {},
@@ -54,6 +55,7 @@ class UpdateService:
             existing.summary = payload.summary
             existing.full_text = payload.full_text
             existing.published_at = payload.published_at
+            existing.event_date = payload.event_date
             existing.url = str(payload.url) if payload.url else None
             existing.tags = payload.tags
             existing.metadata_json = payload.metadata or {}

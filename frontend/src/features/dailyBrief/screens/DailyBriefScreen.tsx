@@ -51,6 +51,28 @@ const DailyBriefScreen = () => {
           ))}
         </View>
 
+        {brief.upcoming_events && brief.upcoming_events.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Coming Up</Text>
+            {brief.upcoming_events.slice(0, 5).map(event => (
+              <View key={`${event.headline}-${event.event_date}`} style={styles.upcomingCard}>
+                <View style={styles.upcomingDateBadge}>
+                  <Text style={styles.upcomingDateText}>
+                    {new Date(event.event_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                  </Text>
+                </View>
+                <View style={styles.upcomingContent}>
+                  <Text style={styles.upcomingHeadline} numberOfLines={2}>{event.headline}</Text>
+                  <View style={styles.upcomingMeta}>
+                    <Text style={styles.upcomingChip}>{event.branch.toUpperCase()}</Text>
+                    <Text style={styles.upcomingType}>{event.event_type.replace('_', ' ')}</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Deep dives</Text>
           {brief.top_updates.map(update => (
@@ -166,6 +188,56 @@ const styles = StyleSheet.create({
   highlightTimestamp: {
     color: '#C7D2FE',
     fontSize: 12
+  },
+  upcomingCard: {
+    backgroundColor: 'rgba(15, 33, 60, 0.6)',
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center'
+  },
+  upcomingDateBadge: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: 56,
+    alignItems: 'center'
+  },
+  upcomingDateText: {
+    color: '#0B1D3A',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center'
+  },
+  upcomingContent: {
+    flex: 1,
+    gap: 6
+  },
+  upcomingHeadline: {
+    color: '#F8FAFC',
+    fontSize: 14,
+    fontWeight: '600'
+  },
+  upcomingMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
+  upcomingChip: {
+    color: '#0B1D3A',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: '700'
+  },
+  upcomingType: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textTransform: 'capitalize'
   }
 });
 

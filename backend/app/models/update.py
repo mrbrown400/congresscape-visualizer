@@ -49,6 +49,7 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     summary: Mapped[Optional[str]] = mapped_column(Text)
     full_text: Mapped[Optional[str]] = mapped_column(Text)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    event_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     url: Mapped[Optional[str]] = mapped_column(String(500))
 
     # SQLite compatible tags (stored as JSON)

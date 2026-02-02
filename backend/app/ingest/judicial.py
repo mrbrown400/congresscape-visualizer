@@ -33,18 +33,43 @@ async def fetch_supreme_court_updates() -> AsyncIterator[NormalizedUpdate]:
         )
 
     scraper = scotus_module.Site()
-    opinions = scraper.parse()
-    for opinion in opinions[:5]:
-        docket = opinion.get("docket", "unknown")
+    scraper.parse()
+
+    # Juriscraper stores data as parallel arrays on the scraper object
+    case_names = scraper.case_names or ()
+    case_dates = scraper.case_dates or ()
+    download_urls = scraper.download_urls or ()
+    docket_numbers = scraper.docket_numbers or ()
+    judges_list = scraper.judges or ()
+    citations = scraper.citations or ()
+
+    count = min(len(case_names), 10)
+    for i in range(count):
+        case_name = case_names[i] if i < len(case_names) else "Supreme Court Opinion"
+        docket = docket_numbers[i] if i < len(docket_numbers) else "unknown"
+        download_url = download_urls[i] if i < len(download_urls) else ""
+        judges = judges_list[i] if i < len(judges_list) else ""
+        citation = citations[i] if i < len(citations) else ""
+
+        # Handle case_dates which can be a datetime.date object
+        case_date = case_dates[i] if i < len(case_dates) else None
+        if case_date:
+            if hasattr(case_date, 'isoformat'):
+                date_str = case_date.isoformat()
+            else:
+                date_str = str(case_date)
+        else:
+            date_str = datetime.now(timezone.utc).isoformat()
+
         yield NormalizedUpdate(
-            external_id=docket,
-            source="freelawproject",
+            external_id=f"scotus-{docket}",
+            source="supremecourt.gov",
             branch="judicial",
-            headline=opinion.get("case_name", "Supreme Court Opinion"),
-            summary=opinion.get("summary", ""),
-            full_text=opinion.get("download_url", ""),
-            published_at=parse_date(opinion.get("date", datetime.now(timezone.utc).isoformat())),
-            url=opinion.get("neutral_citation", ""),
-            tags=opinion.get("nature_of_suit", []),
-            metadata={"docket": docket, "judges": opinion.get("judge", [])},
+            headline=str(case_name),
+            summary=f"Supreme Court opinion. Judge: {judges}" if judges else "Supreme Court opinion",
+            full_text=str(download_url) if download_url else "",
+            published_at=parse_date(date_str),
+            url=str(download_url) if download_url else "",
+            tags=["scotus", "opinion"],
+            metadata={"docket": docket, "judges": judges, "citation": citation},
         )
