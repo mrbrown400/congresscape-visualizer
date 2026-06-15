@@ -1,0 +1,13 @@
+{
+  "name": "congresscape-visualizer-workspace",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "agent:repo-map": "node scripts/build-repo-map.mjs",
+    "dev:backend": "cd backend && poetry run uvicorn app.main:app --reload",
+    "dev:frontend": "cd frontend && EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 npm run web",
+    "quality:backend": "cd backend && poetry run pytest && poetry run ruff check .",
+    "quality:frontend": "cd frontend && npx tsc --noEmit && npm run lint",
+    "quality": "npm run quality:backend && npm run quality:frontend"
+  }
+}

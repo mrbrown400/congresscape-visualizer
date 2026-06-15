@@ -2,11 +2,22 @@ import React, { PropsWithChildren, createContext, useContext, useMemo } from 're
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
-import { branchPalette, neutralPalette } from './colors';
+import {
+  branchPalette,
+  neutralPalette,
+  semanticPalette,
+  typography,
+  spacing,
+  borderRadius
+} from './colors';
 
 type Theme = {
   branch: typeof branchPalette;
   neutral: typeof neutralPalette;
+  semantic: typeof semanticPalette;
+  typography: typeof typography;
+  spacing: typeof spacing;
+  borderRadius: typeof borderRadius;
   isDark: boolean;
 };
 
@@ -17,6 +28,10 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
   const value = useMemo<Theme>(() => ({
     branch: branchPalette,
     neutral: neutralPalette,
+    semantic: semanticPalette,
+    typography,
+    spacing,
+    borderRadius,
     isDark: true // Default to dark mode aesthetic
   }), [system]);
 

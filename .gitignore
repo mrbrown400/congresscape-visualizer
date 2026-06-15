@@ -6,6 +6,12 @@ __pycache__/
 *.so
 *.egg-info/
 .env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+backend/*.db
 
 # Poetry
 backend/poetry.lock

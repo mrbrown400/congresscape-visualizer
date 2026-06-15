@@ -26,28 +26,36 @@ def parse_date(value: str) -> datetime:
 
 
 async def fetch_house_and_senate_updates(api_key: str | None = None) -> AsyncIterator[NormalizedUpdate]:
-    """Sample async generator that yields normalized updates for Congress."""
+    """Fetch recent bills from the current Congress."""
 
     key = api_key or settings.congress_api_key
     params = {"api_key": key} if key else {}
     async with httpx.AsyncClient(timeout=20) as client:
-        resp = await client.get(f"{CONGRESS_GOV_API}/bill", params={"sort": "latest", **params})
+        # Fetch from current Congress (119th, 2025-2027) to get recent bills
+        resp = await client.get(f"{CONGRESS_GOV_API}/bill/119", params={"limit": 20, **params})
         resp.raise_for_status()
         payload = resp.json()
-        for item in payload.get("bills", [])[:5]:
+        for item in payload.get("bills", [])[:15]:
             action = item.get("latestAction", {})
             published_at = action.get("actionDate") or item.get("updateDate") or datetime.now(timezone.utc).isoformat()
+
+            # Build Congress.gov URL
+            congress = item.get("congress", "119")
+            bill_type = item.get("type", "").lower()
+            bill_number = item.get("number", "")
+            congress_url = f"https://www.congress.gov/bill/{congress}th-congress/{bill_type}/{bill_number}" if congress and bill_type and bill_number else None
+
             yield NormalizedUpdate(
-                external_id=item.get("number", "unknown"),
+                external_id=f"{bill_type}-{congress}-{bill_number}",
                 source="congress.gov",
                 branch="legislative",
-                headline=item.get("title", ""),
-                summary=item.get("summary", {}).get("text", ""),
-                full_text=item.get("text", {}).get("url", ""),
+                headline=item.get("title", "")[:500],
+                summary=action.get("text", ""),
+                full_text="",
                 published_at=parse_date(published_at),
-                url=item.get("congressdotgov_url", ""),
-                tags=[item.get("policyArea", {}).get("name", "")] if item.get("policyArea") else [],
-                metadata={"chamber": action.get("chamber"), "updateDate": item.get("updateDate")},
+                url=congress_url or "",
+                tags=[item.get("originChamber", "").lower()] if item.get("originChamber") else [],
+                metadata={"chamber": item.get("originChamber"), "updateDate": item.get("updateDate"), "congress": congress},
             )
 
 

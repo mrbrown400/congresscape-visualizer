@@ -1,0 +1,10 @@
+# Congresscape repo-scoped Codex defaults.
+#
+# Keep repo-specific operating rules in AGENTS.md and .agents/skills/.
+# Do not add MCP servers, code indexes, databases, or orchestration runtimes here
+# unless the harness-curation workflow explicitly approves them.
+
+project_doc_max_bytes = 65536
+
+[features]
+multi_agent = true

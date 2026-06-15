@@ -39,6 +39,7 @@ class IngestPipeline:
                 summary=summary,
                 full_text=update.full_text,
                 published_at=update.published_at,
+                event_date=update.event_date,
                 url=update.url,
                 tags=update.tags,
                 metadata=update.metadata,

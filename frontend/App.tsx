@@ -4,6 +4,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import RootNavigator from './src/navigation/RootNavigator';
 import { ThemeProvider } from './src/theme/ThemeProvider';
+import { SavedItemsProvider } from './src/context/SavedItemsContext';
+import { UserPreferencesProvider } from './src/context/UserPreferencesContext';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 export default function App() {
@@ -11,11 +13,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </ThemeProvider>
+      <UserPreferencesProvider>
+        <SavedItemsProvider>
+          <ThemeProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+          </ThemeProvider>
+        </SavedItemsProvider>
+      </UserPreferencesProvider>
     </SafeAreaProvider>
   );
 }

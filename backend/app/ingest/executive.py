@@ -75,7 +75,8 @@ async def fetch_federal_register_future_events() -> AsyncIterator[NormalizedUpda
     """Fetch Federal Register documents with future effective dates or comment deadlines."""
 
     tomorrow = (datetime.now(timezone.utc) + timedelta(days=1)).strftime("%Y-%m-%d")
-    fields = "fields%5B%5D=title&fields%5B%5D=document_number&fields%5B%5D=effective_on&fields%5B%5D=html_url&fields%5B%5D=abstract&fields%5B%5D=agencies&fields%5B%5D=comments_close_on"
+    fields = "fields%5B%5D=title&fields%5B%5D=document_number&fields%5B%5D=effective_on&fields%5B%5D=html_url&fields%5B%5D=abstract&fields%5B%5D=agencies&fields%5B%5D=comments_close_on&fields%5B%5D=publication_date"
+    now = datetime.now(timezone.utc)
 
     async with httpx.AsyncClient(timeout=30) as client:
         # Fetch documents with future effective dates
@@ -84,6 +85,7 @@ async def fetch_federal_register_future_events() -> AsyncIterator[NormalizedUpda
         response.raise_for_status()
         for entry in response.json().get("results", []):
             effective_date = entry.get("effective_on")
+            publication_date = entry.get("publication_date")
             if effective_date:
                 yield NormalizedUpdate(
                     external_id=f"fr-effective-{entry.get('document_number', '')}",
@@ -92,7 +94,8 @@ async def fetch_federal_register_future_events() -> AsyncIterator[NormalizedUpda
                     headline=f"Effective: {entry.get('title', 'Federal Register Document')}",
                     summary=f"Becomes effective on {effective_date}. {entry.get('abstract', '')[:200] if entry.get('abstract') else ''}",
                     full_text=entry.get("html_url", ""),
-                    published_at=parse_date(effective_date),
+                    published_at=parse_date(publication_date) if publication_date else now,
+                    event_date=parse_date(effective_date),
                     url=entry.get("html_url", ""),
                     tags=["effective-date", "upcoming"],
                     metadata={
@@ -108,6 +111,7 @@ async def fetch_federal_register_future_events() -> AsyncIterator[NormalizedUpda
         response2.raise_for_status()
         for entry in response2.json().get("results", []):
             comment_date = entry.get("comments_close_on")
+            publication_date = entry.get("publication_date")
             if comment_date:
                 yield NormalizedUpdate(
                     external_id=f"fr-comment-{entry.get('document_number', '')}",
@@ -116,7 +120,8 @@ async def fetch_federal_register_future_events() -> AsyncIterator[NormalizedUpda
                     headline=f"Comment Deadline: {entry.get('title', 'Federal Register Document')}",
                     summary=f"Comments due by {comment_date}. {entry.get('abstract', '')[:200] if entry.get('abstract') else ''}",
                     full_text=entry.get("html_url", ""),
-                    published_at=parse_date(comment_date),
+                    published_at=parse_date(publication_date) if publication_date else now,
+                    event_date=parse_date(comment_date),
                     url=entry.get("html_url", ""),
                     tags=["comment-deadline", "upcoming"],
                     metadata={

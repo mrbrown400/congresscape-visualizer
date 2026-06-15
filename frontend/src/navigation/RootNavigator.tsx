@@ -1,29 +1,46 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import DailyBriefScreen from '@features/dailyBrief/screens/DailyBriefScreen';
+import MainTabNavigator from './MainTabNavigator';
 import OnboardingScreen from '../features/onboarding/screens/OnboardingScreen';
-import CalendarScreen from '../features/calendar/screens/CalendarScreen';
+import UpdateDetailScreen from '../features/updateDetail/screens/UpdateDetailScreen';
+import NotificationSettingsScreen from '../features/settings/screens/NotificationSettingsScreen';
+import { useUserPreferences } from '../context/UserPreferencesContext';
+import { FeedItem } from '@features/feed/types';
 
 export type RootStackParamList = {
   Onboarding: undefined;
-  Main: undefined;
-  Calendar: undefined;
+  MainTabs: undefined;
+  UpdateDetail: { item: FeedItem };
+  NotificationSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator = () => {
-  // Wire in persisted onboarding completion later; default to showing onboarding first for now.
-  const hasCompletedOnboarding = false;
+  const { hasCompletedOnboarding } = useUserPreferences();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Calendar">
-      <Stack.Screen name="Calendar" component={CalendarScreen} />
-      {!hasCompletedOnboarding && (
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      )}
-      <Stack.Screen name="Main" component={DailyBriefScreen} />
+    <Stack.Navigator
+      screenOptions={{ headerShown: false }}
+      initialRouteName={hasCompletedOnboarding ? 'MainTabs' : 'Onboarding'}
+    >
+      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+      <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+      <Stack.Screen
+        name="UpdateDetail"
+        component={UpdateDetailScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{
+          animation: 'slide_from_right',
+        }}
+      />
     </Stack.Navigator>
   );
 };
