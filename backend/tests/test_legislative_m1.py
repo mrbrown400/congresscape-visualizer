@@ -135,6 +135,28 @@ async def test_bill_lifecycle_upsert_is_idempotent(session) -> None:
 
 
 @pytest.mark.asyncio
+async def test_source_link_preserves_confidence_category_and_supports(session) -> None:
+    service = LegislativeDataService(session)
+
+    source_link = await service.upsert_source_link(
+        {
+            "label": "LDA filing",
+            "url": "https://lda.senate.gov/filings/public/filing/example",
+            "source_system": "lda",
+            "retrieved_at": datetime(2026, 6, 16, tzinfo=timezone.utc),
+            "confidence": "topic_context",
+            "source_category": "supporting",
+            "supports": ["money_context", "lobbying_disclosure"],
+        }
+    )
+    await session.commit()
+
+    assert source_link.confidence == "topic_context"
+    assert source_link.source_category == "supporting"
+    assert source_link.supports == ["money_context", "lobbying_disclosure"]
+
+
+@pytest.mark.asyncio
 async def test_vote_upsert_links_known_members_and_preserves_unknown_members(session) -> None:
     service = LegislativeDataService(session)
     await service.upsert_member(

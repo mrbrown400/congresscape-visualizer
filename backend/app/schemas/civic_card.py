@@ -15,6 +15,7 @@ MoneySourceRelationship = Literal[
     "topic_context",
     "unavailable",
 ]
+SourceCategory = Literal["official", "fallback", "supporting", "unavailable"]
 
 
 class CivicEntity(BaseModel):
@@ -36,6 +37,8 @@ class CivicSource(BaseModel):
     published_at: datetime | None = None
     retrieved_at: datetime | None = None
     supports: list[str] = Field(default_factory=list)
+    confidence: MoneySourceRelationship = "direct_source"
+    source_category: SourceCategory = "official"
 
 
 class CivicClaim(BaseModel):
@@ -53,6 +56,7 @@ class CivicMoneyContextItem(BaseModel):
     label: str
     value: str | None = None
     source_relationship: MoneySourceRelationship
+    confidence_label: dict[str, str] | None = None
     source_indexes: list[int] = Field(default_factory=list)
     unavailable_reason: str | None = None
     note: str | None = Field(
@@ -61,6 +65,9 @@ class CivicMoneyContextItem(BaseModel):
             "Neutral context copy. Must not infer corruption, motive, or intent."
         ),
     )
+    status: MoneyContextStatus | None = None
+    source_system: str | None = None
+    source_category: SourceCategory | None = None
 
 
 class CivicCard(BaseModel):

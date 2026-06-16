@@ -33,6 +33,7 @@ const FeedCard = ({ item, onPress, onSave }: Props) => {
         </Text>
 
         <VotePromptForFeedItem item={item} />
+        <MoneyContextPreview item={item} />
 
         <View style={styles.footerRow}>
           <Text style={styles.source}>
@@ -49,6 +50,36 @@ const FeedCard = ({ item, onPress, onSave }: Props) => {
       </LinearGradient>
     </Pressable>
   );
+};
+
+const MoneyContextPreview = ({ item }: { item: FeedItem }) => {
+  if (!item.money_context_status || item.money_context_status === 'not_applicable') return null;
+  const firstItem = item.money_context?.[0];
+  const label = firstItem
+    ? `${relationshipLabel(firstItem.source_relationship)}: ${firstItem.label}`
+    : item.money_context_note;
+  if (!label) return null;
+
+  return (
+    <View style={styles.moneyPreview}>
+      <Text style={styles.moneyPreviewText} numberOfLines={2}>
+        {label}
+      </Text>
+    </View>
+  );
+};
+
+const relationshipLabel = (relationship: string) => {
+  switch (relationship) {
+    case 'direct_source':
+      return 'Direct source';
+    case 'related_entity':
+      return 'Related entity';
+    case 'topic_context':
+      return 'Topic context';
+    default:
+      return 'Unavailable';
+  }
 };
 
 const styles = StyleSheet.create({
@@ -88,6 +119,16 @@ const styles = StyleSheet.create({
     color: '#E2E8F0',
     fontSize: 14,
     lineHeight: 20
+  },
+  moneyPreview: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(248,250,252,0.28)',
+    paddingTop: 10
+  },
+  moneyPreviewText: {
+    color: '#E0F2FE',
+    fontSize: 13,
+    lineHeight: 18
   },
   footerRow: {
     flexDirection: 'row',

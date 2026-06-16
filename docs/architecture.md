@@ -8,6 +8,7 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 - **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and eventually serving canonical civic cards. Includes services for summarization, ranking, personalization, and provenance checks.
 - **Civic Card Contract**: Defines shared backend/frontend fields for what happened, why it matters, involved entities, sourced money context, and source trails with unavailable-state handling.
 - **Ingestion Workers**: Congress.gov API workers are the MVP backbone. Official page scraping is fallback only; executive and judicial workers remain future feed inputs rather than M0 blockers.
+- **Money Context Adapters**: `backend/app/ingest/money.py` defines official-source boundaries for CBO, FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, and appropriations links. `backend/app/services/money_context.py` labels direct, related-entity, topic, and unavailable context before feed cards render it.
 - **React Native App**: Presents branch-aware feed surfaces and detail views that can show source trails, money context, and alert-worthy lifecycle changes. Built to share UI modules with a future web client.
 - **Shared Utilities**: Feature flagging, analytics publishing, and background task orchestration prepared for future expansion.
 
@@ -25,6 +26,7 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 - Source trails should prefer official primary sources. Related supporting sources are allowed only when labeled by relationship.
 - Money context must distinguish direct source matches, related entity matches, inferred topic/industry context, and unavailable data.
 - Money copy must be neutral context, not an accusation or corruption signal.
+- Source confidence labels travel with source-trail entries, while money relationship labels travel with each money-context row. UI surfaces must keep those labels visible near the source link or money fact.
 
 ## Modularity & Extensibility
 - Backend service layers are split into API routes, schemas, services, and repositories (`db`).

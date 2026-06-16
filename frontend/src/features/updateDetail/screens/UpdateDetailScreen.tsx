@@ -15,8 +15,11 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   BillDetail,
   Branch,
+  CivicMoneyContextItem,
   FeedItem,
   HearingDetail,
+  MoneyContextStatus,
+  MoneySourceRelationship,
   SourceTrailItem,
   VoteDetail,
   VotePosition,
@@ -87,6 +90,12 @@ const UpdateDetailScreen = ({ route, navigation }: Props) => {
 
         <RankContext item={item} />
         <SourceTrail sources={item.source_trail ?? []} note={item.source_trail_note} />
+        <MoneyContextSection
+          status={item.money_context_status ?? item.detail?.bill?.money_context_status}
+          note={item.money_context_note ?? item.detail?.bill?.money_context_note}
+          items={item.money_context ?? item.detail?.bill?.money_context ?? []}
+          sources={item.source_trail ?? []}
+        />
 
         {item.detail?.bill ? (
           <BillDetailView item={item} bill={item.detail.bill} />
@@ -372,11 +381,109 @@ const SourceTrail = ({ sources, note }: { sources: SourceTrailItem[]; note?: str
       <Unavailable text={note ?? 'Official sources are not attached yet.'} />
     ) : (
       sources.map(source => (
-        <SourceLink key={`${source.source}-${source.url}`} url={source.url} label={`${source.label} · ${source.source}`} />
+        <View key={`${source.source}-${source.url}`} style={styles.sourceTrailRow}>
+          <SourceLink url={source.url} label={`${source.label} · ${source.source}`} />
+          <View style={styles.chipRow}>
+            {source.confidence && <RelationshipChip relationship={source.confidence} />}
+            {source.source_category && <SourceCategoryChip category={source.source_category} />}
+          </View>
+        </View>
       ))
     )}
   </Section>
 );
+
+const MoneyContextSection = ({
+  status,
+  note,
+  items,
+  sources,
+}: {
+  status?: MoneyContextStatus;
+  note?: string | null;
+  items: CivicMoneyContextItem[];
+  sources: SourceTrailItem[];
+}) => {
+  if ((!status || status === 'not_applicable') && items.length === 0) return null;
+
+  return (
+    <Section title="Money Context">
+      {note && <Unavailable text={note} />}
+      {items.length === 0 ? (
+        <Unavailable text="No sourced money context is attached yet." />
+      ) : (
+        items.map((item, index) => (
+          <MoneyContextRow key={`${item.label}-${index}`} item={item} sources={sources} />
+        ))
+      )}
+    </Section>
+  );
+};
+
+const MoneyContextRow = ({
+  item,
+  sources,
+}: {
+  item: CivicMoneyContextItem;
+  sources: SourceTrailItem[];
+}) => {
+  const { neutral } = useTheme();
+  const linkedSources = item.source_indexes
+    .map(index => sources[index])
+    .filter((source): source is SourceTrailItem => Boolean(source));
+
+  return (
+    <View style={[styles.recordRow, { borderColor: neutral.divider }]}>
+      <View style={styles.moneyHeader}>
+        <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{item.label}</Text>
+        <RelationshipChip relationship={item.source_relationship} />
+      </View>
+      {item.value && (
+        <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>{item.value}</Text>
+      )}
+      {item.confidence_label?.description && (
+        <Text style={[styles.metaText, { color: neutral.textMuted }]}>
+          {item.confidence_label.description}
+        </Text>
+      )}
+      {item.unavailable_reason && (
+        <Unavailable text={item.unavailable_reason} />
+      )}
+      {item.note && (
+        <Text style={[styles.metaText, { color: neutral.textMuted }]}>{item.note}</Text>
+      )}
+      {linkedSources.map(source => (
+        <SourceLink
+          key={`${source.source}-${source.url}`}
+          url={source.url}
+          label={`${source.label} · ${source.source}`}
+        />
+      ))}
+    </View>
+  );
+};
+
+const RelationshipChip = ({ relationship }: { relationship: MoneySourceRelationship }) => {
+  const { branch, neutral } = useTheme();
+  const label = relationshipLabel(relationship);
+  const color = relationship === 'unavailable' ? neutral.textMuted : branch.agency;
+  return (
+    <View style={[styles.relationshipChip, { borderColor: color }]}>
+      <Text style={[styles.relationshipChipText, { color }]}>{label}</Text>
+    </View>
+  );
+};
+
+const SourceCategoryChip = ({ category }: { category: string }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={[styles.sourceCategoryChip, { borderColor: neutral.divider }]}>
+      <Text style={[styles.sourceCategoryChipText, { color: neutral.textMuted }]}>
+        {category.replace(/_/g, ' ')}
+      </Text>
+    </View>
+  );
+};
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => {
   const { neutral } = useTheme();
@@ -546,6 +653,21 @@ const getVotePositions = (record: Record<string, unknown>, key: string): VotePos
   return Array.isArray(raw) ? raw as VotePosition[] : [];
 };
 
+const relationshipLabel = (relationship: MoneySourceRelationship) => {
+  switch (relationship) {
+    case 'direct_source':
+      return 'Direct source';
+    case 'related_entity':
+      return 'Related entity';
+    case 'topic_context':
+      return 'Topic context';
+    case 'unavailable':
+      return 'Unavailable';
+    default:
+      return 'Unavailable';
+  }
+};
+
 const formatUnknown = (value: unknown): string => {
   if (value === null || value === undefined) return 'Unavailable';
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -656,6 +778,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     alignItems: 'center',
+  },
+  sourceTrailRow: {
+    gap: 6,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  moneyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  relationshipChip: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  relationshipChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  sourceCategoryChip: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  sourceCategoryChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'capitalize',
   },
   actionRow: {
     flexDirection: 'row',

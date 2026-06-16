@@ -19,6 +19,12 @@ from app.models.legislative import (
 )
 from app.models.update import GovernmentUpdate
 from app.schemas.update import FeedQueryParams
+from app.services.money_context import (
+    build_bill_money_context,
+    build_payload_money_context,
+    money_source_trail_from_cbo_estimates,
+    money_source_trail_from_payload,
+)
 from app.services.personalization import rank_updates, ranking_factors
 
 
@@ -70,6 +76,7 @@ class FeedService:
         source_trail = self._source_trail(update)
         source_trail_status = "available" if source_trail else "pending"
         source_trail_note = None if source_trail else "Official source link has not been published for this event yet."
+        money_context = self._money_context(update, source_trail)
 
         return {
             "id": update.id,
@@ -99,7 +106,8 @@ class FeedService:
             "source_trail": source_trail,
             "source_trail_status": source_trail_status,
             "source_trail_note": source_trail_note,
-            "detail": self._detail(update, params, card_type),
+            **money_context,
+            "detail": self._detail(update, params, card_type, source_trail),
         }
 
     def _card_type(self, update: GovernmentUpdate, metadata: dict[str, Any]) -> str:
@@ -163,6 +171,17 @@ class FeedService:
                     "supports": ["headline", "summary"],
                 },
             )
+        links.extend(self._money_source_links(update))
+        return _dedupe_dicts(links, "source", "url")
+
+    def _money_source_links(self, update: GovernmentUpdate) -> list[dict[str, Any]]:
+        links = []
+        update_metadata = update.metadata_json or {}
+        links.extend(money_source_trail_from_payload(update_metadata.get("money_context")))
+        if update.bill:
+            bill_metadata = update.bill.metadata_json or {}
+            links.extend(money_source_trail_from_payload(bill_metadata.get("money_context")))
+            links.extend(money_source_trail_from_cbo_estimates(update.bill.cbo_cost_estimates))
         return links
 
     def _related_source_links(self, update: GovernmentUpdate) -> list[LegislativeSourceLink]:
@@ -270,16 +289,48 @@ class FeedService:
             )
         return claims
 
-    def _detail(self, update: GovernmentUpdate, params: FeedQueryParams, card_type: str) -> dict[str, Any]:
+    def _detail(
+        self,
+        update: GovernmentUpdate,
+        params: FeedQueryParams,
+        card_type: str,
+        source_trail: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         if card_type == "vote" and update.vote:
             return {"vote": self._vote_detail(update.vote, params)}
         if card_type == "hearing" and update.hearing:
             return {"hearing": self._hearing_detail(update.hearing)}
         if update.bill:
-            return {"bill": self._bill_detail(update.bill, update, params)}
+            return {"bill": self._bill_detail(update.bill, update, params, source_trail)}
         return {}
 
-    def _bill_detail(self, bill: CongressionalBill, update: GovernmentUpdate, params: FeedQueryParams) -> dict[str, Any]:
+    def _money_context(self, update: GovernmentUpdate, source_trail: list[dict[str, Any]]) -> dict[str, Any]:
+        metadata_items = (update.metadata_json or {}).get("money_context")
+        if metadata_items:
+            return build_payload_money_context(
+                metadata_items,
+                source_trail,
+                unavailable_note="No sourced money context is attached for this card yet.",
+            )
+        if update.bill:
+            return build_bill_money_context(
+                bill_metadata=update.bill.metadata_json,
+                cbo_cost_estimates=update.bill.cbo_cost_estimates,
+                source_trail=source_trail,
+            )
+        return {
+            "money_context_status": "not_applicable",
+            "money_context_note": None,
+            "money_context": [],
+        }
+
+    def _bill_detail(
+        self,
+        bill: CongressionalBill,
+        update: GovernmentUpdate,
+        params: FeedQueryParams,
+        source_trail: list[dict[str, Any]],
+    ) -> dict[str, Any]:
         timeline = sorted(bill.actions, key=lambda action: _sortable_datetime(action.acted_at), reverse=True)
         text_versions = sorted(
             bill.text_versions,
@@ -287,6 +338,11 @@ class FeedService:
             reverse=True,
         )
         eligible_vote = bool(bill.votes) or bool((update.metadata_json or {}).get("vote_eligible"))
+        money_context = build_bill_money_context(
+            bill_metadata=bill.metadata_json,
+            cbo_cost_estimates=bill.cbo_cost_estimates,
+            source_trail=source_trail,
+        )
 
         return {
             "canonical_id": bill.canonical_id,
@@ -309,6 +365,7 @@ class FeedService:
             "crs_reports": _list_or_unavailable(bill.crs_reports),
             "votes": [self._vote_summary(vote, params) for vote in bill.votes],
             "vote_eligible": eligible_vote,
+            **money_context,
             "user_position_prompt": (
                 "Record a personal position for comparison. This is civic tracking, not an official congressional vote."
                 if eligible_vote
@@ -474,6 +531,18 @@ def _sortable_datetime(value: datetime | None) -> datetime:
 
 def _list_or_unavailable(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _dedupe_dicts(items: list[dict[str, Any]], *keys: str) -> list[dict[str, Any]]:
+    seen: set[tuple[Any, ...]] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in items:
+        key = tuple(item.get(part) for part in keys)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+    return deduped
 
 
 def _matches_local_context(position: dict[str, Any], state: str | None, district: str | None) -> bool:

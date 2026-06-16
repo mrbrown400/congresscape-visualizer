@@ -60,6 +60,8 @@ def test_civic_card_accepts_source_backed_claims() -> None:
 
     assert card.card_type == "bill"
     assert card.source_trail[0].source == "Congress.gov"
+    assert card.source_trail[0].confidence == "direct_source"
+    assert card.source_trail[0].source_category == "official"
     assert card.money_context[0].source_relationship == "unavailable"
 
 
@@ -105,3 +107,56 @@ def test_civic_card_rejects_available_money_context_without_items() -> None:
 
     with pytest.raises(ValidationError, match="money_context_status='available'"):
         CivicCard.model_validate(payload)
+
+
+def test_civic_card_accepts_money_context_confidence_labels() -> None:
+    card = CivicCard.model_validate(
+        _valid_card_payload(
+            source_trail=[
+                {
+                    "label": "CBO cost estimate",
+                    "source": "cbo",
+                    "url": "https://www.cbo.gov/publication/12345",
+                    "supports": ["money_context", "cbo_cost_estimate"],
+                    "confidence": "direct_source",
+                    "source_category": "official",
+                },
+                {
+                    "label": "LDA filing",
+                    "source": "lda",
+                    "url": "https://lda.senate.gov/filings/public/filing/example",
+                    "supports": ["money_context"],
+                    "confidence": "topic_context",
+                    "source_category": "supporting",
+                },
+            ],
+            money_context=[
+                {
+                    "label": "CBO estimate",
+                    "value": "Published estimate available.",
+                    "source_relationship": "direct_source",
+                    "confidence_label": {
+                        "relationship": "direct_source",
+                        "label": "Direct source match",
+                        "description": "The source directly names this bill.",
+                    },
+                    "source_indexes": [0],
+                    "note": "Money context is source-backed context only; it does not imply corruption, motive, or intent.",
+                    "source_system": "cbo",
+                    "source_category": "official",
+                },
+                {
+                    "label": "Issue lobbying context",
+                    "value": "Related quarterly filing.",
+                    "source_relationship": "topic_context",
+                    "source_indexes": [1],
+                    "note": "Shown as topic context, not an accusation.",
+                    "source_system": "lda",
+                    "source_category": "supporting",
+                },
+            ],
+        )
+    )
+
+    assert card.money_context[0].confidence_label["label"] == "Direct source match"
+    assert card.money_context[1].source_relationship == "topic_context"

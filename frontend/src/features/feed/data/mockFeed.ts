@@ -125,6 +125,32 @@ export const mockFeed: FeedItem[] = [
         source: 'congress.gov',
         url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234',
         supports: ['bill']
+      },
+      {
+        label: 'CBO cost estimate',
+        source: 'cbo',
+        url: 'https://www.cbo.gov/publication/12345',
+        supports: ['money_context', 'cbo_cost_estimate'],
+        confidence: 'direct_source',
+        source_category: 'official'
+      }
+    ],
+    money_context_status: 'available',
+    money_context_note: 'Money context is source-backed context only; it does not imply corruption, motive, or intent.',
+    money_context: [
+      {
+        label: 'CBO cost estimate',
+        value: 'CBO published a cost estimate for this bill.',
+        source_relationship: 'direct_source',
+        confidence_label: {
+          relationship: 'direct_source',
+          label: 'Direct source match',
+          description: 'The source directly names this bill, member, committee, or record.'
+        },
+        source_indexes: [1],
+        note: 'Money context is source-backed context only; it does not imply corruption, motive, or intent.',
+        source_system: 'cbo',
+        source_category: 'official'
       }
     ],
     detail: {
@@ -154,7 +180,13 @@ export const mockFeed: FeedItem[] = [
         text_versions: [{ version_name: 'Introduced in House', source_url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234/text' }],
         amendments: [],
         related_bills: [],
-        cbo_cost_estimates: [],
+        cbo_cost_estimates: [
+          {
+            title: 'CBO cost estimate',
+            source_url: 'https://www.cbo.gov/publication/12345',
+            summary: 'CBO published a cost estimate for this bill.'
+          }
+        ],
         crs_reports: [],
         votes: [{
           canonical_id: 'vote-house-119-2-42',
@@ -172,6 +204,19 @@ export const mockFeed: FeedItem[] = [
           ]
         }],
         vote_eligible: true,
+        money_context_status: 'available',
+        money_context_note: 'Money context is source-backed context only; it does not imply corruption, motive, or intent.',
+        money_context: [
+          {
+            label: 'CBO cost estimate',
+            value: 'CBO published a cost estimate for this bill.',
+            source_relationship: 'direct_source',
+            source_indexes: [1],
+            note: 'Money context is source-backed context only; it does not imply corruption, motive, or intent.',
+            source_system: 'cbo',
+            source_category: 'official'
+          }
+        ],
         user_position_prompt: 'Record a personal position for comparison. This is civic tracking, not an official congressional vote.',
         source_url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234',
         unavailable: {
@@ -179,5 +224,30 @@ export const mockFeed: FeedItem[] = [
         }
       }
     }
+  },
+  {
+    id: 4,
+    headline: 'Money context unavailable for newly filed disclosure topic',
+    summary: 'The feed can show a clear unavailable state when no official money source has been attached yet.',
+    published_at: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
+    branch: 'legislative',
+    source: 'money-context',
+    tags: ['money', 'disclosure'],
+    card_type: 'money',
+    source_trail_status: 'pending',
+    source_trail_note: 'No FEC, LDA, USAspending, disclosure, or CBO source link is attached yet.',
+    source_trail: [],
+    money_context_status: 'unavailable',
+    money_context_note: 'No sourced money context is attached for this card yet.',
+    money_context: [
+      {
+        label: 'Campaign and lobbying context',
+        source_relationship: 'unavailable',
+        source_indexes: [],
+        unavailable_reason: 'No official FEC/OpenFEC or LDA source has been attached.',
+        note: 'Money context is source-backed context only; it does not imply corruption, motive, or intent.',
+        source_category: 'unavailable'
+      }
+    ]
   }
 ];
