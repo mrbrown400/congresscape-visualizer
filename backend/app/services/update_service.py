@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.update import Entity, GovernmentUpdate
 from app.schemas.update import GovernmentUpdateCreate
+from app.services.provenance_diagnostics import stamp_ingest_provenance
 
 
 class UpdateService:
@@ -23,6 +24,7 @@ class UpdateService:
 
     async def create_update(self, payload: GovernmentUpdateCreate) -> GovernmentUpdate:
         entities = await self._resolve_entities(payload.entity_ids)
+        metadata = stamp_ingest_provenance(payload.metadata, source_url=str(payload.url) if payload.url else None)
         update = GovernmentUpdate(
             external_id=payload.external_id,
             source=payload.source,
@@ -38,7 +40,7 @@ class UpdateService:
             vote_id=payload.vote_id,
             hearing_id=payload.hearing_id,
             tags=payload.tags,
-            metadata_json=payload.metadata or {},
+            metadata_json=metadata,
             # embedding=payload.embedding, # Removed for SQLite
             entities=entities,
         )
@@ -55,6 +57,7 @@ class UpdateService:
         existing: Optional[GovernmentUpdate] = result.scalar_one_or_none()
 
         if existing:
+            metadata = stamp_ingest_provenance(payload.metadata, source_url=str(payload.url) if payload.url else None)
             existing.headline = payload.headline
             existing.summary = payload.summary
             existing.full_text = payload.full_text
@@ -66,7 +69,7 @@ class UpdateService:
             existing.vote_id = payload.vote_id
             existing.hearing_id = payload.hearing_id
             existing.tags = payload.tags
-            existing.metadata_json = payload.metadata or {}
+            existing.metadata_json = metadata
             # existing.embedding = payload.embedding # Removed for SQLite
             existing.entities = await self._resolve_entities(payload.entity_ids)
             await self.session.flush()

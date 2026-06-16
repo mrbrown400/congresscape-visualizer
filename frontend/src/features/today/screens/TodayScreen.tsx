@@ -39,6 +39,7 @@ const TodayScreen = () => {
     followedBills: preferences.followedBills,
     followedMembers: preferences.followedMembers,
     followedTopics: preferences.followedTopics,
+    followedCommittees: preferences.followedCommittees,
     state: preferences.homeDistrict?.state,
     district: preferences.homeDistrict?.district,
     limit: 30,

@@ -8,7 +8,8 @@ FastAPI application for the Congresscape primary-source civic feed. It ingests, 
 - Additive civic-card schema for what happened, why it matters, involved entities, money context, and source trail
 - Source/provenance fields and unavailable-state handling for factual claims
 - Money-context contract that labels source relationships and does not infer corruption, motive, or intent
-- Filtered feeds, daily summary compatibility, notifications, personalization, vector search, and background workers
+- Filtered feeds, daily summary compatibility, followed-object alert generation, personalization, vector search, and background workers
+- Ingestion freshness/provenance diagnostics and deterministic civic-feed smoke seed data
 
 ## Getting Started
 
@@ -48,7 +49,6 @@ poetry run pytest
 - `tests` – backend unit tests
 
 ## Next Steps
-- Add canonical bill, action, vote, hearing, member, committee, and source-link models
-- Add Congress.gov lifecycle ingestion into the canonical domain models
-- Add source freshness/provenance checks before feed ranking and alerts
-- Add background task runner for scheduled ingest and source-backed alert dispatch
+- Add more Congress.gov lifecycle ingestion coverage into the canonical domain models
+- Wire followed-object alert generation into the deployed push scheduler
+- Expand deterministic smoke coverage as new feed/detail surfaces are added

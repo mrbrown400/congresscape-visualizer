@@ -5,11 +5,11 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 
 ## High-Level Components
 - **SQLAlchemy Storage**: Stores current `government_updates` records and will expand to canonical bill, action, vote, hearing, member, committee, and source-link tables.
-- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and eventually serving canonical civic cards. Includes services for summarization, ranking, personalization, and provenance checks.
+- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and serving civic-feed card data. Includes services for summarization, ranking, personalization, provenance diagnostics, and followed-object alert generation.
 - **Civic Card Contract**: Defines shared backend/frontend fields for what happened, why it matters, involved entities, sourced money context, and source trails with unavailable-state handling.
 - **Ingestion Workers**: Congress.gov API workers are the MVP backbone. Official page scraping is fallback only; executive and judicial workers remain future feed inputs rather than M0 blockers.
 - **Money Context Adapters**: `backend/app/ingest/money.py` defines official-source boundaries for CBO, FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, and appropriations links. `backend/app/services/money_context.py` labels direct, related-entity, topic, and unavailable context before feed cards render it.
-- **React Native App**: Presents branch-aware feed surfaces and detail views that can show source trails, money context, and alert-worthy lifecycle changes. Built to share UI modules with a future web client.
+- **React Native App**: Presents branch-aware feed surfaces, detail views, notification preferences, and My Government views that can show source trails, money context, and alert-worthy lifecycle changes. Built to share UI modules with a future web client.
 - **Shared Utilities**: Feature flagging, analytics publishing, and background task orchestration prepared for future expansion.
 
 ## Data Flow
@@ -18,8 +18,9 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 3. **Preserve Provenance**: Source URLs, retrieval timestamps, source labels, and unavailable states travel with each factual claim.
 4. **Enrich Carefully**: Summaries, rankings, and money context may explain relevance, but they must not invent facts or infer corruption, motive, or intent.
 5. **Persist**: Data is saved through SQLAlchemy models, starting with `government_updates` and expanding to canonical civic tables.
-6. **Serve**: FastAPI endpoints expose current feed/summary APIs and the additive civic card contract that future feed endpoints can adopt.
-7. **Present**: React Native surfaces cards with what happened, why it matters, involved entities, money context, and source trail affordances.
+6. **Diagnose**: Provenance diagnostics classify recent ingested updates as fresh, stale, missing-source, or failed so alert/feed reliability can be inspected.
+7. **Serve**: FastAPI endpoints expose current feed/summary APIs, provenance diagnostics, followed-object alert candidates, and the additive civic card contract that future feed endpoints can adopt.
+8. **Present**: React Native surfaces cards with what happened, why it matters, involved entities, money context, source trail affordances, and granular notification settings.
 
 ## Provenance Requirements
 - Every factual card claim needs source indexes into the card source trail or an explicit unavailable reason.
@@ -27,6 +28,7 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 - Money context must distinguish direct source matches, related entity matches, inferred topic/industry context, and unavailable data.
 - Money copy must be neutral context, not an accusation or corruption signal.
 - Source confidence labels travel with source-trail entries, while money relationship labels travel with each money-context row. UI surfaces must keep those labels visible near the source link or money fact.
+- Followed-object alerts must only publish candidates with a source URL, and money-context alerts require available, indexed source support.
 
 ## Modularity & Extensibility
 - Backend service layers are split into API routes, schemas, services, and repositories (`db`).
@@ -41,9 +43,9 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 - Observability hooks for logging/metrics included via `structlog` and `OpenTelemetry` placeholders.
 
 ## Future Enhancements
-- Real-time push for sourced alerts when bills move, representatives vote, hearings are scheduled, or text changes.
+- Production push scheduling for the source-backed followed-object alert candidates.
 - Canonical district/member mapping and My Government surfaces.
 - Money-source adapters for FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, CBO, and appropriations context.
 - Graph relationships between agencies and entities for explainable civic context.
-- User account system with granular notification preferences.
+- User account system for syncing granular notification preferences across devices.
 - Vector-powered "Full Coverage" deep dives and conversational RAG exploration.

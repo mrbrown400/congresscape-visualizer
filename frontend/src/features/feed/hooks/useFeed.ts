@@ -15,6 +15,7 @@ export type FeedContextOptions = {
   followedBills?: string[];
   followedMembers?: string[];
   followedTopics?: string[];
+  followedCommittees?: string[];
   state?: string | null;
   district?: string | null;
   cardType?: CivicCardType;
@@ -57,6 +58,7 @@ const mapContextToParams = (contextKey: string, options: FeedContextOptions) => 
     followed_bills: options.followedBills?.join(',') || undefined,
     followed_members: options.followedMembers?.join(',') || undefined,
     followed_topics: options.followedTopics?.join(',') || undefined,
+    followed_committees: options.followedCommittees?.join(',') || undefined,
     state: options.state ?? undefined,
     district: options.district ?? undefined,
     card_type: options.cardType,

@@ -59,6 +59,7 @@ const YouScreen = () => {
     followedBills: preferences.followedBills,
     followedMembers: preferences.followedMembers,
     followedTopics: preferences.followedTopics,
+    followedCommittees: preferences.followedCommittees,
     state: preferences.homeDistrict?.state,
     district: preferences.homeDistrict?.district,
     limit: 12,
@@ -66,6 +67,7 @@ const YouScreen = () => {
     preferences.followedBills,
     preferences.followedMembers,
     preferences.followedTopics,
+    preferences.followedCommittees,
     preferences.homeDistrict?.state,
     preferences.homeDistrict?.district,
   ]);
@@ -112,7 +114,16 @@ const YouScreen = () => {
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.header}>
-        <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>MY GOVERNMENT</Text>
+        <View style={styles.headerTopRow}>
+          <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>MY GOVERNMENT</Text>
+          <Pressable
+            style={[styles.headerAction, { borderColor: neutral.divider }]}
+            onPress={() => navigation.navigate('NotificationSettings')}
+          >
+            <Ionicons name="notifications-outline" size={16} color={branchColors.agency} />
+            <Text style={[styles.headerActionText, { color: branchColors.agency }]}>Notifications</Text>
+          </Pressable>
+        </View>
         <Text style={[styles.title, { color: neutral.textPrimary }]}>
           {districtLabel ?? 'Add Your District'}
         </Text>
@@ -556,6 +567,25 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 4,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  headerAction: {
+    minHeight: 32,
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  headerActionText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   eyebrow: {
     fontSize: 12,

@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.schemas.update import GovernmentUpdateCreate, GovernmentUpdateRead
 from app.services.embedding import EmbeddingService, get_embedding_service
+from app.schemas.provenance import ProvenanceDiagnosticsResponse
+from app.services.provenance_diagnostics import DEFAULT_STALE_AFTER_HOURS, ProvenanceDiagnosticsService
 from app.services.summarization import SummarizationService, get_summarization_service
 from app.services.update_service import UpdateService
 
@@ -40,3 +42,15 @@ async def ingest_update(
     await session.commit()
     await session.refresh(update)
     return update
+
+
+@router.get("/diagnostics/provenance")
+async def provenance_diagnostics(
+    limit: int = 100,
+    stale_after_hours: int = DEFAULT_STALE_AFTER_HOURS,
+    session: AsyncSession = Depends(get_db),
+) -> ProvenanceDiagnosticsResponse:
+    """Return freshness and source-trail diagnostics for ingested feed records."""
+
+    service = ProvenanceDiagnosticsService(session)
+    return await service.list_update_diagnostics(limit=limit, stale_after_hours=stale_after_hours)

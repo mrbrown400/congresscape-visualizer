@@ -8,12 +8,16 @@ import { SavedItemsProvider } from './src/context/SavedItemsContext';
 import { UserPreferencesProvider } from './src/context/UserPreferencesContext';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 
-export default function App() {
+const PushNotificationRegistration = () => {
   usePushNotifications();
+  return null;
+};
 
+export default function App() {
   return (
     <SafeAreaProvider>
       <UserPreferencesProvider>
+        <PushNotificationRegistration />
         <SavedItemsProvider>
           <ThemeProvider>
             <NavigationContainer>
