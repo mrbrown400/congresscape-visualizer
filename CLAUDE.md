@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Congresscape Visualizer is a full-stack platform that delivers daily briefings of U.S. government activity across Legislative, Judicial, and Executive branches. It consists of a FastAPI backend with PostgreSQL/pgvector and a React Native (Expo) mobile app.
+Congresscape Visualizer is a full-stack platform for a primary-source civic feed: a Congress.gov-first way to follow government activity through sourced cards for Today, My Government, Bills, Votes, Hearings, Money, and Alerts. It consists of a FastAPI backend with SQLAlchemy storage and a React Native (Expo) mobile app.
 
 ## Common Commands
 
@@ -45,7 +45,7 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 **Key directories**:
 - `api/routes/` - REST endpoints (feeds, ingest, summary, notifications, system)
 - `models/` - SQLAlchemy ORM models (GovernmentUpdate, Entity, NotificationSubscription)
-- `schemas/` - Pydantic request/response validation
+- `schemas/` - Pydantic request/response validation, including additive civic-card contracts
 - `services/` - Business logic (daily_summary_service, feed_service, notification_service, embedding, summarization)
 - `ingest/` - Data source connectors (congress.py, executive.py, judicial.py) with shared `NormalizedUpdate` dataclass
 - `core/config.py` - Pydantic settings from environment variables
@@ -78,6 +78,8 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 - **Service layer pattern**: Business logic in `services/`, routes are thin wrappers
 - **Async throughout**: All backend I/O uses async/await (asyncpg, httpx)
 - **Modular ingestion**: Each data source (Congress, SCOTUS, Federal Register) implements fetch → normalize → persist
+- **Source-backed claims**: Civic feed cards should include source trails, provenance, and unavailable states for factual claims
+- **Money guardrail**: Money context must distinguish source relationship strength and must not infer corruption, motive, or intent
 - **Feature-based frontend**: Each feature owns its screens, hooks, types, and components
 - **Branch-aware styling**: UI uses color palette keyed by government branch (legislative, executive, judicial)
 

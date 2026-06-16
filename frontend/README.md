@@ -1,11 +1,12 @@
 # Congresscape Mobile App
 
-React Native (Expo) client that surfaces a single daily briefing with highlights, deep dives, and push alerts when new briefings drop.
+React Native (Expo) client for a primary-source civic feed. The app is shaped around sourced cards for Today, My Government, Bills, Votes, Hearings, Money, and Alerts instead of political social media posts.
 
 ## Highlights
-- Narrative “Daily Briefing” screen with highlight bullets and deep-dive cards
-- Push notification opt-in using Expo notifications so users get pinged only when there’s a new summary
-- Onboarding flow to capture interests for future personalization
+- Today-first feed surfaces for source-backed government activity
+- Shared civic card types for what happened, why it matters, involved entities, money context, and source trail
+- Push notification opt-in using Expo notifications for future alerts when bills move, representatives vote, hearings are scheduled, or official text changes
+- Onboarding flow to capture interests and followed objects for future personalization
 - API client wired to FastAPI backend with graceful fallback copy when the network is down
 - Modular architecture ready for web support via Expo
 
@@ -25,15 +26,17 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 npm run start
 
 ## Structure
 - `App.tsx` – entry point wrapping navigation, theming, and push registration hook
-- `src/navigation` – stack navigator routing between onboarding and the briefing
-- `src/features/dailyBrief` – hooks, types, and UI for the daily summary experience
-- `src/services` – API wrapper plus daily brief + notification clients
+- `src/navigation` – stack navigator routing between onboarding and civic feed surfaces
+- `src/features/dailyBrief` – compatibility hooks, types, and UI for the current summary experience
+- `src/features/feed` – feed UI and shared civic card/feed types
+- `src/services` – API wrapper plus feed, summary, update, and notification clients
 - `src/theme` – palette + theming utilities
 - `src/components` – shared UI primitives
 - `src/utils` – shared utilities (dayjs configuration)
 
 ## Next Steps
-- Persist onboarding selections with AsyncStorage and attach to personalization API
-- Tighten push notification copy and include branch/topic filters once preferences land
-- Add deep-dive “Full Coverage” view that expands to audio/video/link collections
+- Persist followed bills, members, committees, topics, and district context with AsyncStorage
+- Add source trail and money context affordances to feed/detail cards
+- Add user bill-position prompts and representative comparison once canonical vote data lands
+- Add deep-dive views for bill lifecycle, votes, hearings, and money context
 - Share UI primitives with a future web app via React Native Web

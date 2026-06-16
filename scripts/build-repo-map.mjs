@@ -24,7 +24,7 @@ const sections = [
   '- Backend runtime: FastAPI, async SQLAlchemy, Pydantic, Poetry, SQLite for current local dev, PostgreSQL/pgvector through Docker.',
   '- Frontend entry path: `frontend/index.js -> frontend/App.tsx -> frontend/src/navigation/RootNavigator.tsx`.',
   '- Frontend runtime: React Native, Expo, TypeScript, React Navigation, React Context, axios clients.',
-  '- Domain focus: daily briefings, branch-aware feeds, calendar/upcoming events, government ingestion, summaries, notifications, and saved/user preferences.',
+  '- Domain focus: primary-source civic feed cards, Congress.gov-first ingestion, source trails/provenance, money context guardrails, alerts, and saved/user preferences.',
   '',
   '## Root Commands',
   '',
@@ -68,7 +68,7 @@ const sections = [
   '',
   '- `frontend/package.json` defines `npm run lint`, but ESLint is not currently installed.',
   '- `poetry run ruff check .` currently reports existing lint issues in backend app files and untracked scripts.',
-  '- Backend docs still describe active PostgreSQL/pgvector embeddings, while current models are SQLite-compatible and do not persist embeddings.',
+  '- Backend runtime supports SQLite-compatible local development while PostgreSQL/pgvector remains the Docker target.',
   '- Local `main` is stale behind `origin/main`; current harness work is based on `claude/redesign-app-ui-3JUxK`.'
 ];
 

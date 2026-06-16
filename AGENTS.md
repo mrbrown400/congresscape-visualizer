@@ -6,13 +6,15 @@ Congresscape Visualizer uses Codex as the active agent workflow. Keep durable pr
 
 ## Project Mission
 
-Congresscape Visualizer is a full-stack platform that delivers daily briefings of U.S. government activity across the Legislative, Judicial, and Executive branches. It consists of a FastAPI backend, SQLAlchemy data models, ingestion connectors, summary/notification services, and a React Native (Expo) mobile app.
+Congresscape Visualizer is a full-stack platform for a primary-source civic feed: a Congress.gov-first replacement for political social media that packages government activity into sourced cards with provenance, money context, and user bill voting. It consists of a FastAPI backend, SQLAlchemy data models, ingestion connectors, summary/notification services, and a React Native (Expo) mobile app.
 
 Core product goals:
-- Daily federal-activity briefings that are useful at a glance.
-- Branch-aware feed, calendar, and detail views.
-- Reliable ingestion from Congress.gov, Federal Register, White House, and Supreme Court sources.
-- Push-ready notification workflows for new briefings and important updates.
+- Today, My Government, Bills, Votes, Hearings, Money, and Alerts surfaces that are useful at a glance.
+- Congress.gov API as the primary backbone for the first MVP, with page scraping only as fallback.
+- Source trails and provenance for factual claims, including clear unavailable states when official data has not appeared.
+- Sourced money context that distinguishes direct facts from related context and never infers corruption, motive, or intent.
+- Executive and judicial sources as future feed inputs, not blockers for the Congress.gov-first MVP.
+- Push-ready notification workflows for source-backed alerts and important updates.
 
 ## Active Workflow
 

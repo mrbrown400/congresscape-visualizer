@@ -1,22 +1,30 @@
 # Congresscape Visualizer Architecture
 
 ## Overview
-Congresscape Visualizer distills each day’s government activity into a curated briefing covering the Legislative, Judicial, and Executive branches. The platform consists of a modular FastAPI backend with PostgreSQL + pgvector storage, an ingestion pipeline that normalizes diverse data sources, and a React Native mobile client focused on a single daily summary with optional push alerts.
+Congresscape Visualizer is moving toward a primary-source civic feed: a Congress.gov-first product that packages government activity into sourced cards instead of political social media posts. The platform consists of a modular FastAPI backend, SQLAlchemy storage, ingestion pipelines, provenance-aware card contracts, and a React Native mobile client for Today, My Government, Bills, Votes, Hearings, Money, and Alerts.
 
 ## High-Level Components
-- **PostgreSQL + pgvector**: Stores canonical `government_updates` records, embeddings, and metadata for personalization and future semantic search.
-- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and searching updates. Includes services for summarization (LLM), ranking, and personalization.
-- **Ingestion Workers**: Modular fetchers for Congress, Courts, and Executive sources. Each worker normalizes data into a shared schema.
-- **React Native App**: Presents the briefing as a narrative headline, highlight bullets, and deep-dive cards, with push notifications when a new summary drops. Built to share UI modules with a future web client.
+- **SQLAlchemy Storage**: Stores current `government_updates` records and will expand to canonical bill, action, vote, hearing, member, committee, and source-link tables.
+- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and eventually serving canonical civic cards. Includes services for summarization, ranking, personalization, and provenance checks.
+- **Civic Card Contract**: Defines shared backend/frontend fields for what happened, why it matters, involved entities, sourced money context, and source trails with unavailable-state handling.
+- **Ingestion Workers**: Congress.gov API workers are the MVP backbone. Official page scraping is fallback only; executive and judicial workers remain future feed inputs rather than M0 blockers.
+- **React Native App**: Presents branch-aware feed surfaces and detail views that can show source trails, money context, and alert-worthy lifecycle changes. Built to share UI modules with a future web client.
 - **Shared Utilities**: Feature flagging, analytics publishing, and background task orchestration prepared for future expansion.
 
 ## Data Flow
-1. **Fetch**: Source-specific ingestion modules pull raw updates on a schedule (background tasks, Celery/Arq-ready).
-2. **Normalize**: Raw payloads map to `NormalizedUpdate` objects with metadata (entities, tags, branch, source_url).
-3. **Summarize & Embed**: LLM service generates snackable summaries; embeddings computed for the full text and stored in pgvector.
-4. **Persist**: Data saved into PostgreSQL within `government_updates`, `entities`, and relation tables.
-5. **Serve**: FastAPI endpoints expose the daily summary, feed lookups for deep dives, and notification registration; WebSocket/SSE remains ready for future real-time push.
-6. **Present**: React Native app consumes the daily summary endpoint, rendering highlights and deep dives with branch-aware styling and optional notifications.
+1. **Fetch**: Source-specific ingestion modules pull raw official data, starting with Congress.gov API endpoints for bills, actions, text, committees, hearings, votes, and members.
+2. **Normalize**: Raw payloads map to `NormalizedUpdate` objects today and canonical civic domain records in future M1/M2 work.
+3. **Preserve Provenance**: Source URLs, retrieval timestamps, source labels, and unavailable states travel with each factual claim.
+4. **Enrich Carefully**: Summaries, rankings, and money context may explain relevance, but they must not invent facts or infer corruption, motive, or intent.
+5. **Persist**: Data is saved through SQLAlchemy models, starting with `government_updates` and expanding to canonical civic tables.
+6. **Serve**: FastAPI endpoints expose current feed/summary APIs and the additive civic card contract that future feed endpoints can adopt.
+7. **Present**: React Native surfaces cards with what happened, why it matters, involved entities, money context, and source trail affordances.
+
+## Provenance Requirements
+- Every factual card claim needs source indexes into the card source trail or an explicit unavailable reason.
+- Source trails should prefer official primary sources. Related supporting sources are allowed only when labeled by relationship.
+- Money context must distinguish direct source matches, related entity matches, inferred topic/industry context, and unavailable data.
+- Money copy must be neutral context, not an accusation or corruption signal.
 
 ## Modularity & Extensibility
 - Backend service layers are split into API routes, schemas, services, and repositories (`db`).
@@ -31,7 +39,9 @@ Congresscape Visualizer distills each day’s government activity into a curated
 - Observability hooks for logging/metrics included via `structlog` and `OpenTelemetry` placeholders.
 
 ## Future Enhancements
-- Real-time WebSocket push for urgent alerts.
-- Graph relationships between agencies (SAM.gov hierarchy) for network visualizations.
+- Real-time push for sourced alerts when bills move, representatives vote, hearings are scheduled, or text changes.
+- Canonical district/member mapping and My Government surfaces.
+- Money-source adapters for FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, CBO, and appropriations context.
+- Graph relationships between agencies and entities for explainable civic context.
 - User account system with granular notification preferences.
 - Vector-powered "Full Coverage" deep dives and conversational RAG exploration.
