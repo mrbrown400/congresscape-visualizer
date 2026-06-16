@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import dayjs from 'dayjs';
 import { GovernmentUpdate } from '@services/updatesService';
 

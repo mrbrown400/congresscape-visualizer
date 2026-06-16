@@ -47,7 +47,7 @@ const trendingTopics = [
 ];
 
 const ExploreScreen = () => {
-  const { neutral, branch: branchColors, semantic, spacing, borderRadius } = useTheme();
+  const { neutral, branch: branchColors, semantic } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { isSaved, toggleSave } = useSavedItems();
 
@@ -59,6 +59,8 @@ const ExploreScreen = () => {
   const contextKey = useMemo(() => {
     if (activeQuickFilter === 'trending') return 'trending';
     if (activeQuickFilter === 'urgent') return 'urgent';
+    if (activeQuickFilter === 'hearings') return 'hearings';
+    if (activeQuickFilter === 'votes') return 'votes';
     if (activeBranch === 'legislative') return 'legislative';
     if (activeBranch === 'executive') return 'executive';
     if (activeBranch === 'judicial') return 'judicial';
@@ -74,7 +76,7 @@ const ExploreScreen = () => {
     const query = searchQuery.toLowerCase();
     return items.filter(item =>
       item.headline.toLowerCase().includes(query) ||
-      item.summary.toLowerCase().includes(query) ||
+      (item.summary ?? '').toLowerCase().includes(query) ||
       item.tags.some(tag => tag.toLowerCase().includes(query))
     );
   }, [items, searchQuery]);

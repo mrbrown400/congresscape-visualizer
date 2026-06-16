@@ -12,315 +12,192 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { useDailyBrief } from '@features/dailyBrief/hooks/useDailyBrief';
-import { useTheme } from '@theme/ThemeProvider';
-import { useSavedItems } from '../../../context/SavedItemsContext';
-import { FeedItem, Branch } from '@features/feed/types';
-import dayjs from '@utils/dayjs';
+import { useFeed } from '@features/feed/hooks/useFeed';
+import { CivicCardType, FeedItem } from '@features/feed/types';
+import { useUserPreferences } from '@context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
+import { useTheme } from '@theme/ThemeProvider';
+import dayjs from '@utils/dayjs';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const branchConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-  legislative: { icon: 'business', label: 'Legislative' },
-  house: { icon: 'business', label: 'House' },
-  senate: { icon: 'business', label: 'Senate' },
-  executive: { icon: 'document-text', label: 'Executive' },
-  judicial: { icon: 'scale', label: 'Judicial' },
-  agency: { icon: 'grid', label: 'Agency' },
+const cardTypeOrder: CivicCardType[] = ['vote', 'hearing', 'bill', 'alert', 'money'];
+const cardTypeLabels: Record<CivicCardType, string> = {
+  bill: 'Bills',
+  vote: 'Votes',
+  hearing: 'Hearings',
+  money: 'Money',
+  alert: 'Alerts',
 };
 
 const TodayScreen = () => {
-  const { neutral, branch: branchColors, semantic, typography, spacing } = useTheme();
-  const { brief, loading, error, reload } = useDailyBrief();
-  const { isSaved, toggleSave } = useSavedItems();
+  const { neutral, branch: branchColors, semantic } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const { preferences } = useUserPreferences();
+  const feedOptions = useMemo(() => ({
+    followedBills: preferences.followedBills,
+    followedMembers: preferences.followedMembers,
+    followedTopics: preferences.followedTopics,
+    state: preferences.homeDistrict?.state,
+    district: preferences.homeDistrict?.district,
+    limit: 30,
+  }), [preferences]);
+  const { items, loading, error, reload } = useFeed('today', feedOptions);
 
-  const handleItemPress = useCallback((item: FeedItem) => {
+  const grouped = useMemo(() => {
+    return items.reduce<Record<string, FeedItem[]>>((acc, item) => {
+      const key = item.card_type ?? 'alert';
+      acc[key] = [...(acc[key] ?? []), item];
+      return acc;
+    }, {});
+  }, [items]);
+
+  const openItem = useCallback((item: FeedItem) => {
     navigation.navigate('UpdateDetail', { item });
   }, [navigation]);
 
-  const groupedUpdates = useMemo(() => {
-    if (!brief?.top_updates) return {};
-
-    const groups: Record<string, FeedItem[]> = {};
-    brief.top_updates.forEach(item => {
-      const branch = item.branch || 'legislative';
-      if (!groups[branch]) {
-        groups[branch] = [];
-      }
-      groups[branch].push(item);
-    });
-    return groups;
-  }, [brief]);
-
-  const urgentItems = useMemo(() => {
-    if (!brief?.highlights) return [];
-    return brief.highlights.filter(h =>
-      h.tags?.includes('urgent') || h.tags?.includes('breaking')
-    );
-  }, [brief]);
-
-  const content = useMemo(() => {
-    if (loading && !brief) {
-      return (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color={branchColors.agency} />
-          <Text style={[styles.loaderText, { color: neutral.textPrimary }]}>
-            Preparing today's briefing...
-          </Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.errorContainer}>
-          <Ionicons name="cloud-offline" size={48} color={semantic.error} />
-          <Text style={[styles.errorText, { color: semantic.error }]}>{error}</Text>
-          <Pressable style={[styles.retryButton, { backgroundColor: branchColors.agency }]} onPress={reload}>
-            <Text style={styles.retryText}>Try Again</Text>
-          </Pressable>
-        </View>
-      );
-    }
-
-    if (!brief) {
-      return (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="newspaper-outline" size={48} color={neutral.textMuted} />
-          <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
-            No government actions to report yet today.
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.contentWrapper}>
-        {/* Date Header */}
-        <View style={styles.dateHeader}>
-          <Ionicons name="sunny" size={24} color={branchColors.agency} />
-          <Text style={[styles.dateText, { color: neutral.textPrimary }]}>
-            {dayjs().format('dddd, MMMM D').toUpperCase()}
-          </Text>
-        </View>
-
-        {/* Hero Headline Card */}
-        <View style={[styles.heroCard, { backgroundColor: neutral.card }]}>
-          <View style={styles.heroLabelRow}>
-            <View style={styles.heroLabel}>
-              <Ionicons name="newspaper" size={16} color={branchColors.agency} />
-              <Text style={[styles.heroLabelText, { color: branchColors.agency }]}>
-                TOP STORY
-              </Text>
-            </View>
-            {brief.top_updates?.[0]?.branch && (
-              <View style={[
-                styles.heroBranchChip,
-                { backgroundColor: (branchColors[brief.top_updates[0].branch as Branch] || branchColors.agency) + '20' }
-              ]}>
-                <Text style={[
-                  styles.heroBranchText,
-                  { color: branchColors[brief.top_updates[0].branch as Branch] || branchColors.agency }
-                ]}>
-                  {brief.top_updates[0].branch.toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </View>
-          <Text style={[styles.heroHeadline, { color: neutral.textPrimary }]}>
-            {brief.headline}
-          </Text>
-          <Text style={[styles.heroNarrative, { color: neutral.textSecondary }]}>
-            {brief.narrative}
-          </Text>
-        </View>
-
-        {/* Urgent Section */}
-        {urgentItems.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Ionicons name="alert-circle" size={20} color={semantic.urgent} />
-                <Text style={[styles.sectionTitle, { color: semantic.urgent }]}>URGENT</Text>
-              </View>
-            </View>
-            {urgentItems.map((item, idx) => (
-              <Pressable
-                key={`urgent-${idx}`}
-                style={[styles.urgentCard, { backgroundColor: neutral.card, borderLeftColor: semantic.urgent }]}
-              >
-                <View style={styles.urgentDot} />
-                <Text style={[styles.urgentText, { color: neutral.textPrimary }]}>
-                  {item.headline}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        {/* By Branch Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionDivider, { color: neutral.textMuted }]}>BY BRANCH</Text>
-          </View>
-
-          {Object.entries(groupedUpdates).map(([branchKey, items]) => {
-            const config = branchConfig[branchKey] || branchConfig.legislative;
-            const color = branchColors[branchKey as Branch] || branchColors.legislative;
-
-            return (
-              <View key={branchKey} style={styles.branchSection}>
-                <View style={styles.branchHeader}>
-                  <View style={[styles.branchIconContainer, { backgroundColor: color + '20' }]}>
-                    <Ionicons name={config.icon} size={20} color={color} />
-                  </View>
-                  <Text style={[styles.branchLabel, { color: neutral.textPrimary }]}>
-                    {config.label}
-                  </Text>
-                  <View style={styles.branchCount}>
-                    <Text style={[styles.branchCountText, { color: neutral.textMuted }]}>
-                      {items.length} update{items.length !== 1 ? 's' : ''}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color={neutral.textMuted} />
-                  </View>
-                </View>
-
-                {items.slice(0, 3).map(item => (
-                  <Pressable
-                    key={item.id}
-                    style={[styles.updateItem, { borderLeftColor: color }]}
-                    onPress={() => handleItemPress(item)}
-                  >
-                    <View style={styles.updateContent}>
-                      <Text style={[styles.updateHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
-                        {item.headline}
-                      </Text>
-                      <Text style={[styles.updateTime, { color: neutral.textMuted }]}>
-                        {dayjs(item.published_at).fromNow()}
-                      </Text>
-                    </View>
-                    <Pressable
-                      style={styles.saveButton}
-                      onPress={() => toggleSave(item)}
-                      hitSlop={8}
-                    >
-                      <Ionicons
-                        name={isSaved(item.id) ? 'bookmark' : 'bookmark-outline'}
-                        size={20}
-                        color={isSaved(item.id) ? branchColors.agency : neutral.textMuted}
-                      />
-                    </Pressable>
-                  </Pressable>
-                ))}
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Highlights Section */}
-        {brief.highlights.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionDivider, { color: neutral.textMuted }]}>HIGHLIGHTS</Text>
-            </View>
-
-            {brief.highlights.filter(h => !urgentItems.includes(h)).slice(0, 5).map((highlight, idx) => {
-              const color = branchColors[highlight.branch as Branch] || branchColors.legislative;
-              return (
-                <View
-                  key={`highlight-${idx}`}
-                  style={[styles.highlightCard, { backgroundColor: neutral.card }]}
-                >
-                  <View style={[styles.highlightBranchBar, { backgroundColor: color }]} />
-                  <View style={styles.highlightContent}>
-                    <View style={styles.highlightHeader}>
-                      <Text style={[styles.highlightBranch, { color }]}>
-                        {highlight.branch.toUpperCase()}
-                      </Text>
-                      <Text style={[styles.highlightTime, { color: neutral.textMuted }]}>
-                        {dayjs(highlight.published_at).format('h:mm A')}
-                      </Text>
-                    </View>
-                    <Text style={[styles.highlightHeadline, { color: neutral.textPrimary }]}>
-                      {highlight.headline}
-                    </Text>
-                    {highlight.summary && (
-                      <Text style={[styles.highlightSummary, { color: neutral.textSecondary }]} numberOfLines={2}>
-                        {highlight.summary}
-                      </Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {/* Coming Up Section */}
-        {brief.upcoming_events && brief.upcoming_events.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <Ionicons name="calendar" size={18} color={branchColors.agency} />
-                <Text style={[styles.sectionTitle, { color: branchColors.agency }]}>COMING UP</Text>
-              </View>
-            </View>
-
-            {brief.upcoming_events.slice(0, 5).map((event, idx) => {
-              const color = branchColors[event.branch as Branch] || branchColors.executive;
-              return (
-                <View
-                  key={`upcoming-${idx}`}
-                  style={[styles.upcomingCard, { backgroundColor: neutral.card }]}
-                >
-                  <View style={[styles.upcomingDateBadge, { backgroundColor: branchColors.agency }]}>
-                    <Text style={styles.upcomingDateMonth}>
-                      {dayjs(event.event_date).format('MMM')}
-                    </Text>
-                    <Text style={styles.upcomingDateDay}>
-                      {dayjs(event.event_date).format('D')}
-                    </Text>
-                  </View>
-                  <View style={styles.upcomingContent}>
-                    <Text style={[styles.upcomingHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
-                      {event.headline}
-                    </Text>
-                    <View style={styles.upcomingMeta}>
-                      <View style={[styles.upcomingChip, { backgroundColor: color + '30' }]}>
-                        <Text style={[styles.upcomingChipText, { color }]}>
-                          {event.branch.toUpperCase()}
-                        </Text>
-                      </View>
-                      <Text style={[styles.upcomingType, { color: neutral.textMuted }]}>
-                        {event.event_type.replace('_', ' ')}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </View>
-    );
-  }, [brief, error, loading, groupedUpdates, urgentItems, branchColors, neutral, semantic, isSaved, toggleSave, handleItemPress, reload]);
+  const topItem = items[0];
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: neutral.background }]}
       contentContainerStyle={styles.scrollContent}
       refreshControl={
-        <RefreshControl
-          refreshing={loading}
-          onRefresh={reload}
-          tintColor={branchColors.agency}
-        />
+        <RefreshControl refreshing={loading} onRefresh={reload} tintColor={branchColors.agency} />
       }
     >
-      {content}
+      <View style={styles.header}>
+        <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>
+          {dayjs().format('dddd, MMMM D').toUpperCase()}
+        </Text>
+        <Text style={[styles.title, { color: neutral.textPrimary }]}>Today</Text>
+      </View>
+
+      {loading && items.length === 0 && (
+        <View style={styles.stateBlock}>
+          <ActivityIndicator size="large" color={branchColors.agency} />
+          <Text style={[styles.stateText, { color: neutral.textSecondary }]}>
+            Loading primary-source events...
+          </Text>
+        </View>
+      )}
+
+      {error && (
+        <View style={[styles.notice, { borderColor: semantic.warning }]}>
+          <Ionicons name="cloud-offline-outline" size={20} color={semantic.warning} />
+          <Text style={[styles.noticeText, { color: neutral.textSecondary }]}>{error}</Text>
+        </View>
+      )}
+
+      {!loading && items.length === 0 && (
+        <View style={styles.stateBlock}>
+          <Ionicons name="newspaper-outline" size={36} color={neutral.textMuted} />
+          <Text style={[styles.stateText, { color: neutral.textSecondary }]}>
+            No source-backed events are available for today yet.
+          </Text>
+        </View>
+      )}
+
+      {topItem && (
+        <Pressable
+          style={[styles.topStory, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
+          onPress={() => openItem(topItem)}
+        >
+          <View style={styles.topRow}>
+            <Text style={[styles.sectionLabel, { color: branchColors.agency }]}>TOP RANKED EVENT</Text>
+            <Text style={[styles.scoreText, { color: neutral.textMuted }]}>
+              {Math.round(topItem.rank_context?.score ?? 0)}
+            </Text>
+          </View>
+          <Text style={[styles.topHeadline, { color: neutral.textPrimary }]}>{topItem.headline}</Text>
+          <Text style={[styles.summary, { color: neutral.textSecondary }]}>
+            {topItem.summary ?? 'Official summary has not been published yet.'}
+          </Text>
+          <RankReasons item={topItem} />
+          <SourceTrailPreview item={topItem} />
+        </Pressable>
+      )}
+
+      {cardTypeOrder.map(cardType => {
+        const sectionItems = grouped[cardType] ?? [];
+        if (sectionItems.length === 0) return null;
+
+        return (
+          <View key={cardType} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
+                {cardTypeLabels[cardType]}
+              </Text>
+              <Text style={[styles.sectionCount, { color: neutral.textMuted }]}>
+                {sectionItems.length}
+              </Text>
+            </View>
+
+            {sectionItems.map(item => (
+              <Pressable
+                key={item.id}
+                style={[styles.eventRow, { borderColor: neutral.divider, backgroundColor: neutral.card }]}
+                onPress={() => openItem(item)}
+              >
+                <View style={styles.eventHeader}>
+                  <Text style={[styles.eventType, { color: branchColors[item.branch] ?? branchColors.legislative }]}>
+                    {(item.card_type ?? 'event').toUpperCase()}
+                  </Text>
+                  <Text style={[styles.eventTime, { color: neutral.textMuted }]}>
+                    {dayjs(item.published_at).fromNow()}
+                  </Text>
+                </View>
+                <Text style={[styles.eventHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
+                  {item.headline}
+                </Text>
+                {item.rank_context?.reasons?.[0] && (
+                  <Text style={[styles.reasonText, { color: neutral.textSecondary }]} numberOfLines={2}>
+                    {item.rank_context.reasons[0]}
+                  </Text>
+                )}
+                <SourceTrailPreview item={item} compact />
+              </Pressable>
+            ))}
+          </View>
+        );
+      })}
     </ScrollView>
+  );
+};
+
+const RankReasons = ({ item }: { item: FeedItem }) => {
+  const { neutral } = useTheme();
+  const reasons = item.rank_context?.reasons ?? [];
+  if (reasons.length === 0) return null;
+
+  return (
+    <View style={styles.reasonList}>
+      {reasons.slice(0, 3).map(reason => (
+        <View key={reason} style={styles.reasonRow}>
+          <Ionicons name="information-circle-outline" size={16} color={neutral.textMuted} />
+          <Text style={[styles.reasonText, { color: neutral.textSecondary }]}>{reason}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const SourceTrailPreview = ({ item, compact = false }: { item: FeedItem; compact?: boolean }) => {
+  const { neutral, branch } = useTheme();
+  const firstSource = item.source_trail?.[0];
+  if (!firstSource && !item.source_trail_note) return null;
+
+  return (
+    <View style={compact ? styles.sourceCompact : styles.sourceBox}>
+      <Ionicons
+        name={firstSource ? 'link-outline' : 'alert-circle-outline'}
+        size={16}
+        color={firstSource ? branch.agency : neutral.textMuted}
+      />
+      <Text style={[styles.sourceText, { color: neutral.textSecondary }]} numberOfLines={compact ? 1 : 2}>
+        {firstSource ? `${firstSource.label} · ${firstSource.source}` : item.source_trail_note}
+      </Text>
+    </View>
   );
 };
 
@@ -329,285 +206,139 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
     paddingTop: 60,
-    paddingBottom: 100,
-  },
-  loader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingTop: 120,
-  },
-  loaderText: {
-    fontSize: 16,
-  },
-  errorContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 120,
     gap: 16,
-    paddingTop: 120,
   },
-  errorText: {
-    fontSize: 16,
-    textAlign: 'center',
+  header: {
+    gap: 4,
   },
-  retryButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-  retryText: {
-    color: '#0B1D3A',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingTop: 120,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  contentWrapper: {
-    gap: 24,
-  },
-  dateHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dateText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  heroCard: {
-    borderRadius: 20,
-    padding: 20,
-    gap: 12,
-  },
-  heroLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  heroLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  heroLabelText: {
+  eyebrow: {
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1,
   },
-  heroBranchChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  heroBranchText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  heroHeadline: {
-    fontSize: 24,
+  title: {
+    fontSize: 34,
     fontWeight: '800',
-    lineHeight: 30,
   },
-  heroNarrative: {
-    fontSize: 16,
-    lineHeight: 24,
+  stateBlock: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 48,
+  },
+  stateText: {
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  notice: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  topStory: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    gap: 10,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  scoreText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topHeadline: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '800',
+  },
+  summary: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  reasonList: {
+    gap: 6,
+  },
+  reasonRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'flex-start',
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  sourceBox: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(148, 163, 184, 0.35)',
+    paddingTop: 10,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  sourceCompact: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  sourceText: {
+    flex: 1,
+    fontSize: 12,
   },
   section: {
-    gap: 12,
+    gap: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  sectionDivider: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-  },
-  urgentCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    gap: 12,
-  },
-  urgentDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-  },
-  urgentText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  branchSection: {
-    gap: 8,
-  },
-  branchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 8,
-  },
-  branchIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  branchLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
-  },
-  branchCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  branchCountText: {
-    fontSize: 14,
-  },
-  updateItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 16,
-    paddingVertical: 12,
-    marginLeft: 18,
-    borderLeftWidth: 2,
-    gap: 12,
-  },
-  updateContent: {
-    flex: 1,
-    gap: 4,
-  },
-  updateHeadline: {
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  updateTime: {
-    fontSize: 12,
-  },
-  saveButton: {
-    padding: 4,
-  },
-  highlightCard: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  highlightBranchBar: {
-    width: 4,
-  },
-  highlightContent: {
-    flex: 1,
-    padding: 16,
-    gap: 8,
-  },
-  highlightHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  highlightBranch: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  highlightTime: {
-    fontSize: 12,
-  },
-  highlightHeadline: {
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  highlightSummary: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  upcomingCard: {
-    flexDirection: 'row',
-    borderRadius: 16,
-    padding: 12,
-    gap: 12,
-    alignItems: 'center',
-  },
-  upcomingDateBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  upcomingDateMonth: {
-    color: '#0B1D3A',
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  upcomingDateDay: {
-    color: '#0B1D3A',
     fontSize: 18,
     fontWeight: '800',
   },
-  upcomingContent: {
-    flex: 1,
-    gap: 6,
-  },
-  upcomingHeadline: {
-    fontSize: 14,
-    fontWeight: '600',
-    lineHeight: 18,
-  },
-  upcomingMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  upcomingChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-  },
-  upcomingChipText: {
-    fontSize: 10,
+  sectionCount: {
+    fontSize: 13,
     fontWeight: '700',
   },
-  upcomingType: {
+  eventRow: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 14,
+    gap: 8,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  eventType: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  eventTime: {
     fontSize: 12,
-    textTransform: 'capitalize',
+  },
+  eventHeadline: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '700',
   },
 });
 

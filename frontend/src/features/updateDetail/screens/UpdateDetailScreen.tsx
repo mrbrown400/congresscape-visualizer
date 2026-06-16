@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Linking,
   Pressable,
@@ -6,227 +6,554 @@ import {
   Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { useTheme } from '@theme/ThemeProvider';
-import { useSavedItems } from '../../../context/SavedItemsContext';
+import {
+  BillDetail,
+  Branch,
+  FeedItem,
+  HearingDetail,
+  SourceTrailItem,
+  VoteDetail,
+  VotePosition,
+} from '@features/feed/types';
+import BillStatusTracker from '@features/updateDetail/components/BillStatusTracker';
+import { useSavedItems } from '@context/SavedItemsContext';
+import { useUserPreferences, UserBillPosition } from '@context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
-import { Branch } from '@features/feed/types';
+import { useTheme } from '@theme/ThemeProvider';
 import dayjs from '@utils/dayjs';
-import BillStatusTracker from '../components/BillStatusTracker';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UpdateDetail'>;
 
-const branchConfig: Record<string, { icon: keyof typeof Ionicons.glyphMap; label: string }> = {
-  legislative: { icon: 'business', label: 'Legislative' },
-  house: { icon: 'business', label: 'House' },
-  senate: { icon: 'business', label: 'Senate' },
-  executive: { icon: 'document-text', label: 'Executive' },
-  judicial: { icon: 'scale', label: 'Judicial' },
-  agency: { icon: 'grid', label: 'Agency' },
-};
+const positionOptions: { value: UserBillPosition['position']; label: string }[] = [
+  { value: 'yea', label: 'Yea' },
+  { value: 'nay', label: 'Nay' },
+  { value: 'present', label: 'Present' },
+  { value: 'abstain', label: 'Abstain' },
+  { value: 'undecided', label: 'Undecided' },
+];
 
 const UpdateDetailScreen = ({ route, navigation }: Props) => {
   const { item } = route.params;
-  const { neutral, branch: branchColors, semantic, spacing } = useTheme();
+  const { neutral, branch: branchColors } = useTheme();
   const { isSaved, toggleSave } = useSavedItems();
-
-  const branchColor = branchColors[item.branch as Branch] || branchColors.legislative;
-  const config = branchConfig[item.branch] || branchConfig.legislative;
+  const [voteSearch, setVoteSearch] = useState('');
   const saved = isSaved(item.id);
-
-  // Determine if this is a bill (for showing status tracker)
-  const isBill = useMemo(() => {
-    const lowerHeadline = item.headline.toLowerCase();
-    const lowerTags = item.tags.map(t => t.toLowerCase());
-    return (
-      lowerHeadline.includes('bill') ||
-      lowerHeadline.includes('h.r.') ||
-      lowerHeadline.includes('s.') ||
-      lowerHeadline.includes('act') ||
-      lowerTags.includes('bill') ||
-      lowerTags.includes('legislation')
-    );
-  }, [item]);
-
-  // Extract bill status from metadata if available
-  const billStatus = useMemo(() => {
-    if (!isBill) return null;
-
-    // Default to introduced status, can be enhanced with real data
-    const status = (item.metadata?.status as string) || 'introduced';
-    const statusMap: Record<string, number> = {
-      'introduced': 0,
-      'committee': 1,
-      'floor': 2,
-      'passed_house': 2,
-      'passed_senate': 2,
-      'other_chamber': 3,
-      'conference': 4,
-      'president': 5,
-      'signed': 6,
-      'vetoed': 6,
-    };
-    return statusMap[status] ?? 0;
-  }, [isBill, item.metadata]);
+  const branchColor = branchColors[item.branch as Branch] || branchColors.legislative;
 
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `${item.headline}\n\n${item.summary}${item.url ? `\n\nRead more: ${item.url}` : ''}`,
-        title: item.headline,
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
-
-  const handleOpenUrl = () => {
-    if (item.url) {
-      Linking.openURL(item.url);
-    }
+    await Share.share({
+      message: `${item.headline}\n\n${item.summary ?? ''}${item.url ? `\n\nSource: ${item.url}` : ''}`,
+      title: item.headline,
+    });
   };
 
   return (
     <View style={[styles.container, { backgroundColor: neutral.background }]}>
-      {/* Header */}
       <View style={[styles.header, { borderBottomColor: neutral.divider }]}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          hitSlop={12}
-        >
+        <Pressable style={styles.iconButton} onPress={() => navigation.goBack()} hitSlop={12}>
           <Ionicons name="arrow-back" size={24} color={neutral.textPrimary} />
         </Pressable>
         <View style={styles.headerActions}>
-          <Pressable
-            style={styles.headerButton}
-            onPress={() => toggleSave(item)}
-            hitSlop={8}
-          >
+          <Pressable style={styles.iconButton} onPress={() => toggleSave(item)} hitSlop={8}>
             <Ionicons
               name={saved ? 'bookmark' : 'bookmark-outline'}
-              size={24}
+              size={23}
               color={saved ? branchColors.agency : neutral.textPrimary}
             />
           </Pressable>
-          <Pressable
-            style={styles.headerButton}
-            onPress={handleShare}
-            hitSlop={8}
-          >
-            <Ionicons name="share-outline" size={24} color={neutral.textPrimary} />
+          <Pressable style={styles.iconButton} onPress={handleShare} hitSlop={8}>
+            <Ionicons name="share-outline" size={23} color={neutral.textPrimary} />
           </Pressable>
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Branch Badge */}
-        <View style={styles.branchRow}>
-          <View style={[styles.branchBadge, { backgroundColor: branchColor + '20' }]}>
-            <Ionicons name={config.icon} size={16} color={branchColor} />
-            <Text style={[styles.branchText, { color: branchColor }]}>
-              {config.label.toUpperCase()}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.kickerRow}>
+          <View style={[styles.kicker, { borderColor: branchColor }]}>
+            <Text style={[styles.kickerText, { color: branchColor }]}>
+              {(item.card_type ?? item.branch).toUpperCase()}
             </Text>
           </View>
-        </View>
-
-        {/* Main Content */}
-        <Text style={[styles.headline, { color: neutral.textPrimary }]}>
-          {item.headline}
-        </Text>
-
-        <View style={styles.metaRow}>
-          <Text style={[styles.source, { color: neutral.textMuted }]}>
-            {item.source.toUpperCase()}
-          </Text>
-          <Text style={[styles.metaDot, { color: neutral.textMuted }]}>•</Text>
-          <Text style={[styles.date, { color: neutral.textMuted }]}>
+          <Text style={[styles.dateText, { color: neutral.textMuted }]}>
             {dayjs(item.published_at).format('MMM D, YYYY h:mm A')}
           </Text>
         </View>
 
-        {/* Bill Status Tracker */}
-        {isBill && billStatus !== null && (
-          <View style={styles.statusSection}>
-            <Text style={[styles.sectionLabel, { color: neutral.textMuted }]}>STATUS</Text>
-            <BillStatusTracker currentStep={billStatus} />
-          </View>
+        <Text style={[styles.headline, { color: neutral.textPrimary }]}>{item.headline}</Text>
+        <Text style={[styles.summary, { color: neutral.textSecondary }]}>
+          {item.summary ?? 'Official summary has not been published yet.'}
+        </Text>
+
+        <RankContext item={item} />
+        <SourceTrail sources={item.source_trail ?? []} note={item.source_trail_note} />
+
+        {item.detail?.bill ? (
+          <BillDetailView item={item} bill={item.detail.bill} />
+        ) : item.detail?.vote ? (
+          <VoteDetailView vote={item.detail.vote} search={voteSearch} onSearchChange={setVoteSearch} />
+        ) : item.detail?.hearing ? (
+          <HearingDetailView hearing={item.detail.hearing} />
+        ) : (
+          <GenericDetail item={item} />
         )}
-
-        {/* Summary */}
-        <View style={styles.summarySection}>
-          <Text style={[styles.sectionLabel, { color: neutral.textMuted }]}>SUMMARY</Text>
-          <Text style={[styles.summary, { color: neutral.textSecondary }]}>
-            {item.summary}
-          </Text>
-        </View>
-
-        {/* Tags */}
-        {item.tags.length > 0 && (
-          <View style={styles.tagsSection}>
-            <Text style={[styles.sectionLabel, { color: neutral.textMuted }]}>TOPICS</Text>
-            <View style={styles.tagsContainer}>
-              {item.tags.map(tag => (
-                <View
-                  key={tag}
-                  style={[styles.tag, { backgroundColor: neutral.card }]}
-                >
-                  <Text style={[styles.tagText, { color: neutral.textPrimary }]}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Timeline (Placeholder for future enhancement) */}
-        <View style={styles.timelineSection}>
-          <Text style={[styles.sectionLabel, { color: neutral.textMuted }]}>TIMELINE</Text>
-          <View style={[styles.timelineItem, { borderLeftColor: branchColor }]}>
-            <Text style={[styles.timelineDate, { color: neutral.textMuted }]}>
-              {dayjs(item.published_at).format('MMM D')}
-            </Text>
-            <Text style={[styles.timelineEvent, { color: neutral.textPrimary }]}>
-              Published
-            </Text>
-          </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsSection}>
-          {item.url && (
-            <Pressable
-              style={[styles.primaryButton, { backgroundColor: branchColor }]}
-              onPress={handleOpenUrl}
-            >
-              <Ionicons name="open-outline" size={20} color="#FFFFFF" />
-              <Text style={styles.primaryButtonText}>View Full Text</Text>
-            </Pressable>
-          )}
-
-          <Pressable
-            style={[styles.secondaryButton, { borderColor: branchColor }]}
-            onPress={() => toggleSave(item)}
-          >
-            <Ionicons
-              name={saved ? 'bookmark' : 'bookmark-outline'}
-              size={20}
-              color={branchColor}
-            />
-            <Text style={[styles.secondaryButtonText, { color: branchColor }]}>
-              {saved ? 'Saved' : 'Track This Update'}
-            </Text>
-          </Pressable>
-        </View>
       </ScrollView>
     </View>
   );
+};
+
+const BillDetailView = ({ item, bill }: { item: FeedItem; bill: BillDetail }) => {
+  const { neutral, branch } = useTheme();
+  const {
+    preferences,
+    followBill,
+    unfollowBill,
+    setBillPosition,
+    clearBillPosition,
+  } = useUserPreferences();
+  const followed = preferences.followedBills.includes(bill.canonical_id);
+  const savedPosition = preferences.billPositions[bill.canonical_id]?.position;
+  const statusStep = billStatusStep(bill.status);
+
+  return (
+    <View style={styles.detailStack}>
+      <ActionRow
+        primaryLabel={followed ? 'Following Bill' : 'Follow Bill'}
+        onPrimary={() => followed ? unfollowBill(bill.canonical_id) : followBill(bill.canonical_id)}
+        sourceUrl={bill.source_url ?? item.url}
+      />
+
+      <Section title="Status">
+        <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>{bill.status}</Text>
+        <BillStatusTracker currentStep={statusStep} />
+      </Section>
+
+      {bill.vote_eligible && (
+        <Section title="Your Position">
+          <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>
+            {bill.user_position_prompt}
+          </Text>
+          <View style={styles.positionGrid}>
+            {positionOptions.map(option => {
+              const active = savedPosition === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  style={[
+                    styles.positionButton,
+                    {
+                      borderColor: active ? branch.agency : neutral.divider,
+                      backgroundColor: active ? branch.agency : neutral.card,
+                    },
+                  ]}
+                  onPress={() => setBillPosition(bill.canonical_id, option.value)}
+                >
+                  <Text style={[styles.positionText, { color: active ? '#FFFFFF' : neutral.textPrimary }]}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {savedPosition && (
+            <Pressable onPress={() => clearBillPosition(bill.canonical_id)}>
+              <Text style={[styles.linkText, { color: branch.agency }]}>Clear personal position</Text>
+            </Pressable>
+          )}
+        </Section>
+      )}
+
+      <RecordList title="Sponsors" records={bill.sponsors} emptyText="Official sponsor data is not published yet." />
+      <RecordList title="Cosponsors" records={bill.cosponsors} emptyText="Official cosponsor data is not published yet." />
+      <RecordList title="Committees" records={bill.committees} emptyText={bill.unavailable.committees ?? 'No committees are linked.'} />
+      <Section title="Lifecycle">
+        {bill.timeline.length === 0 ? (
+          <Unavailable text="No official lifecycle actions are published yet." />
+        ) : (
+          bill.timeline.map(action => (
+            <View key={action.id} style={[styles.timelineRow, { borderLeftColor: branch.legislative }]}>
+              <Text style={[styles.metaText, { color: neutral.textMuted }]}>
+                {action.acted_at ? dayjs(action.acted_at).format('MMM D, YYYY') : 'Date unavailable'}
+              </Text>
+              <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{action.text}</Text>
+              {action.source_url && <SourceLink url={action.source_url} label="Official action" />}
+            </View>
+          ))
+        )}
+      </Section>
+      <RecordList title="Text Versions" records={bill.text_versions} emptyText={bill.unavailable.text_versions ?? 'No official text versions are published yet.'} />
+      <RecordList title="Amendments" records={bill.amendments} emptyText="No official amendments are published yet." />
+      <RecordList title="Votes" records={bill.votes} emptyText={bill.unavailable.votes ?? 'No votes are linked yet.'} />
+      <RecordList title="CBO And CRS" records={[...bill.cbo_cost_estimates, ...bill.crs_reports]} emptyText="No CBO estimate or CRS report is published yet." />
+      <RecordList title="Related Bills" records={bill.related_bills} emptyText="No related bills are published yet." />
+    </View>
+  );
+};
+
+const VoteDetailView = ({
+  vote,
+  search,
+  onSearchChange,
+}: {
+  vote: VoteDetail;
+  search: string;
+  onSearchChange: (value: string) => void;
+}) => {
+  const { neutral, branch } = useTheme();
+  const filteredPositions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return vote.positions;
+    return vote.positions.filter(position => (
+      position.member_name.toLowerCase().includes(query) ||
+      (position.party ?? '').toLowerCase().includes(query) ||
+      position.position.toLowerCase().includes(query) ||
+      (position.state ?? '').toLowerCase().includes(query)
+    ));
+  }, [search, vote.positions]);
+
+  return (
+    <View style={styles.detailStack}>
+      <ActionRow sourceUrl={vote.source_url} />
+      <Section title="Roll Call">
+        <FactGrid facts={[
+          ['Chamber', vote.chamber],
+          ['Roll', vote.roll_number],
+          ['Result', vote.result ?? 'Unavailable'],
+          ['Margin', vote.margin ?? 'Unavailable'],
+        ]} />
+        <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{vote.question}</Text>
+      </Section>
+
+      <Section title="Totals">
+        <RecordPills values={vote.totals} />
+      </Section>
+
+      <Section title="Party Split">
+        <RecordPills values={vote.party_split} />
+      </Section>
+
+      <Section title="Local Representatives">
+        {vote.local_representative_positions.length === 0 ? (
+          <Unavailable text={vote.unavailable.local_representatives ?? 'No local representative match is available.'} />
+        ) : (
+          vote.local_representative_positions.map(position => (
+            <PositionRow key={position.member_identifier} position={position} highlight />
+          ))
+        )}
+      </Section>
+
+      {vote.linked_bill && (
+        <Section title="Linked Bill">
+          <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>
+            {recordLabel(vote.linked_bill)}
+          </Text>
+        </Section>
+      )}
+
+      <Section title="Member Positions">
+        <TextInput
+          value={search}
+          onChangeText={onSearchChange}
+          placeholder="Search by member, party, state, or position"
+          placeholderTextColor={neutral.textMuted}
+          style={[styles.searchInput, { color: neutral.textPrimary, borderColor: neutral.divider }]}
+        />
+        {filteredPositions.length === 0 ? (
+          <Unavailable text={vote.unavailable.member_positions ?? 'No matching positions.'} />
+        ) : (
+          filteredPositions.slice(0, 80).map(position => (
+            <PositionRow key={position.member_identifier} position={position} />
+          ))
+        )}
+        {filteredPositions.length > 80 && (
+          <Text style={[styles.metaText, { color: branch.agency }]}>
+            Showing first 80 matching positions.
+          </Text>
+        )}
+      </Section>
+    </View>
+  );
+};
+
+const HearingDetailView = ({ hearing }: { hearing: HearingDetail }) => {
+  const { neutral, branch } = useTheme();
+  const { preferences, followCommittee, unfollowCommittee } = useUserPreferences();
+  const committeeCode = getRecordString(hearing.committee, 'committee_code');
+  const committeeName = getRecordString(hearing.committee, 'name');
+  const followed = committeeCode ? preferences.followedCommittees.includes(committeeCode) : false;
+
+  return (
+    <View style={styles.detailStack}>
+      <ActionRow
+        primaryLabel={committeeCode ? (followed ? 'Following Committee' : 'Follow Committee') : undefined}
+        onPrimary={committeeCode ? () => followed ? unfollowCommittee(committeeCode) : followCommittee(committeeCode) : undefined}
+        sourceUrl={hearing.source_url}
+      />
+      <Section title="Schedule">
+        <FactGrid facts={[
+          ['Status', hearing.status ?? 'Unavailable'],
+          ['Type', hearing.meeting_type ?? 'Unavailable'],
+          ['When', hearing.scheduled_at ? dayjs(hearing.scheduled_at).format('MMM D, YYYY h:mm A') : 'Unavailable'],
+          ['Location', hearing.location ?? 'Unavailable'],
+        ]} />
+      </Section>
+      <Section title="Committee">
+        {committeeName ? (
+          <>
+            <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{committeeName}</Text>
+            {getRecordString(hearing.committee, 'jurisdiction') && (
+              <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>
+                {getRecordString(hearing.committee, 'jurisdiction')}
+              </Text>
+            )}
+          </>
+        ) : (
+          <Unavailable text="Official committee details are not published yet." />
+        )}
+      </Section>
+      <RecordList title="Witnesses" records={hearing.witnesses} emptyText={hearing.unavailable.witnesses ?? 'Witnesses are not published yet.'} />
+      <RecordList title="Related Bills" records={hearing.related_bills} emptyText="No related bills are published yet." />
+      <RecordList title="Video" records={hearing.videos} emptyText={hearing.unavailable.videos ?? 'Official video is not published yet.'} />
+      <RecordList title="Transcript" records={hearing.transcripts} emptyText={hearing.unavailable.transcripts ?? 'Official transcript is not published yet.'} />
+      {hearing.alert_affordance && (
+        <View style={[styles.notice, { borderColor: branch.agency }]}>
+          <Ionicons name="notifications-outline" size={18} color={branch.agency} />
+          <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>{hearing.alert_affordance}</Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
+const GenericDetail = ({ item }: { item: FeedItem }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={styles.detailStack}>
+      <Section title="Summary">
+        <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>
+          {item.full_text ?? item.summary ?? 'No additional detail is available yet.'}
+        </Text>
+      </Section>
+      {item.url && <ActionRow sourceUrl={item.url} />}
+    </View>
+  );
+};
+
+const RankContext = ({ item }: { item: FeedItem }) => {
+  const { neutral } = useTheme();
+  const factors = item.rank_context?.factors;
+  if (!factors) return null;
+  return (
+    <Section title="Why This Is Ranked Here">
+      <View style={styles.factorGrid}>
+        {Object.entries(factors).map(([key, value]) => (
+          <View key={key} style={[styles.factor, { borderColor: neutral.divider }]}>
+            <Text style={[styles.factorLabel, { color: neutral.textMuted }]}>{key.replace(/_/g, ' ')}</Text>
+            <Text style={[styles.factorValue, { color: neutral.textPrimary }]}>{Math.round(value)}</Text>
+          </View>
+        ))}
+      </View>
+    </Section>
+  );
+};
+
+const SourceTrail = ({ sources, note }: { sources: SourceTrailItem[]; note?: string | null }) => (
+  <Section title="Source Trail">
+    {sources.length === 0 ? (
+      <Unavailable text={note ?? 'Official sources are not attached yet.'} />
+    ) : (
+      sources.map(source => (
+        <SourceLink key={`${source.source}-${source.url}`} url={source.url} label={`${source.label} · ${source.source}`} />
+      ))
+    )}
+  </Section>
+);
+
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={[styles.section, { borderColor: neutral.divider }]}>
+      <Text style={[styles.sectionTitle, { color: neutral.textMuted }]}>{title.toUpperCase()}</Text>
+      {children}
+    </View>
+  );
+};
+
+const ActionRow = ({
+  primaryLabel,
+  onPrimary,
+  sourceUrl,
+}: {
+  primaryLabel?: string;
+  onPrimary?: () => void;
+  sourceUrl?: string | null;
+}) => {
+  const { branch } = useTheme();
+  if (!primaryLabel && !sourceUrl) return null;
+  return (
+    <View style={styles.actionRow}>
+      {primaryLabel && onPrimary && (
+        <Pressable style={[styles.primaryButton, { backgroundColor: branch.agency }]} onPress={onPrimary}>
+          <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
+        </Pressable>
+      )}
+      {sourceUrl && (
+        <Pressable style={[styles.secondaryButton, { borderColor: branch.agency }]} onPress={() => Linking.openURL(sourceUrl)}>
+          <Ionicons name="open-outline" size={18} color={branch.agency} />
+          <Text style={[styles.secondaryButtonText, { color: branch.agency }]}>Official Source</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+};
+
+const SourceLink = ({ url, label }: { url: string; label: string }) => {
+  const { branch } = useTheme();
+  return (
+    <Pressable style={styles.sourceLink} onPress={() => Linking.openURL(url)}>
+      <Ionicons name="link-outline" size={17} color={branch.agency} />
+      <Text style={[styles.linkText, { color: branch.agency }]}>{label}</Text>
+    </Pressable>
+  );
+};
+
+const RecordList = ({
+  title,
+  records,
+  emptyText,
+}: {
+  title: string;
+  records: Record<string, unknown>[];
+  emptyText: string;
+}) => (
+  <Section title={title}>
+    {records.length === 0 ? (
+      <Unavailable text={emptyText} />
+    ) : (
+      records.slice(0, 12).map((record, index) => (
+        <RecordRow key={`${title}-${index}`} record={record} />
+      ))
+    )}
+  </Section>
+);
+
+const RecordRow = ({ record }: { record: Record<string, unknown> }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={[styles.recordRow, { borderColor: neutral.divider }]}>
+      <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{recordLabel(record)}</Text>
+      {recordMeta(record) && (
+        <Text style={[styles.metaText, { color: neutral.textMuted }]}>{recordMeta(record)}</Text>
+      )}
+      {getRecordString(record, 'source_url') && (
+        <SourceLink url={getRecordString(record, 'source_url') ?? ''} label="Official link" />
+      )}
+    </View>
+  );
+};
+
+const PositionRow = ({ position, highlight = false }: { position: VotePosition; highlight?: boolean }) => {
+  const { neutral, branch } = useTheme();
+  return (
+    <View style={[styles.positionRow, { borderColor: highlight ? branch.agency : neutral.divider }]}>
+      <View style={styles.positionTextBlock}>
+        <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{position.member_name}</Text>
+        <Text style={[styles.metaText, { color: neutral.textMuted }]}>
+          {[position.party, position.state, position.district ? `District ${position.district}` : null].filter(Boolean).join(' · ')}
+        </Text>
+      </View>
+      <Text style={[styles.voteBadge, { color: branch.agency }]}>{position.position.toUpperCase()}</Text>
+    </View>
+  );
+};
+
+const FactGrid = ({ facts }: { facts: [string, string][] }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={styles.factGrid}>
+      {facts.map(([label, value]) => (
+        <View key={label} style={[styles.fact, { borderColor: neutral.divider }]}>
+          <Text style={[styles.factorLabel, { color: neutral.textMuted }]}>{label}</Text>
+          <Text style={[styles.factValue, { color: neutral.textPrimary }]}>{value}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const RecordPills = ({ values }: { values: Record<string, unknown> }) => {
+  const { neutral } = useTheme();
+  const entries = Object.entries(values);
+  if (entries.length === 0) {
+    return <Unavailable text="Official totals are not published yet." />;
+  }
+  return (
+    <View style={styles.pillWrap}>
+      {entries.map(([key, value]) => (
+        <View key={key} style={[styles.pill, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
+          <Text style={[styles.pillText, { color: neutral.textPrimary }]}>
+            {key}: {formatUnknown(value)}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const Unavailable = ({ text }: { text: string }) => {
+  const { neutral } = useTheme();
+  return <Text style={[styles.unavailable, { color: neutral.textMuted }]}>{text}</Text>;
+};
+
+const recordLabel = (record: Record<string, unknown>) => {
+  return (
+    getRecordString(record, 'display_number') ||
+    getRecordString(record, 'version_name') ||
+    getRecordString(record, 'title') ||
+    getRecordString(record, 'name') ||
+    getRecordString(record, 'label') ||
+    getRecordString(record, 'result') ||
+    formatUnknown(record)
+  );
+};
+
+const recordMeta = (record: Record<string, unknown>) => {
+  return (
+    getRecordString(record, 'jurisdiction') ||
+    getRecordString(record, 'version_code') ||
+    getRecordString(record, 'roll_number') ||
+    getRecordString(record, 'source') ||
+    null
+  );
+};
+
+const getRecordString = (record: Record<string, unknown> | null | undefined, key: string) => {
+  const raw = record?.[key];
+  return typeof raw === 'string' ? raw : null;
+};
+
+const formatUnknown = (value: unknown): string => {
+  if (value === null || value === undefined) return 'Unavailable';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? '' : 's'}`;
+  if (typeof value === 'object') return Object.entries(value).map(([key, child]) => `${key}: ${formatUnknown(child)}`).join(', ');
+  return String(value);
+};
+
+const billStatusStep = (status: string) => {
+  const lower = status.toLowerCase();
+  if (lower.includes('law') || lower.includes('signed') || lower.includes('veto')) return 6;
+  if (lower.includes('president')) return 5;
+  if (lower.includes('conference')) return 4;
+  if (lower.includes('senate') || lower.includes('other chamber')) return 3;
+  if (lower.includes('passed') || lower.includes('floor')) return 2;
+  if (lower.includes('committee')) return 1;
+  return 0;
 };
 
 const styles = StyleSheet.create({
@@ -242,140 +569,224 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
   },
-  backButton: {
+  iconButton: {
     padding: 8,
-    marginLeft: -8,
   },
   headerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
-  },
-  headerButton: {
-    padding: 8,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
-    gap: 20,
+    paddingBottom: 120,
+    gap: 16,
   },
-  branchRow: {
+  kickerRow: {
     flexDirection: 'row',
-  },
-  branchBadge: {
-    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
   },
-  branchText: {
+  kicker: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  kickerText: {
     fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+  },
+  dateText: {
+    fontSize: 12,
   },
   headline: {
-    fontSize: 26,
+    fontSize: 27,
     fontWeight: '800',
     lineHeight: 34,
   },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  source: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  metaDot: {
-    fontSize: 12,
-  },
-  date: {
-    fontSize: 12,
-  },
-  statusSection: {
-    gap: 12,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.5,
-  },
-  summarySection: {
-    gap: 12,
-  },
   summary: {
     fontSize: 16,
-    lineHeight: 26,
+    lineHeight: 24,
   },
-  tagsSection: {
-    gap: 12,
+  detailStack: {
+    gap: 14,
   },
-  tagsContainer: {
+  section: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    gap: 10,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  bodyText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  bodyTextStrong: {
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+  metaText: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  linkText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sourceLink: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  primaryButton: {
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  primaryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  factorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  tag: {
-    paddingHorizontal: 14,
+  factor: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    minWidth: 110,
+    flex: 1,
+  },
+  factorLabel: {
+    fontSize: 11,
+    textTransform: 'capitalize',
+  },
+  factorValue: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  positionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  positionButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 11,
     paddingVertical: 8,
-    borderRadius: 20,
   },
-  tagText: {
-    fontSize: 14,
-    fontWeight: '500',
+  positionText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
-  timelineSection: {
-    gap: 12,
-  },
-  timelineItem: {
-    paddingLeft: 16,
+  timelineRow: {
     borderLeftWidth: 3,
+    paddingLeft: 10,
     gap: 4,
   },
-  timelineDate: {
-    fontSize: 12,
-    fontWeight: '600',
+  recordRow: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    gap: 4,
   },
-  timelineEvent: {
+  factGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  fact: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    minWidth: 130,
+    flex: 1,
+  },
+  factValue: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '800',
   },
-  actionsSection: {
+  pillWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  pill: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  pillText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  positionRow: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 12,
-    paddingTop: 8,
   },
-  primaryButton: {
+  positionTextBlock: {
+    flex: 1,
+  },
+  voteBadge: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  notice: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 16,
     gap: 8,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-    gap: 8,
   },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  unavailable: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

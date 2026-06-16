@@ -1,354 +1,380 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { useTheme } from '@theme/ThemeProvider';
-import { useSavedItems } from '../../../context/SavedItemsContext';
-import { useUserPreferences } from '../../../context/UserPreferencesContext';
+import { useFeed } from '@features/feed/hooks/useFeed';
 import { FeedItem } from '@features/feed/types';
+import { CurrentMember } from '@features/members/types';
+import { useDistrictLookup } from '@features/members/hooks/useDistrictLookup';
+import { useUserPreferences } from '@context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
+import { useTheme } from '@theme/ThemeProvider';
 import dayjs from '@utils/dayjs';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const interestLabels: Record<string, string> = {
-  legislative: 'Congress',
-  judicial: 'Courts',
-  executive: 'Executive',
-  budget: 'Budget',
-  oversight: 'Oversight',
-};
+const defaultTopics = ['budget', 'oversight', 'health', 'technology', 'veterans'];
 
 const YouScreen = () => {
-  const { neutral, branch: branchColors, semantic, spacing } = useTheme();
+  const { neutral, branch: branchColors, semantic } = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  const { savedItems, clearAll } = useSavedItems();
   const {
     preferences,
-    setNotificationPreferences,
-    resetOnboarding,
+    followMember,
+    unfollowMember,
+    followBill,
+    unfollowBill,
+    followTopic,
+    unfollowTopic,
+    followCommittee,
+    unfollowCommittee,
+    clearDistrictMemberMapping,
   } = useUserPreferences();
+  const { resolve, isLoading: lookupLoading, error: lookupError } = useDistrictLookup();
+  const [lookupText, setLookupText] = useState('');
 
-  const handleItemPress = useCallback((item: FeedItem) => {
-    navigation.navigate('UpdateDetail', { item });
-  }, [navigation]);
-
-  const handleEditInterests = useCallback(() => {
-    navigation.navigate('Onboarding');
-  }, [navigation]);
-
-  const handleNotificationSettings = useCallback(() => {
-    navigation.navigate('NotificationSettings');
-  }, [navigation]);
-
-  const handleClearSaved = useCallback(() => {
-    Alert.alert(
-      'Clear All Saved Items',
-      'Are you sure you want to remove all saved items? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear All', style: 'destructive', onPress: clearAll },
-      ]
-    );
-  }, [clearAll]);
-
-  const followingCount = {
-    bills: preferences.followedBills.length,
-    members: preferences.followedMembers.length,
-    topics: preferences.followedTopics.length,
-  };
   const districtLabel = preferences.homeDistrict?.state && preferences.homeDistrict?.district
     ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}`
     : null;
+
+  const feedOptions = useMemo(() => ({
+    followedBills: preferences.followedBills,
+    followedMembers: preferences.followedMembers,
+    followedTopics: preferences.followedTopics,
+    state: preferences.homeDistrict?.state,
+    district: preferences.homeDistrict?.district,
+    limit: 12,
+  }), [
+    preferences.followedBills,
+    preferences.followedMembers,
+    preferences.followedTopics,
+    preferences.homeDistrict?.state,
+    preferences.homeDistrict?.district,
+  ]);
+  const { items, loading: feedLoading, reload } = useFeed('myGovernment', feedOptions);
+
+  const followedCommittees = preferences.followedCommittees ?? [];
+  const followedMembers = new Set(preferences.followedMembers);
+  const followedBills = new Set(preferences.followedBills);
+  const followedTopics = new Set(preferences.followedTopics);
   const representative = preferences.currentMembers.find(member => member.chamber === 'House');
   const senators = preferences.currentMembers.filter(member => member.chamber === 'Senate');
+
+  const committees = useMemo(() => collectCommittees(items), [items]);
+  const bills = useMemo(() => collectBills(items), [items]);
+  const topics = useMemo(() => Array.from(new Set([...defaultTopics, ...preferences.interests, ...preferences.followedTopics])), [
+    preferences.interests,
+    preferences.followedTopics,
+  ]);
+
+  const handleLookup = useCallback(async () => {
+    const query = lookupText.trim();
+    if (!query) return;
+    const isZip = /^\d{5}$/.test(query);
+    await resolve(isZip ? { zipCode: query } : { address: query });
+  }, [lookupText, resolve]);
+
+  const openItem = useCallback((item: FeedItem) => {
+    navigation.navigate('UpdateDetail', { item });
+  }, [navigation]);
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: neutral.background }]}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: neutral.textPrimary }]}>
-          Your Briefing
+        <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>MY GOVERNMENT</Text>
+        <Text style={[styles.title, { color: neutral.textPrimary }]}>
+          {districtLabel ?? 'Add Your District'}
         </Text>
       </View>
 
-      {/* Following Summary */}
-      <View style={[styles.section, { backgroundColor: neutral.card }]}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="bookmark" size={20} color={branchColors.agency} />
-          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
-            Following
+      <View style={[styles.panel, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
+        <View style={styles.lookupRow}>
+          <TextInput
+            value={lookupText}
+            onChangeText={setLookupText}
+            placeholder="ZIP or address"
+            placeholderTextColor={neutral.textMuted}
+            style={[styles.lookupInput, { color: neutral.textPrimary, borderColor: neutral.divider }]}
+            autoCapitalize="words"
+            returnKeyType="search"
+            onSubmitEditing={handleLookup}
+          />
+          <Pressable
+            style={[styles.lookupButton, { backgroundColor: branchColors.agency }]}
+            onPress={handleLookup}
+            disabled={lookupLoading}
+          >
+            {lookupLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Ionicons name="search" size={18} color="#FFFFFF" />
+            )}
+          </Pressable>
+        </View>
+        {lookupError && <Text style={[styles.warningText, { color: semantic.error }]}>{lookupError}</Text>}
+        {preferences.districtLookupAmbiguity && (
+          <Text style={[styles.warningText, { color: semantic.warning }]}>
+            {preferences.districtLookupAmbiguity}
           </Text>
-        </View>
-        <View style={styles.followingRow}>
-          <View style={styles.followingStat}>
-            <Text style={[styles.followingNumber, { color: branchColors.legislative }]}>
-              {followingCount.bills}
-            </Text>
-            <Text style={[styles.followingLabel, { color: neutral.textMuted }]}>Bills</Text>
-          </View>
-          <View style={[styles.followingDivider, { backgroundColor: neutral.divider }]} />
-          <View style={styles.followingStat}>
-            <Text style={[styles.followingNumber, { color: branchColors.executive }]}>
-              {followingCount.members}
-            </Text>
-            <Text style={[styles.followingLabel, { color: neutral.textMuted }]}>Members</Text>
-          </View>
-          <View style={[styles.followingDivider, { backgroundColor: neutral.divider }]} />
-          <View style={styles.followingStat}>
-            <Text style={[styles.followingNumber, { color: branchColors.judicial }]}>
-              {followingCount.topics}
-            </Text>
-            <Text style={[styles.followingLabel, { color: neutral.textMuted }]}>Topics</Text>
-          </View>
-        </View>
+        )}
+        {preferences.homeDistrict && (
+          <Pressable onPress={clearDistrictMemberMapping}>
+            <Text style={[styles.linkText, { color: branchColors.agency }]}>Clear district mapping</Text>
+          </Pressable>
+        )}
       </View>
 
-      {/* My Government */}
-      <View style={[styles.section, { backgroundColor: neutral.card }]}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="business" size={20} color={branchColors.legislative} />
-          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
-            My Government
-          </Text>
-          {districtLabel && (
-            <Text style={[styles.districtBadge, { color: branchColors.legislative, backgroundColor: neutral.surface }]}>
-              {districtLabel}
-            </Text>
-          )}
-        </View>
-
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Representatives</Text>
         {!preferences.homeDistrict ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="location-outline" size={32} color={neutral.textMuted} />
-            <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
-              Add a district lookup to show your representative and senators here.
-            </Text>
-          </View>
+          <EmptyMessage text="Resolve a district to show your representative and senators." />
         ) : (
-          <View style={styles.memberList}>
-            {preferences.districtLookupAmbiguity && (
-              <Text style={[styles.lookupWarning, { color: semantic.warning }]}>
-                {preferences.districtLookupAmbiguity}
-              </Text>
-            )}
+          <View style={styles.stack}>
             {representative && (
-              <View style={[styles.memberRow, { borderBottomColor: neutral.divider }]}>
-                <View style={styles.memberInfo}>
-                  <Text style={[styles.memberRole, { color: neutral.textMuted }]}>Representative</Text>
-                  <Text style={[styles.memberName, { color: neutral.textPrimary }]}>
-                    {representative.name}
-                  </Text>
-                </View>
-                <Text style={[styles.memberParty, { color: neutral.textMuted }]}>
-                  {representative.party ?? ''}
-                </Text>
-              </View>
+              <MemberRow
+                member={representative}
+                label="Representative"
+                followed={followedMembers.has(representative.bioguide_id)}
+                onToggle={() => followedMembers.has(representative.bioguide_id)
+                  ? unfollowMember(representative.bioguide_id)
+                  : followMember(representative.bioguide_id)}
+              />
             )}
             {senators.map(senator => (
-              <View key={senator.bioguide_id} style={[styles.memberRow, { borderBottomColor: neutral.divider }]}>
-                <View style={styles.memberInfo}>
-                  <Text style={[styles.memberRole, { color: neutral.textMuted }]}>Senator</Text>
-                  <Text style={[styles.memberName, { color: neutral.textPrimary }]}>
-                    {senator.name}
-                  </Text>
-                </View>
-                <Text style={[styles.memberParty, { color: neutral.textMuted }]}>
-                  {senator.party ?? ''}
-                </Text>
-              </View>
+              <MemberRow
+                key={senator.bioguide_id}
+                member={senator}
+                label="Senator"
+                followed={followedMembers.has(senator.bioguide_id)}
+                onToggle={() => followedMembers.has(senator.bioguide_id)
+                  ? unfollowMember(senator.bioguide_id)
+                  : followMember(senator.bioguide_id)}
+              />
             ))}
             {preferences.currentMembers.length === 0 && (
-              <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
-                No current members are loaded for this district yet.
-              </Text>
+              <EmptyMessage text="No current members are loaded for this district yet." />
             )}
           </View>
         )}
       </View>
 
-      {/* Saved Items */}
-      <View style={[styles.section, { backgroundColor: neutral.card }]}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="star" size={20} color={branchColors.agency} />
-          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
-            Saved Items
-          </Text>
-          {savedItems.length > 0 && (
-            <Pressable onPress={handleClearSaved} style={styles.clearButton}>
-              <Text style={[styles.clearButtonText, { color: semantic.error }]}>Clear All</Text>
-            </Pressable>
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Followed Topics</Text>
+        <View style={styles.chipWrap}>
+          {topics.map(topic => {
+            const active = followedTopics.has(topic);
+            return (
+              <Pressable
+                key={topic}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: active ? branchColors.agency : neutral.card,
+                    borderColor: active ? branchColors.agency : neutral.divider,
+                  },
+                ]}
+                onPress={() => active ? unfollowTopic(topic) : followTopic(topic)}
+              >
+                <Text style={[styles.chipText, { color: active ? '#FFFFFF' : neutral.textPrimary }]}>
+                  {topic}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Bills And Committees</Text>
+        <View style={styles.stack}>
+          {bills.map(bill => {
+            const billId = bill.canonicalId;
+            const active = followedBills.has(billId);
+            return (
+              <FollowRow
+                key={billId}
+                label={bill.label}
+                meta={bill.title}
+                followed={active}
+                onToggle={() => active ? unfollowBill(billId) : followBill(billId)}
+              />
+            );
+          })}
+          {committees.map(committee => {
+            const active = followedCommittees.includes(committee.id);
+            return (
+              <FollowRow
+                key={committee.id}
+                label={committee.name}
+                meta={committee.jurisdiction ?? 'Committee'}
+                followed={active}
+                onToggle={() => active ? unfollowCommittee(committee.id) : followCommittee(committee.id)}
+              />
+            );
+          })}
+          {bills.length === 0 && committees.length === 0 && (
+            <EmptyMessage text="Ranked feed cards will surface followable bills and committees here." />
           )}
         </View>
+      </View>
 
-        {savedItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="bookmark-outline" size={32} color={neutral.textMuted} />
-            <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
-              No saved items yet. Tap the bookmark icon on any update to save it here.
-            </Text>
+      <View style={styles.section}>
+        <View style={styles.sectionHeadingRow}>
+          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Recent Local Activity</Text>
+          <Pressable onPress={reload}>
+            <Ionicons name="refresh" size={18} color={branchColors.agency} />
+          </Pressable>
+        </View>
+        {feedLoading && items.length === 0 ? (
+          <View style={styles.inlineLoader}>
+            <ActivityIndicator color={branchColors.agency} />
           </View>
         ) : (
-          <View style={styles.savedList}>
-            {savedItems.slice(0, 5).map(item => (
+          <View style={styles.stack}>
+            {items.slice(0, 8).map(item => (
               <Pressable
                 key={item.id}
-                style={[styles.savedItem, { borderBottomColor: neutral.divider }]}
-                onPress={() => handleItemPress(item)}
+                style={[styles.activityRow, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
+                onPress={() => openItem(item)}
               >
-                <View style={[styles.savedItemBar, { backgroundColor: branchColors[item.branch] || branchColors.legislative }]} />
-                <View style={styles.savedItemContent}>
-                  <Text style={[styles.savedItemHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
-                    {item.headline}
-                  </Text>
-                  <Text style={[styles.savedItemMeta, { color: neutral.textMuted }]}>
-                    {item.branch.toUpperCase()} • {dayjs(item.published_at).fromNow()}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={neutral.textMuted} />
+                <Text style={[styles.activityType, { color: branchColors[item.branch] ?? branchColors.legislative }]}>
+                  {(item.card_type ?? item.branch).toUpperCase()}
+                </Text>
+                <Text style={[styles.activityHeadline, { color: neutral.textPrimary }]} numberOfLines={2}>
+                  {item.headline}
+                </Text>
+                <Text style={[styles.activityMeta, { color: neutral.textMuted }]}>
+                  {dayjs(item.published_at).fromNow()}
+                </Text>
               </Pressable>
             ))}
-            {savedItems.length > 5 && (
-              <Text style={[styles.moreItemsText, { color: neutral.textMuted }]}>
-                +{savedItems.length - 5} more items
-              </Text>
+            {items.length === 0 && (
+              <EmptyMessage text="No recent activity matches your district or followed objects yet." />
             )}
           </View>
         )}
-      </View>
-
-      {/* Notifications */}
-      <View style={[styles.section, { backgroundColor: neutral.card }]}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="notifications" size={20} color={branchColors.agency} />
-          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
-            Notifications
-          </Text>
-        </View>
-
-        <View style={styles.settingsList}>
-          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>Daily Digest</Text>
-              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
-                {preferences.notifications.dailyDigestTime}
-              </Text>
-            </View>
-            <Switch
-              value={preferences.notifications.dailyDigest}
-              onValueChange={(value) => setNotificationPreferences({ dailyDigest: value })}
-              trackColor={{ false: neutral.divider, true: branchColors.agency + '80' }}
-              thumbColor={preferences.notifications.dailyDigest ? branchColors.agency : neutral.textMuted}
-            />
-          </View>
-
-          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>Breaking News</Text>
-              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
-                Urgent government updates
-              </Text>
-            </View>
-            <Switch
-              value={preferences.notifications.breakingNews}
-              onValueChange={(value) => setNotificationPreferences({ breakingNews: value })}
-              trackColor={{ false: neutral.divider, true: branchColors.agency + '80' }}
-              thumbColor={preferences.notifications.breakingNews ? branchColors.agency : neutral.textMuted}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>Bill Updates</Text>
-              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
-                Updates on followed bills
-              </Text>
-            </View>
-            <Switch
-              value={preferences.notifications.billUpdates}
-              onValueChange={(value) => setNotificationPreferences({ billUpdates: value })}
-              trackColor={{ false: neutral.divider, true: branchColors.agency + '80' }}
-              thumbColor={preferences.notifications.billUpdates ? branchColors.agency : neutral.textMuted}
-            />
-          </View>
-        </View>
-
-        <Pressable
-          style={[styles.settingsLink, { borderTopColor: neutral.divider }]}
-          onPress={handleNotificationSettings}
-        >
-          <Text style={[styles.settingsLinkText, { color: branchColors.agency }]}>
-            More notification settings
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color={branchColors.agency} />
-        </Pressable>
-      </View>
-
-      {/* Interests */}
-      <View style={[styles.section, { backgroundColor: neutral.card }]}>
-        <View style={styles.sectionHeader}>
-          <Ionicons name="heart" size={20} color={branchColors.agency} />
-          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
-            Interests
-          </Text>
-        </View>
-
-        <View style={styles.interestsList}>
-          {preferences.interests.length === 0 ? (
-            <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
-              No interests selected yet.
-            </Text>
-          ) : (
-            <View style={styles.interestChips}>
-              {preferences.interests.map(interest => (
-                <View
-                  key={interest}
-                  style={[styles.interestChip, { backgroundColor: neutral.surface }]}
-                >
-                  <Text style={[styles.interestChipText, { color: neutral.textPrimary }]}>
-                    {interestLabels[interest] || interest}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-
-        <Pressable
-          style={[styles.settingsLink, { borderTopColor: neutral.divider }]}
-          onPress={handleEditInterests}
-        >
-          <Text style={[styles.settingsLinkText, { color: branchColors.agency }]}>
-            Edit your interests
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color={branchColors.agency} />
-        </Pressable>
-      </View>
-
-      {/* App Info */}
-      <View style={styles.footer}>
-        <Text style={[styles.footerText, { color: neutral.textMuted }]}>
-          Congresscape v0.1.0
-        </Text>
-        <Text style={[styles.footerText, { color: neutral.textMuted }]}>
-          Your daily briefing on federal government activity
-        </Text>
       </View>
     </ScrollView>
   );
+};
+
+const MemberRow = ({
+  member,
+  label,
+  followed,
+  onToggle,
+}: {
+  member: CurrentMember;
+  label: string;
+  followed: boolean;
+  onToggle: () => void;
+}) => (
+  <FollowRow
+    label={member.name}
+    meta={`${label}${member.party ? ` · ${member.party}` : ''}`}
+    followed={followed}
+    onToggle={onToggle}
+  />
+);
+
+const FollowRow = ({
+  label,
+  meta,
+  followed,
+  onToggle,
+}: {
+  label: string;
+  meta?: string | null;
+  followed: boolean;
+  onToggle: () => void;
+}) => {
+  const { neutral, branch } = useTheme();
+  return (
+    <View style={[styles.followRow, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
+      <View style={styles.followText}>
+        <Text style={[styles.followLabel, { color: neutral.textPrimary }]}>{label}</Text>
+        {meta && <Text style={[styles.followMeta, { color: neutral.textMuted }]}>{meta}</Text>}
+      </View>
+      <Pressable
+        style={[
+          styles.followButton,
+          {
+            borderColor: branch.agency,
+            backgroundColor: followed ? branch.agency : 'transparent',
+          },
+        ]}
+        onPress={onToggle}
+      >
+        <Text style={[styles.followButtonText, { color: followed ? '#FFFFFF' : branch.agency }]}>
+          {followed ? 'Following' : 'Follow'}
+        </Text>
+      </Pressable>
+    </View>
+  );
+};
+
+const EmptyMessage = ({ text }: { text: string }) => {
+  const { neutral } = useTheme();
+  return (
+    <View style={styles.emptyBox}>
+      <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>{text}</Text>
+    </View>
+  );
+};
+
+const collectBills = (items: FeedItem[]) => {
+  const byId = new Map<string, { canonicalId: string; label: string; title?: string | null }>();
+  items.forEach(item => {
+    const bill = item.detail?.bill;
+    if (!bill) return;
+    byId.set(bill.canonical_id, {
+      canonicalId: bill.canonical_id,
+      label: bill.display_number,
+      title: bill.short_title ?? bill.title,
+    });
+  });
+  return Array.from(byId.values());
+};
+
+const collectCommittees = (items: FeedItem[]) => {
+  const byId = new Map<string, { id: string; name: string; jurisdiction?: string | null }>();
+  items.forEach(item => {
+    const billCommittees = item.detail?.bill?.committees ?? [];
+    billCommittees.forEach(committee => {
+      const id = getString(committee, 'committee_code');
+      const name = getString(committee, 'name');
+      if (id && name) {
+        byId.set(id, { id, name, jurisdiction: getString(committee, 'jurisdiction') });
+      }
+    });
+    const hearingCommittee = item.detail?.hearing?.committee;
+    if (hearingCommittee) {
+      const id = getString(hearingCommittee, 'committee_code');
+      const name = getString(hearingCommittee, 'name');
+      if (id && name) {
+        byId.set(id, { id, name, jurisdiction: getString(hearingCommittee, 'jurisdiction') });
+      }
+    }
+  });
+  return Array.from(byId.values());
+};
+
+const getString = (value: Record<string, unknown>, key: string) => {
+  const raw = value[key];
+  return typeof raw === 'string' ? raw : null;
 };
 
 const styles = StyleSheet.create({
@@ -358,198 +384,141 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 60,
     paddingHorizontal: 16,
-    paddingBottom: 100,
-    gap: 16,
+    paddingBottom: 120,
+    gap: 18,
   },
   header: {
-    paddingVertical: 8,
+    gap: 4,
   },
-  headerTitle: {
-    fontSize: 28,
+  eyebrow: {
+    fontSize: 12,
     fontWeight: '800',
   },
-  section: {
-    borderRadius: 20,
-    padding: 16,
-    gap: 16,
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  panel: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
     gap: 10,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-  },
-  clearButton: {
-    padding: 4,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  followingRow: {
+  lookupRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 8,
+    gap: 8,
   },
-  followingStat: {
-    alignItems: 'center',
-    gap: 4,
+  lookupInput: {
     flex: 1,
-  },
-  followingNumber: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  followingLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  followingDivider: {
-    width: 1,
-    height: 40,
-  },
-  districtBadge: {
-    fontSize: 13,
-    fontWeight: '700',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  memberList: {
-    gap: 0,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    gap: 12,
-  },
-  memberInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  memberRole: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  memberName: {
     fontSize: 15,
-    fontWeight: '600',
   },
-  memberParty: {
-    fontSize: 13,
-    fontWeight: '500',
+  lookupButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  lookupWarning: {
+  warningText: {
     fontSize: 13,
     lineHeight: 18,
   },
-  emptyState: {
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 20,
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  savedList: {
-    gap: 0,
-  },
-  savedItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    gap: 12,
-  },
-  savedItemBar: {
-    width: 3,
-    height: 40,
-    borderRadius: 2,
-  },
-  savedItemContent: {
-    flex: 1,
-    gap: 4,
-  },
-  savedItemHeadline: {
-    fontSize: 15,
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-  savedItemMeta: {
-    fontSize: 12,
-  },
-  moreItemsText: {
-    fontSize: 14,
-    textAlign: 'center',
-    paddingTop: 12,
-  },
-  settingsList: {
-    gap: 0,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  settingInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  settingDescription: {
+  linkText: {
     fontSize: 13,
+    fontWeight: '700',
   },
-  settingsLink: {
+  section: {
+    gap: 10,
+  },
+  sectionHeadingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
+    alignItems: 'center',
   },
-  settingsLinkText: {
-    fontSize: 15,
-    fontWeight: '500',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
   },
-  interestsList: {
+  stack: {
     gap: 8,
   },
-  interestChips: {
+  followRow: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  followText: {
+    flex: 1,
+    gap: 3,
+  },
+  followLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  followMeta: {
+    fontSize: 12,
+  },
+  followButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  followButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  interestChip: {
-    paddingHorizontal: 14,
+  chip: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
   },
-  interestChipText: {
-    fontSize: 14,
-    fontWeight: '500',
+  chipText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'capitalize',
   },
-  footer: {
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 20,
+  activityRow: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    gap: 5,
   },
-  footerText: {
+  activityType: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  activityHeadline: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  activityMeta: {
     fontSize: 12,
+  },
+  inlineLoader: {
+    paddingVertical: 24,
+  },
+  emptyBox: {
+    paddingVertical: 14,
+  },
+  emptyText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

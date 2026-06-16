@@ -70,14 +70,133 @@ export type CivicCard = {
   metadata?: Record<string, unknown> | null;
 };
 
+export type RankContext = {
+  score: number;
+  factors: Record<string, number>;
+  reasons: string[];
+};
+
+export type SourceTrailItem = CivicSource & {
+  confidence?: string;
+  source_category?: string;
+};
+
+export type BillTimelineItem = {
+  id: number;
+  action_type?: string | null;
+  text: string;
+  acted_at?: string | null;
+  chamber?: string | null;
+  source_url?: string | null;
+};
+
+export type BillDetail = {
+  canonical_id: string;
+  display_number: string;
+  title: string;
+  short_title?: string | null;
+  status: string;
+  origin_chamber?: string | null;
+  policy_area?: string | null;
+  introduced_at?: string | null;
+  latest_action_at?: string | null;
+  sponsors: Record<string, unknown>[];
+  cosponsors: Record<string, unknown>[];
+  committees: Record<string, unknown>[];
+  timeline: BillTimelineItem[];
+  text_versions: Record<string, unknown>[];
+  amendments: Record<string, unknown>[];
+  related_bills: Record<string, unknown>[];
+  cbo_cost_estimates: Record<string, unknown>[];
+  crs_reports: Record<string, unknown>[];
+  votes: Record<string, unknown>[];
+  vote_eligible: boolean;
+  user_position_prompt?: string | null;
+  source_url?: string | null;
+  unavailable: Record<string, string | null>;
+};
+
+export type VotePosition = {
+  member_identifier: string;
+  member_name: string;
+  party?: string | null;
+  state?: string | null;
+  district?: string | null;
+  position: string;
+  congress_url?: string | null;
+  is_current_member?: boolean | null;
+};
+
+export type VoteDetail = {
+  canonical_id: string;
+  chamber: string;
+  congress: number;
+  session?: string | null;
+  roll_number: string;
+  vote_date?: string | null;
+  question: string;
+  result?: string | null;
+  margin?: string | null;
+  totals: Record<string, unknown>;
+  party_split: Record<string, unknown>;
+  positions: VotePosition[];
+  local_representative_positions: VotePosition[];
+  linked_bill?: Record<string, unknown> | null;
+  source_url?: string | null;
+  unavailable: Record<string, string | null>;
+};
+
+export type HearingDetail = {
+  canonical_id: string;
+  event_id: string;
+  congress?: number | null;
+  chamber: string;
+  title: string;
+  meeting_type?: string | null;
+  status?: string | null;
+  scheduled_at?: string | null;
+  location?: string | null;
+  committee?: Record<string, unknown> | null;
+  witnesses: Record<string, unknown>[];
+  related_bills: Record<string, unknown>[];
+  videos: Record<string, unknown>[];
+  transcripts: Record<string, unknown>[];
+  source_url?: string | null;
+  follow_supported: boolean;
+  alert_affordance?: string | null;
+  unavailable: Record<string, string | null>;
+};
+
+export type FeedItemDetail = {
+  bill?: BillDetail;
+  vote?: VoteDetail;
+  hearing?: HearingDetail;
+};
+
 export type FeedItem = {
   id: number;
+  external_id?: string;
   headline: string;
-  summary: string;
+  summary?: string | null;
+  full_text?: string | null;
   published_at: string;
+  event_date?: string | null;
   branch: Branch;
   source: string;
   url?: string;
+  bill_id?: number | null;
+  bill_action_id?: number | null;
+  vote_id?: number | null;
+  hearing_id?: number | null;
   tags: string[];
-  metadata?: Record<string, unknown>;
+  card_type?: CivicCardType;
+  rank_context?: RankContext;
+  involved?: CivicEntity[];
+  key_claims?: CivicClaim[];
+  source_trail?: SourceTrailItem[];
+  source_trail_status?: SourceTrailStatus;
+  source_trail_note?: string | null;
+  detail?: FeedItemDetail;
+  entities?: { id: number; name: string; type: string; slug: string }[];
+  metadata?: Record<string, unknown> | null;
 };

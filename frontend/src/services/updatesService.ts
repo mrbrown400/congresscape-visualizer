@@ -1,5 +1,4 @@
 import axios from 'axios';
-import dayjs from 'dayjs';
 import Constants from 'expo-constants';
 
 // Fallback to localhost if not configured (e.g. in development)
