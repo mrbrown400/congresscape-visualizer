@@ -45,6 +45,7 @@ const defaultPreferences: UserPreferences = {
 type UserPreferencesContextType = {
   preferences: UserPreferences;
   hasCompletedOnboarding: boolean;
+  isLoaded: boolean;
   setInterests: (interests: string[]) => void;
   toggleInterest: (interest: string) => void;
   setNotificationPreferences: (prefs: Partial<NotificationPreferences>) => void;
@@ -226,6 +227,7 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
       value={{
         preferences,
         hasCompletedOnboarding,
+        isLoaded,
         setInterests,
         toggleInterest,
         setNotificationPreferences,

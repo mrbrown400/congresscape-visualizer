@@ -18,7 +18,11 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const RootNavigator = () => {
-  const { hasCompletedOnboarding } = useUserPreferences();
+  const { hasCompletedOnboarding, isLoaded } = useUserPreferences();
+
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <Stack.Navigator
