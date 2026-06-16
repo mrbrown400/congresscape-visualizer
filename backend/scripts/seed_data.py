@@ -1,7 +1,10 @@
+"""Seed the local database with deterministic-looking mock updates."""
+# ruff: noqa: E402
+
 import asyncio
-import sys
 import os
 import random
+import sys
 from datetime import datetime, timedelta, timezone
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))

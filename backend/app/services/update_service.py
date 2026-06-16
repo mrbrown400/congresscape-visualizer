@@ -33,6 +33,10 @@ class UpdateService:
             published_at=payload.published_at,
             event_date=payload.event_date,
             url=str(payload.url) if payload.url else None,
+            bill_id=payload.bill_id,
+            bill_action_id=payload.bill_action_id,
+            vote_id=payload.vote_id,
+            hearing_id=payload.hearing_id,
             tags=payload.tags,
             metadata_json=payload.metadata or {},
             # embedding=payload.embedding, # Removed for SQLite
@@ -57,6 +61,10 @@ class UpdateService:
             existing.published_at = payload.published_at
             existing.event_date = payload.event_date
             existing.url = str(payload.url) if payload.url else None
+            existing.bill_id = payload.bill_id
+            existing.bill_action_id = payload.bill_action_id
+            existing.vote_id = payload.vote_id
+            existing.hearing_id = payload.hearing_id
             existing.tags = payload.tags
             existing.metadata_json = payload.metadata or {}
             # existing.embedding = payload.embedding # Removed for SQLite

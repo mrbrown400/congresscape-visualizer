@@ -67,6 +67,11 @@ const YouScreen = () => {
     members: preferences.followedMembers.length,
     topics: preferences.followedTopics.length,
   };
+  const districtLabel = preferences.homeDistrict?.state && preferences.homeDistrict?.district
+    ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}`
+    : null;
+  const representative = preferences.currentMembers.find(member => member.chamber === 'House');
+  const senators = preferences.currentMembers.filter(member => member.chamber === 'Senate');
 
   return (
     <ScrollView
@@ -110,6 +115,69 @@ const YouScreen = () => {
             <Text style={[styles.followingLabel, { color: neutral.textMuted }]}>Topics</Text>
           </View>
         </View>
+      </View>
+
+      {/* My Government */}
+      <View style={[styles.section, { backgroundColor: neutral.card }]}>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="business" size={20} color={branchColors.legislative} />
+          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
+            My Government
+          </Text>
+          {districtLabel && (
+            <Text style={[styles.districtBadge, { color: branchColors.legislative, backgroundColor: neutral.surface }]}>
+              {districtLabel}
+            </Text>
+          )}
+        </View>
+
+        {!preferences.homeDistrict ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="location-outline" size={32} color={neutral.textMuted} />
+            <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
+              Add a district lookup to show your representative and senators here.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.memberList}>
+            {preferences.districtLookupAmbiguity && (
+              <Text style={[styles.lookupWarning, { color: semantic.warning }]}>
+                {preferences.districtLookupAmbiguity}
+              </Text>
+            )}
+            {representative && (
+              <View style={[styles.memberRow, { borderBottomColor: neutral.divider }]}>
+                <View style={styles.memberInfo}>
+                  <Text style={[styles.memberRole, { color: neutral.textMuted }]}>Representative</Text>
+                  <Text style={[styles.memberName, { color: neutral.textPrimary }]}>
+                    {representative.name}
+                  </Text>
+                </View>
+                <Text style={[styles.memberParty, { color: neutral.textMuted }]}>
+                  {representative.party ?? ''}
+                </Text>
+              </View>
+            )}
+            {senators.map(senator => (
+              <View key={senator.bioguide_id} style={[styles.memberRow, { borderBottomColor: neutral.divider }]}>
+                <View style={styles.memberInfo}>
+                  <Text style={[styles.memberRole, { color: neutral.textMuted }]}>Senator</Text>
+                  <Text style={[styles.memberName, { color: neutral.textPrimary }]}>
+                    {senator.name}
+                  </Text>
+                </View>
+                <Text style={[styles.memberParty, { color: neutral.textMuted }]}>
+                  {senator.party ?? ''}
+                </Text>
+              </View>
+            ))}
+            {preferences.currentMembers.length === 0 && (
+              <Text style={[styles.emptyText, { color: neutral.textSecondary }]}>
+                No current members are loaded for this district yet.
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Saved Items */}
@@ -344,6 +412,45 @@ const styles = StyleSheet.create({
   followingDivider: {
     width: 1,
     height: 40,
+  },
+  districtBadge: {
+    fontSize: 13,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  memberList: {
+    gap: 0,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  memberInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  memberRole: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  memberName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  memberParty: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  lookupWarning: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   emptyState: {
     alignItems: 'center',

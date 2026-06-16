@@ -1,14 +1,15 @@
 """Database models for government updates and related metadata."""
+from __future__ import annotations
+
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import (
     JSON,
     Column,
     DateTime,
     ForeignKey,
-    Index,
     String,
     Table,
     Text,
@@ -16,6 +17,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONBMixin, PrimaryKeyMixin, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.legislative import (
+        BillAction,
+        CongressionalBill,
+        CongressionalHearing,
+        CongressionalVote,
+    )
 
 
 class BranchEnum(str, Enum):
@@ -51,6 +60,18 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     event_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     url: Mapped[Optional[str]] = mapped_column(String(500))
+    bill_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("congressional_bills.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    bill_action_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("bill_actions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    vote_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("congressional_votes.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    hearing_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("congressional_hearings.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # SQLite compatible tags (stored as JSON)
     tags: Mapped[List[str]] = mapped_column(JSON, default=list)
@@ -64,6 +85,10 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
         secondary=update_entity_association,
         lazy="selectin",
     )
+    bill: Mapped[Optional["CongressionalBill"]] = relationship(lazy="selectin")
+    bill_action: Mapped[Optional["BillAction"]] = relationship(lazy="selectin")
+    vote: Mapped[Optional["CongressionalVote"]] = relationship(lazy="selectin")
+    hearing: Mapped[Optional["CongressionalHearing"]] = relationship(lazy="selectin")
 
     # Indexes removed for SQLite
     # __table_args__ = (
