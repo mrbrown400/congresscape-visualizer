@@ -21,7 +21,7 @@ const timeOptions = [
 ];
 
 const NotificationSettingsScreen = ({ navigation }: Props) => {
-  const { neutral, branch: branchColors, spacing } = useTheme();
+  const { neutral, branch: branchColors } = useTheme();
   const { preferences, setNotificationPreferences } = useUserPreferences();
 
   const [showTimePicker, setShowTimePicker] = useState(false);

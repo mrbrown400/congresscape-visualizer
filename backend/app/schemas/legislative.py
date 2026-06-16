@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 SourceConfidence = Literal["direct_source", "related_entity", "topic_context", "unavailable"]
@@ -24,11 +24,9 @@ class LegislativeSourceLinkBase(BaseModel):
 
 
 class LegislativeSourceLinkRead(LegislativeSourceLinkBase):
-    id: int
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
+    id: int
 
 
 class CongressionalCommitteeBase(BaseModel):
@@ -43,12 +41,10 @@ class CongressionalCommitteeBase(BaseModel):
 
 
 class CongressionalCommitteeRead(CongressionalCommitteeBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     source_links: list[LegislativeSourceLinkRead] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
 
 class BillActionBase(BaseModel):
@@ -65,13 +61,11 @@ class BillActionBase(BaseModel):
 
 
 class BillActionRead(BillActionBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     bill_id: int
     source_links: list[LegislativeSourceLinkRead] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
 
 class BillTextVersionBase(BaseModel):
@@ -85,13 +79,11 @@ class BillTextVersionBase(BaseModel):
 
 
 class BillTextVersionRead(BillTextVersionBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     bill_id: int
     source_links: list[LegislativeSourceLinkRead] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
-        populate_by_name = True
 
 
 class CongressionalBillBase(BaseModel):
@@ -118,18 +110,18 @@ class CongressionalBillBase(BaseModel):
 
 
 class CongressionalBillRead(CongressionalBillBase):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
     id: int
     actions: list[BillActionRead] = Field(default_factory=list)
     text_versions: list[BillTextVersionRead] = Field(default_factory=list)
     committees: list[CongressionalCommitteeRead] = Field(default_factory=list)
     source_links: list[LegislativeSourceLinkRead] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True
-
 
 class CongressionalMemberRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     bioguide_id: str
     name: str
@@ -142,11 +134,10 @@ class CongressionalMemberRead(BaseModel):
     congress_url: HttpUrl | None = None
     identifiers: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        from_attributes = True
-
 
 class CongressionalVoteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     canonical_id: str
     chamber: str
@@ -161,11 +152,10 @@ class CongressionalVoteRead(BaseModel):
     totals: dict[str, Any] = Field(default_factory=dict)
     party_split: dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        from_attributes = True
-
 
 class CongressionalHearingRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     canonical_id: str
     event_id: str
@@ -182,9 +172,6 @@ class CongressionalHearingRead(BaseModel):
     related_bills: list[dict[str, Any]] = Field(default_factory=list)
     videos: list[dict[str, Any]] = Field(default_factory=list)
     transcripts: list[dict[str, Any]] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
 
 
 class DistrictLookupResponse(BaseModel):

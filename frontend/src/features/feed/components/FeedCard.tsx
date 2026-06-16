@@ -28,11 +28,13 @@ const FeedCard = ({ item, onPress, onSave }: Props) => {
 
         <Text style={styles.headline}>{item.headline}</Text>
         <Text style={styles.summary} numberOfLines={3}>
-          {item.summary}
+          {item.summary ?? 'Official summary has not been published yet.'}
         </Text>
 
         <View style={styles.footerRow}>
-          <Text style={styles.source}>{item.source.toUpperCase()}</Text>
+          <Text style={styles.source}>
+            {(item.card_type ?? item.source).toUpperCase()}
+          </Text>
           <View style={styles.tagRow}>
             {item.tags.slice(0, 2).map(tag => (
               <View key={tag} style={styles.tagChip}>

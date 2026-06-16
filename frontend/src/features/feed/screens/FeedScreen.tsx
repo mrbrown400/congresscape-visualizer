@@ -1,11 +1,16 @@
 import React, { useCallback } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import FeedCard from '@features/feed/components/FeedCard';
 import { useFeed } from '@features/feed/hooks/useFeed';
+import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
 
 import { FeedItem } from '../types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type Props = {
   contextKey: string;
@@ -14,8 +19,11 @@ type Props = {
 const FeedScreen = ({ contextKey }: Props) => {
   const { neutral } = useTheme();
   const { items, loading, error, reload } = useFeed(contextKey);
+  const navigation = useNavigation<NavigationProp>();
 
-  const renderItem = useCallback(({ item }: { item: FeedItem }) => <FeedCard item={item} />, []);
+  const renderItem = useCallback(({ item }: { item: FeedItem }) => (
+    <FeedCard item={item} onPress={() => navigation.navigate('UpdateDetail', { item })} />
+  ), [navigation]);
 
   return (
     <View style={[styles.container, { backgroundColor: neutral.background }]}> 

@@ -19,10 +19,17 @@ export type UserPreferences = {
   followedMembers: string[];
   followedBills: string[];
   followedTopics: string[];
+  followedCommittees: string[];
+  billPositions: Record<string, UserBillPosition>;
   homeDistrict: UserDistrict | null;
   currentMembers: CurrentMember[];
   currentMembersUpdatedAt: string | null;
   districtLookupAmbiguity: string | null;
+};
+
+export type UserBillPosition = {
+  position: 'yea' | 'nay' | 'present' | 'abstain' | 'undecided';
+  updatedAt: string;
 };
 
 const defaultPreferences: UserPreferences = {
@@ -36,6 +43,8 @@ const defaultPreferences: UserPreferences = {
   followedMembers: [],
   followedBills: [],
   followedTopics: [],
+  followedCommittees: [],
+  billPositions: {},
   homeDistrict: null,
   currentMembers: [],
   currentMembersUpdatedAt: null,
@@ -55,6 +64,10 @@ type UserPreferencesContextType = {
   unfollowBill: (billId: string) => void;
   followTopic: (topic: string) => void;
   unfollowTopic: (topic: string) => void;
+  followCommittee: (committeeId: string) => void;
+  unfollowCommittee: (committeeId: string) => void;
+  setBillPosition: (billId: string, position: UserBillPosition['position']) => void;
+  clearBillPosition: (billId: string) => void;
   setDistrictMemberMapping: (mapping: DistrictLookupResponse) => void;
   clearDistrictMemberMapping: () => void;
   completeOnboarding: () => void;
@@ -172,6 +185,43 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
     }));
   }, []);
 
+  const followCommittee = useCallback((committeeId: string) => {
+    setPreferences(prev => ({
+      ...prev,
+      followedCommittees: prev.followedCommittees.includes(committeeId)
+        ? prev.followedCommittees
+        : [...prev.followedCommittees, committeeId]
+    }));
+  }, []);
+
+  const unfollowCommittee = useCallback((committeeId: string) => {
+    setPreferences(prev => ({
+      ...prev,
+      followedCommittees: prev.followedCommittees.filter(id => id !== committeeId)
+    }));
+  }, []);
+
+  const setBillPosition = useCallback((billId: string, position: UserBillPosition['position']) => {
+    setPreferences(prev => ({
+      ...prev,
+      billPositions: {
+        ...prev.billPositions,
+        [billId]: {
+          position,
+          updatedAt: new Date().toISOString(),
+        },
+      },
+    }));
+  }, []);
+
+  const clearBillPosition = useCallback((billId: string) => {
+    setPreferences(prev => {
+      const nextPositions = { ...prev.billPositions };
+      delete nextPositions[billId];
+      return { ...prev, billPositions: nextPositions };
+    });
+  }, []);
+
   const setDistrictMemberMapping = useCallback((mapping: DistrictLookupResponse) => {
     setPreferences(prev => ({
       ...prev,
@@ -237,6 +287,10 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
         unfollowBill,
         followTopic,
         unfollowTopic,
+        followCommittee,
+        unfollowCommittee,
+        setBillPosition,
+        clearBillPosition,
         setDistrictMemberMapping,
         clearDistrictMemberMapping,
         completeOnboarding,

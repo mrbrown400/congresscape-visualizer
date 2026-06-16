@@ -91,7 +91,7 @@ const UpdateCard = ({ item, onPress, onSave, isSaved = false, compact = false }:
 
         {/* Summary */}
         <Text style={[styles.summary, { color: neutral.textSecondary }]} numberOfLines={2}>
-          {item.summary}
+          {item.summary ?? 'Official summary has not been published yet.'}
         </Text>
 
         {/* Footer */}

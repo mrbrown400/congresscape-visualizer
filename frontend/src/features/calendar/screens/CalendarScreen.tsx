@@ -26,8 +26,8 @@ const CalendarScreen = () => {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
 
-  const startOfMonth = currentDate.startOf('month');
-  const endOfMonth = currentDate.endOf('month');
+  const startOfMonth = useMemo(() => currentDate.startOf('month'), [currentDate]);
+  const endOfMonth = useMemo(() => currentDate.endOf('month'), [currentDate]);
   const startDayOfWeek = startOfMonth.day(); // 0-6
   const daysInMonth = currentDate.daysInMonth();
 
@@ -50,7 +50,7 @@ const CalendarScreen = () => {
       setLoading(false);
     };
     loadUpdates();
-  }, [currentDate, viewMode]);
+  }, [currentDate, endOfMonth, startOfMonth, viewMode]);
 
   // Generate calendar grid
   const calendarDays = useMemo(() => {
@@ -64,7 +64,7 @@ const CalendarScreen = () => {
       days.push(startOfMonth.date(i));
     }
     return days;
-  }, [currentDate]);
+  }, [daysInMonth, startDayOfWeek, startOfMonth]);
 
   // Group updates by date for the calendar dots
   const updatesByDate = useMemo(() => {

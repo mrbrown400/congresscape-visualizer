@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PushTokenCreate(BaseModel):
@@ -17,11 +17,10 @@ class PushTokenCreate(BaseModel):
 class PushTokenRead(BaseModel):
     """Echo back the stored token with metadata."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     token: str
     platform: str
     timezone: str | None = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
