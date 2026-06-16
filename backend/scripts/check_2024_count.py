@@ -1,6 +1,10 @@
+"""Check government update counts for 2024."""
+# ruff: noqa: E402
+
 import asyncio
-import sys
 import os
+import sys
+
 from sqlalchemy import text
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))

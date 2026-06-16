@@ -1,6 +1,9 @@
+"""Check total government update count."""
+# ruff: noqa: E402
+
 import asyncio
-import sys
 import os
+import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 

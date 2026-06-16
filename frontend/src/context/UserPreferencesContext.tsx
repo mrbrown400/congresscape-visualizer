@@ -1,6 +1,8 @@
 import React, { PropsWithChildren, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { CurrentMember, DistrictLookupResponse, UserDistrict } from '@features/members/types';
+
 const PREFS_KEY = '@congresscape:user_preferences';
 const ONBOARDING_KEY = '@congresscape:onboarding_completed';
 
@@ -17,6 +19,10 @@ export type UserPreferences = {
   followedMembers: string[];
   followedBills: string[];
   followedTopics: string[];
+  homeDistrict: UserDistrict | null;
+  currentMembers: CurrentMember[];
+  currentMembersUpdatedAt: string | null;
+  districtLookupAmbiguity: string | null;
 };
 
 const defaultPreferences: UserPreferences = {
@@ -30,11 +36,16 @@ const defaultPreferences: UserPreferences = {
   followedMembers: [],
   followedBills: [],
   followedTopics: [],
+  homeDistrict: null,
+  currentMembers: [],
+  currentMembersUpdatedAt: null,
+  districtLookupAmbiguity: null,
 };
 
 type UserPreferencesContextType = {
   preferences: UserPreferences;
   hasCompletedOnboarding: boolean;
+  isLoaded: boolean;
   setInterests: (interests: string[]) => void;
   toggleInterest: (interest: string) => void;
   setNotificationPreferences: (prefs: Partial<NotificationPreferences>) => void;
@@ -44,6 +55,8 @@ type UserPreferencesContextType = {
   unfollowBill: (billId: string) => void;
   followTopic: (topic: string) => void;
   unfollowTopic: (topic: string) => void;
+  setDistrictMemberMapping: (mapping: DistrictLookupResponse) => void;
+  clearDistrictMemberMapping: () => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
 };
@@ -159,6 +172,38 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
     }));
   }, []);
 
+  const setDistrictMemberMapping = useCallback((mapping: DistrictLookupResponse) => {
+    setPreferences(prev => ({
+      ...prev,
+      homeDistrict: {
+        state: mapping.state ?? null,
+        district: mapping.district ?? null,
+        lookupKey: mapping.lookup_key,
+        lookupType: mapping.lookup_type,
+        query: mapping.query,
+        source: mapping.source,
+        retrievedAt: mapping.retrieved_at,
+        ambiguityReason: mapping.ambiguity_reason ?? null,
+      },
+      currentMembers: [
+        ...(mapping.representative ? [mapping.representative] : []),
+        ...mapping.senators,
+      ],
+      currentMembersUpdatedAt: mapping.retrieved_at,
+      districtLookupAmbiguity: mapping.ambiguity_reason ?? null,
+    }));
+  }, []);
+
+  const clearDistrictMemberMapping = useCallback(() => {
+    setPreferences(prev => ({
+      ...prev,
+      homeDistrict: null,
+      currentMembers: [],
+      currentMembersUpdatedAt: null,
+      districtLookupAmbiguity: null,
+    }));
+  }, []);
+
   const completeOnboarding = useCallback(async () => {
     setHasCompletedOnboarding(true);
     try {
@@ -182,6 +227,7 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
       value={{
         preferences,
         hasCompletedOnboarding,
+        isLoaded,
         setInterests,
         toggleInterest,
         setNotificationPreferences,
@@ -191,6 +237,8 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
         unfollowBill,
         followTopic,
         unfollowTopic,
+        setDistrictMemberMapping,
+        clearDistrictMemberMapping,
         completeOnboarding,
         resetOnboarding,
       }}

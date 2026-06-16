@@ -1,6 +1,9 @@
+"""Populate the local database from configured public sources."""
+# ruff: noqa: E402
+
 import asyncio
-import sys
 import os
+import sys
 
 # Add backend to path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
