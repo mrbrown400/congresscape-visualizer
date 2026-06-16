@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useFeed } from '@features/feed/hooks/useFeed';
 import { CivicCardType, FeedItem } from '@features/feed/types';
+import VotePromptForFeedItem from '@features/votes/components/VotePromptForFeedItem';
 import { useUserPreferences } from '@context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
@@ -115,6 +116,7 @@ const TodayScreen = () => {
           </Text>
           <RankReasons item={topItem} />
           <SourceTrailPreview item={topItem} />
+          <VotePromptForFeedItem item={topItem} compact />
         </Pressable>
       )}
 
@@ -156,6 +158,7 @@ const TodayScreen = () => {
                   </Text>
                 )}
                 <SourceTrailPreview item={item} compact />
+                <VotePromptForFeedItem item={item} compact />
               </Pressable>
             ))}
           </View>

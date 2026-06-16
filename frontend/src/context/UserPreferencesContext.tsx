@@ -2,6 +2,7 @@ import React, { PropsWithChildren, createContext, useCallback, useContext, useEf
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { CurrentMember, DistrictLookupResponse, UserDistrict } from '@features/members/types';
+import { UserVotePositionValue } from '@features/votes/utils/voteComparison';
 
 const PREFS_KEY = '@congresscape:user_preferences';
 const ONBOARDING_KEY = '@congresscape:onboarding_completed';
@@ -28,8 +29,20 @@ export type UserPreferences = {
 };
 
 export type UserBillPosition = {
-  position: 'yea' | 'nay' | 'present' | 'abstain' | 'undecided';
+  position: UserVotePositionValue;
   updatedAt: string;
+  billId: string;
+  voteId?: string | null;
+  sourceUrl?: string | null;
+  label?: string | null;
+  prompt?: string | null;
+};
+
+export type SetBillPositionOptions = {
+  voteId?: string | null;
+  sourceUrl?: string | null;
+  label?: string | null;
+  prompt?: string | null;
 };
 
 const defaultPreferences: UserPreferences = {
@@ -66,8 +79,9 @@ type UserPreferencesContextType = {
   unfollowTopic: (topic: string) => void;
   followCommittee: (committeeId: string) => void;
   unfollowCommittee: (committeeId: string) => void;
-  setBillPosition: (billId: string, position: UserBillPosition['position']) => void;
+  setBillPosition: (billId: string, position: UserBillPosition['position'], options?: SetBillPositionOptions) => void;
   clearBillPosition: (billId: string) => void;
+  clearAllBillPositions: () => void;
   setDistrictMemberMapping: (mapping: DistrictLookupResponse) => void;
   clearDistrictMemberMapping: () => void;
   completeOnboarding: () => void;
@@ -90,7 +104,7 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
           AsyncStorage.getItem(ONBOARDING_KEY),
         ]);
         if (storedPrefs) {
-          setPreferences({ ...defaultPreferences, ...JSON.parse(storedPrefs) });
+          setPreferences(normalizePreferences(JSON.parse(storedPrefs)));
         }
         if (storedOnboarding === 'true') {
           setHasCompletedOnboarding(true);
@@ -201,7 +215,11 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
     }));
   }, []);
 
-  const setBillPosition = useCallback((billId: string, position: UserBillPosition['position']) => {
+  const setBillPosition = useCallback((
+    billId: string,
+    position: UserBillPosition['position'],
+    options: SetBillPositionOptions = {},
+  ) => {
     setPreferences(prev => ({
       ...prev,
       billPositions: {
@@ -209,6 +227,11 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
         [billId]: {
           position,
           updatedAt: new Date().toISOString(),
+          billId,
+          voteId: options.voteId ?? null,
+          sourceUrl: options.sourceUrl ?? null,
+          label: options.label ?? null,
+          prompt: options.prompt ?? null,
         },
       },
     }));
@@ -220,6 +243,10 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
       delete nextPositions[billId];
       return { ...prev, billPositions: nextPositions };
     });
+  }, []);
+
+  const clearAllBillPositions = useCallback(() => {
+    setPreferences(prev => ({ ...prev, billPositions: {} }));
   }, []);
 
   const setDistrictMemberMapping = useCallback((mapping: DistrictLookupResponse) => {
@@ -291,6 +318,7 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
         unfollowCommittee,
         setBillPosition,
         clearBillPosition,
+        clearAllBillPositions,
         setDistrictMemberMapping,
         clearDistrictMemberMapping,
         completeOnboarding,
@@ -308,4 +336,40 @@ export const useUserPreferences = () => {
     throw new Error('useUserPreferences must be used within UserPreferencesProvider');
   }
   return ctx;
+};
+
+const normalizePreferences = (stored: Partial<UserPreferences>): UserPreferences => {
+  const merged = {
+    ...defaultPreferences,
+    ...stored,
+    notifications: {
+      ...defaultPreferences.notifications,
+      ...(stored.notifications ?? {}),
+    },
+  };
+
+  return {
+    ...merged,
+    billPositions: normalizeBillPositions(stored.billPositions),
+  };
+};
+
+const normalizeBillPositions = (
+  positions: Partial<Record<string, Partial<UserBillPosition>>> | undefined,
+): Record<string, UserBillPosition> => {
+  if (!positions) return {};
+
+  return Object.entries(positions).reduce<Record<string, UserBillPosition>>((acc, [key, value]) => {
+    if (!value?.position) return acc;
+    acc[key] = {
+      position: value.position,
+      updatedAt: value.updatedAt ?? new Date().toISOString(),
+      billId: value.billId ?? key,
+      voteId: value.voteId ?? null,
+      sourceUrl: value.sourceUrl ?? null,
+      label: value.label ?? null,
+      prompt: value.prompt ?? null,
+    };
+    return acc;
+  }, {});
 };

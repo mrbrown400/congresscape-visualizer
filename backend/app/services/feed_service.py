@@ -276,10 +276,10 @@ class FeedService:
         if card_type == "hearing" and update.hearing:
             return {"hearing": self._hearing_detail(update.hearing)}
         if update.bill:
-            return {"bill": self._bill_detail(update.bill, update)}
+            return {"bill": self._bill_detail(update.bill, update, params)}
         return {}
 
-    def _bill_detail(self, bill: CongressionalBill, update: GovernmentUpdate) -> dict[str, Any]:
+    def _bill_detail(self, bill: CongressionalBill, update: GovernmentUpdate, params: FeedQueryParams) -> dict[str, Any]:
         timeline = sorted(bill.actions, key=lambda action: _sortable_datetime(action.acted_at), reverse=True)
         text_versions = sorted(
             bill.text_versions,
@@ -307,7 +307,7 @@ class FeedService:
             "related_bills": _list_or_unavailable(bill.related_bills),
             "cbo_cost_estimates": _list_or_unavailable(bill.cbo_cost_estimates),
             "crs_reports": _list_or_unavailable(bill.crs_reports),
-            "votes": [self._vote_summary(vote) for vote in bill.votes],
+            "votes": [self._vote_summary(vote, params) for vote in bill.votes],
             "vote_eligible": eligible_vote,
             "user_position_prompt": (
                 "Record a personal position for comparison. This is civic tracking, not an official congressional vote."
@@ -392,7 +392,8 @@ class FeedService:
             "source_url": bill.congress_url,
         }
 
-    def _vote_summary(self, vote: CongressionalVote) -> dict[str, Any]:
+    def _vote_summary(self, vote: CongressionalVote, params: FeedQueryParams | None = None) -> dict[str, Any]:
+        positions = [self._position_detail(position) for position in vote.positions]
         return {
             "id": vote.id,
             "canonical_id": vote.canonical_id,
@@ -402,6 +403,16 @@ class FeedService:
             "question": vote.question,
             "result": vote.result,
             "source_url": vote.source_url,
+            "positions": positions,
+            "local_representative_positions": (
+                [
+                    position
+                    for position in positions
+                    if _matches_local_context(position, params.state, params.district)
+                ]
+                if params
+                else []
+            ),
         }
 
     def _committee_detail(self, committee: CongressionalCommittee | None) -> dict[str, Any] | None:

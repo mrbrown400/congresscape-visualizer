@@ -8,7 +8,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:vote-comparison": "node scripts/run-vote-comparison-tests.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",

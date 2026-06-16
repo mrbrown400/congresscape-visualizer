@@ -23,20 +23,15 @@ import {
 } from '@features/feed/types';
 import BillStatusTracker from '@features/updateDetail/components/BillStatusTracker';
 import { useSavedItems } from '@context/SavedItemsContext';
-import { useUserPreferences, UserBillPosition } from '@context/UserPreferencesContext';
+import { useUserPreferences } from '@context/UserPreferencesContext';
+import UserVotePositionControl from '@features/votes/components/UserVotePositionControl';
+import VoteComparisonPanel from '@features/votes/components/VoteComparisonPanel';
+import { VoteSubject, getVoteSubjectForBill, getVoteSubjectForVote } from '@features/votes/utils/voteSubjects';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
 import dayjs from '@utils/dayjs';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UpdateDetail'>;
-
-const positionOptions: { value: UserBillPosition['position']; label: string }[] = [
-  { value: 'yea', label: 'Yea' },
-  { value: 'nay', label: 'Nay' },
-  { value: 'present', label: 'Present' },
-  { value: 'abstain', label: 'Abstain' },
-  { value: 'undecided', label: 'Undecided' },
-];
 
 const UpdateDetailScreen = ({ route, navigation }: Props) => {
   const { item } = route.params;
@@ -113,12 +108,10 @@ const BillDetailView = ({ item, bill }: { item: FeedItem; bill: BillDetail }) =>
     preferences,
     followBill,
     unfollowBill,
-    setBillPosition,
-    clearBillPosition,
   } = useUserPreferences();
   const followed = preferences.followedBills.includes(bill.canonical_id);
-  const savedPosition = preferences.billPositions[bill.canonical_id]?.position;
   const statusStep = billStatusStep(bill.status);
+  const voteSubject = getVoteSubjectForBill(bill);
 
   return (
     <View style={styles.detailStack}>
@@ -133,40 +126,13 @@ const BillDetailView = ({ item, bill }: { item: FeedItem; bill: BillDetail }) =>
         <BillStatusTracker currentStep={statusStep} />
       </Section>
 
-      {bill.vote_eligible && (
+      {voteSubject && (
         <Section title="Your Position">
-          <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>
-            {bill.user_position_prompt}
-          </Text>
-          <View style={styles.positionGrid}>
-            {positionOptions.map(option => {
-              const active = savedPosition === option.value;
-              return (
-                <Pressable
-                  key={option.value}
-                  style={[
-                    styles.positionButton,
-                    {
-                      borderColor: active ? branch.agency : neutral.divider,
-                      backgroundColor: active ? branch.agency : neutral.card,
-                    },
-                  ]}
-                  onPress={() => setBillPosition(bill.canonical_id, option.value)}
-                >
-                  <Text style={[styles.positionText, { color: active ? '#FFFFFF' : neutral.textPrimary }]}>
-                    {option.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {savedPosition && (
-            <Pressable onPress={() => clearBillPosition(bill.canonical_id)}>
-              <Text style={[styles.linkText, { color: branch.agency }]}>Clear personal position</Text>
-            </Pressable>
-          )}
+          <UserVotePositionControl subject={voteSubject} />
         </Section>
       )}
+
+      {voteSubject && <BillVoteComparisons votes={bill.votes} subject={voteSubject} />}
 
       <RecordList title="Sponsors" records={bill.sponsors} emptyText="Official sponsor data is not published yet." />
       <RecordList title="Cosponsors" records={bill.cosponsors} emptyText="Official cosponsor data is not published yet." />
@@ -205,6 +171,7 @@ const VoteDetailView = ({
   onSearchChange: (value: string) => void;
 }) => {
   const { neutral, branch } = useTheme();
+  const voteSubject = getVoteSubjectForVote(vote);
   const filteredPositions = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return vote.positions;
@@ -219,6 +186,14 @@ const VoteDetailView = ({
   return (
     <View style={styles.detailStack}>
       <ActionRow sourceUrl={vote.source_url} />
+      <Section title="Your Position">
+        <UserVotePositionControl subject={voteSubject} />
+      </Section>
+      <VoteComparisonPanel
+        subject={voteSubject}
+        positions={vote.positions}
+        localPositions={vote.local_representative_positions}
+      />
       <Section title="Roll Call">
         <FactGrid facts={[
           ['Chamber', vote.chamber],
@@ -277,6 +252,35 @@ const VoteDetailView = ({
         )}
       </Section>
     </View>
+  );
+};
+
+const BillVoteComparisons = ({ votes, subject }: { votes: Record<string, unknown>[]; subject: VoteSubject }) => {
+  const comparableVotes = votes.filter(vote => getVotePositions(vote, 'positions').length > 0);
+  if (comparableVotes.length === 0) return null;
+
+  return (
+    <>
+      {comparableVotes.map(vote => {
+        const voteId = getRecordString(vote, 'canonical_id') ?? subject.voteId ?? subject.subjectId;
+        const rollNumber = getRecordString(vote, 'roll_number');
+        const voteSubject = {
+          ...subject,
+          voteId,
+          sourceUrl: getRecordString(vote, 'source_url') ?? subject.sourceUrl,
+          label: rollNumber ? `${subject.label} roll ${rollNumber}` : subject.label,
+        };
+        return (
+          <VoteComparisonPanel
+            key={voteId}
+            subject={voteSubject}
+            title={rollNumber ? `Roll Call ${rollNumber} Comparison` : 'Vote Comparison'}
+            positions={getVotePositions(vote, 'positions')}
+            localPositions={getVotePositions(vote, 'local_representative_positions')}
+          />
+        );
+      })}
+    </>
   );
 };
 
@@ -535,6 +539,11 @@ const recordMeta = (record: Record<string, unknown>) => {
 const getRecordString = (record: Record<string, unknown> | null | undefined, key: string) => {
   const raw = record?.[key];
   return typeof raw === 'string' ? raw : null;
+};
+
+const getVotePositions = (record: Record<string, unknown>, key: string): VotePosition[] => {
+  const raw = record[key];
+  return Array.isArray(raw) ? raw as VotePosition[] : [];
 };
 
 const formatUnknown = (value: unknown): string => {

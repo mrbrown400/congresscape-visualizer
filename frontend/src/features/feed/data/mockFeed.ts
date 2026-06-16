@@ -156,7 +156,21 @@ export const mockFeed: FeedItem[] = [
         related_bills: [],
         cbo_cost_estimates: [],
         crs_reports: [],
-        votes: [{ roll_number: '42', result: 'Passed' }],
+        votes: [{
+          canonical_id: 'vote-house-119-2-42',
+          chamber: 'House',
+          roll_number: '42',
+          question: 'On Passage',
+          result: 'Passed',
+          source_url: 'https://clerk.house.gov/Votes/202642',
+          positions: [
+            { member_identifier: 'R000037', member_name: 'CA 37 Representative', party: 'D', state: 'CA', district: '37', position: 'yea' },
+            { member_identifier: 'T000001', member_name: 'Texas Example Member', party: 'R', state: 'TX', district: '12', position: 'nay' }
+          ],
+          local_representative_positions: [
+            { member_identifier: 'R000037', member_name: 'CA 37 Representative', party: 'D', state: 'CA', district: '37', position: 'yea' }
+          ]
+        }],
         vote_eligible: true,
         user_position_prompt: 'Record a personal position for comparison. This is civic tracking, not an official congressional vote.',
         source_url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234',

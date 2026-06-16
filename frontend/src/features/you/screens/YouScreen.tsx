@@ -13,10 +13,17 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useFeed } from '@features/feed/hooks/useFeed';
-import { FeedItem } from '@features/feed/types';
+import { FeedItem, VotePosition } from '@features/feed/types';
 import { CurrentMember } from '@features/members/types';
 import { useDistrictLookup } from '@features/members/hooks/useDistrictLookup';
-import { useUserPreferences } from '@context/UserPreferencesContext';
+import { UserBillPosition, useUserPreferences } from '@context/UserPreferencesContext';
+import {
+  VoteComparisonRecord,
+  VoteComparisonSummary,
+  getUserPositionLabel,
+  summarizeVoteComparisons,
+} from '@features/votes/utils/voteComparison';
+import { findLedgerEntry, getRecordString as getVoteRecordString, localVotePrivacyCopy } from '@features/votes/utils/voteSubjects';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
 import dayjs from '@utils/dayjs';
@@ -39,6 +46,7 @@ const YouScreen = () => {
     followCommittee,
     unfollowCommittee,
     clearDistrictMemberMapping,
+    clearAllBillPositions,
   } = useUserPreferences();
   const { resolve, isLoading: lookupLoading, error: lookupError } = useDistrictLookup();
   const [lookupText, setLookupText] = useState('');
@@ -69,6 +77,16 @@ const YouScreen = () => {
   const followedTopics = new Set(preferences.followedTopics);
   const representative = preferences.currentMembers.find(member => member.chamber === 'House');
   const senators = preferences.currentMembers.filter(member => member.chamber === 'Senate');
+  const ledgerEntries = useMemo(() => {
+    return Object.values(preferences.billPositions).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }, [preferences.billPositions]);
+  const selectedMemberIds = useMemo(() => new Set([
+    ...preferences.currentMembers.map(member => member.bioguide_id),
+    ...preferences.followedMembers,
+  ]), [preferences.currentMembers, preferences.followedMembers]);
+  const comparisonRows = useMemo(() => {
+    return buildAggregateComparisonRows(items, preferences.billPositions, selectedMemberIds);
+  }, [items, preferences.billPositions, selectedMemberIds]);
 
   const committees = useMemo(() => collectCommittees(items), [items]);
   const bills = useMemo(() => collectBills(items), [items]);
@@ -135,6 +153,50 @@ const YouScreen = () => {
             <Text style={[styles.linkText, { color: branchColors.agency }]}>Clear district mapping</Text>
           </Pressable>
         )}
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeadingRow}>
+          <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Personal Vote Ledger</Text>
+          {ledgerEntries.length > 0 && (
+            <Pressable
+              style={[styles.clearButton, { borderColor: branchColors.agency }]}
+              onPress={clearAllBillPositions}
+            >
+              <Text style={[styles.clearButtonText, { color: branchColors.agency }]}>Clear All</Text>
+            </Pressable>
+          )}
+        </View>
+        <Text style={[styles.privacyText, { color: neutral.textSecondary }]}>
+          {localVotePrivacyCopy}
+        </Text>
+        <View style={styles.stack}>
+          {ledgerEntries.slice(0, 5).map(entry => (
+            <LedgerRow key={entry.billId} entry={entry} />
+          ))}
+          {ledgerEntries.length === 0 && (
+            <EmptyMessage text="Record a personal bill or vote position to start a local comparison ledger." />
+          )}
+          {ledgerEntries.length > 5 && (
+            <Text style={[styles.activityMeta, { color: neutral.textMuted }]}>
+              Showing 5 of {ledgerEntries.length} saved positions.
+            </Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>Vote Comparison</Text>
+        <Text style={[styles.privacyText, { color: neutral.textSecondary }]}>
+          Similarity uses official roll-call member positions found in your current feed. Undecided, missing, non-voting, and unknown positions are excluded from denominators.
+        </Text>
+        <View style={styles.stack}>
+          {comparisonRows.length === 0 ? (
+            <EmptyMessage text="Resolve a district, follow members, and record positions on votes to see representative and party similarity." />
+          ) : (
+            comparisonRows.map(row => <AggregateComparisonRow key={`${row.entityKind}-${row.entityId}`} row={row} />)
+          )}
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -271,6 +333,40 @@ const YouScreen = () => {
   );
 };
 
+const LedgerRow = ({ entry }: { entry: UserBillPosition }) => {
+  const { neutral, branch } = useTheme();
+  return (
+    <View style={[styles.followRow, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
+      <View style={styles.followText}>
+        <Text style={[styles.followLabel, { color: neutral.textPrimary }]}>
+          {entry.label ?? entry.billId}
+        </Text>
+        <Text style={[styles.followMeta, { color: neutral.textMuted }]}>
+          {[entry.voteId ? `Vote ${entry.voteId}` : 'Bill position', `Updated ${dayjs(entry.updatedAt).fromNow()}`].join(' · ')}
+        </Text>
+      </View>
+      <Text style={[styles.voteValue, { color: branch.agency }]}>{getUserPositionLabel(entry.position)}</Text>
+    </View>
+  );
+};
+
+const AggregateComparisonRow = ({ row }: { row: VoteComparisonSummary }) => {
+  const { neutral, branch } = useTheme();
+  return (
+    <View style={[styles.followRow, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
+      <View style={styles.followText}>
+        <Text style={[styles.followLabel, { color: neutral.textPrimary }]}>{row.entityLabel}</Text>
+        <Text style={[styles.followMeta, { color: neutral.textMuted }]}>
+          {[row.entityMeta, `${row.comparable} comparable`, `${row.excluded} excluded`].filter(Boolean).join(' · ')}
+        </Text>
+      </View>
+      <Text style={[styles.voteValue, { color: branch.agency }]}>
+        {row.similarityPercent === null ? 'N/A' : `${row.similarityPercent}%`}
+      </Text>
+    </View>
+  );
+};
+
 const MemberRow = ({
   member,
   label,
@@ -372,9 +468,80 @@ const collectCommittees = (items: FeedItem[]) => {
   return Array.from(byId.values());
 };
 
+const buildAggregateComparisonRows = (
+  items: FeedItem[],
+  ledger: Record<string, UserBillPosition>,
+  selectedMemberIds: Set<string>,
+) => {
+  const records: VoteComparisonRecord[] = [];
+  const seen = new Set<string>();
+
+  const addRecord = (record: VoteComparisonRecord) => {
+    const key = `${record.entityKind}:${record.entityId}:${record.voteId}:${record.officialPosition}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    records.push(record);
+  };
+
+  const addVote = (vote: Record<string, unknown>, billId?: string | null) => {
+    const voteId = getVoteRecordString(vote, 'canonical_id');
+    if (!voteId) return;
+    const saved = findLedgerEntry(ledger, billId ?? voteId, voteId);
+    if (!saved) return;
+
+    getVotePositions(vote, 'positions').forEach(position => {
+      if (position.party) {
+        addRecord({
+          entityId: position.party,
+          entityLabel: `${position.party} party`,
+          entityKind: 'party',
+          entityMeta: 'Party member positions',
+          voteId,
+          userPosition: saved.position,
+          officialPosition: position.position,
+        });
+      }
+
+      if (selectedMemberIds.has(position.member_identifier)) {
+        addRecord({
+          entityId: position.member_identifier,
+          entityLabel: position.member_name,
+          entityKind: 'member',
+          entityMeta: [position.party, position.state, position.district ? `District ${position.district}` : null]
+            .filter(Boolean)
+            .join(' · '),
+          voteId,
+          userPosition: saved.position,
+          officialPosition: position.position,
+        });
+      }
+    });
+  };
+
+  items.forEach(item => {
+    if (item.detail?.vote) {
+      addVote(
+        item.detail.vote as unknown as Record<string, unknown>,
+        getVoteRecordString(item.detail.vote.linked_bill, 'canonical_id'),
+      );
+    }
+
+    if (item.detail?.bill) {
+      item.detail.bill.votes.forEach(vote => addVote(vote, item.detail?.bill?.canonical_id));
+    }
+  });
+
+  return summarizeVoteComparisons(records).slice(0, 8);
+};
+
 const getString = (value: Record<string, unknown>, key: string) => {
   const raw = value[key];
   return typeof raw === 'string' ? raw : null;
+};
+
+const getVotePositions = (record: Record<string, unknown>, key: string): VotePosition[] => {
+  const raw = record[key];
+  return Array.isArray(raw) ? raw as VotePosition[] : [];
 };
 
 const styles = StyleSheet.create({
@@ -431,6 +598,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  privacyText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
   section: {
     gap: 10,
   },
@@ -474,6 +645,20 @@ const styles = StyleSheet.create({
   },
   followButtonText: {
     fontSize: 12,
+    fontWeight: '800',
+  },
+  clearButton: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  clearButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  voteValue: {
+    fontSize: 14,
     fontWeight: '800',
   },
   chipWrap: {

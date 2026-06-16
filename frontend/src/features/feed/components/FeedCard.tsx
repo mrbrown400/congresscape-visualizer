@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@theme/ThemeProvider';
 import dayjs from '@utils/dayjs';
+import VotePromptForFeedItem from '@features/votes/components/VotePromptForFeedItem';
 import { FeedItem } from '../types';
 
 type Props = {
@@ -30,6 +31,8 @@ const FeedCard = ({ item, onPress, onSave }: Props) => {
         <Text style={styles.summary} numberOfLines={3}>
           {item.summary ?? 'Official summary has not been published yet.'}
         </Text>
+
+        <VotePromptForFeedItem item={item} />
 
         <View style={styles.footerRow}>
           <Text style={styles.source}>
