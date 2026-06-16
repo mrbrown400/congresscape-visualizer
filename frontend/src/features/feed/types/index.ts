@@ -12,6 +12,8 @@ export type MoneySourceRelationship =
   | 'topic_context'
   | 'unavailable';
 
+export type SourceCategory = 'official' | 'fallback' | 'supporting' | 'unavailable';
+
 export type CivicEntity = {
   name: string;
   entity_type: string;
@@ -27,6 +29,8 @@ export type CivicSource = {
   published_at?: string | null;
   retrieved_at?: string | null;
   supports: string[];
+  confidence?: MoneySourceRelationship;
+  source_category?: SourceCategory;
 };
 
 export type CivicClaim = {
@@ -40,9 +44,17 @@ export type CivicMoneyContextItem = {
   label: string;
   value?: string | null;
   source_relationship: MoneySourceRelationship;
+  confidence_label?: {
+    relationship: MoneySourceRelationship;
+    label: string;
+    description: string;
+  } | null;
   source_indexes: number[];
   unavailable_reason?: string | null;
   note?: string | null;
+  status?: MoneyContextStatus | null;
+  source_system?: string | null;
+  source_category?: SourceCategory | null;
 };
 
 export type CivicCard = {
@@ -111,6 +123,9 @@ export type BillDetail = {
   crs_reports: Record<string, unknown>[];
   votes: Record<string, unknown>[];
   vote_eligible: boolean;
+  money_context_status?: MoneyContextStatus;
+  money_context_note?: string | null;
+  money_context?: CivicMoneyContextItem[];
   user_position_prompt?: string | null;
   source_url?: string | null;
   unavailable: Record<string, string | null>;
@@ -196,6 +211,9 @@ export type FeedItem = {
   source_trail?: SourceTrailItem[];
   source_trail_status?: SourceTrailStatus;
   source_trail_note?: string | null;
+  money_context_status?: MoneyContextStatus;
+  money_context_note?: string | null;
+  money_context?: CivicMoneyContextItem[];
   detail?: FeedItemDetail;
   entities?: { id: number; name: string; type: string; slug: string }[];
   metadata?: Record<string, unknown> | null;

@@ -59,6 +59,9 @@ class FeedItemRead(GovernmentUpdateRead):
     source_trail: list[dict[str, Any]] = Field(default_factory=list)
     source_trail_status: str = "available"
     source_trail_note: str | None = None
+    money_context_status: str = "not_applicable"
+    money_context_note: str | None = None
+    money_context: list[dict[str, Any]] = Field(default_factory=list)
     detail: dict[str, Any] = Field(default_factory=dict)
 
 

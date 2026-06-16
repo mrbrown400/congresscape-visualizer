@@ -58,6 +58,14 @@ async def test_today_feed_ranks_canonical_primary_source_events_with_detail_payl
             "policy_area": "Government Operations and Politics",
             "congress_url": "https://www.congress.gov/bill/119th-congress/house-bill/1234",
             "cosponsors": [{"name": "Example Cosponsor"}],
+            "cbo_cost_estimates": [
+                {
+                    "title": "H.R. 1234 cost estimate",
+                    "summary": "CBO estimates implementation would affect direct spending.",
+                    "url": "https://www.cbo.gov/publication/12345",
+                    "date": (now - timedelta(days=1)).isoformat(),
+                }
+            ],
             "actions": [
                 {
                     "sequence": 1,
@@ -238,6 +246,11 @@ async def test_today_feed_ranks_canonical_primary_source_events_with_detail_payl
     assert items[0]["detail"]["vote"]["local_representative_positions"][0]["member_name"] == "CA 37 Representative"
     assert items[1]["detail"]["hearing"]["unavailable"]["transcripts"] == "Official transcript is not published yet."
     assert items[2]["detail"]["bill"]["vote_eligible"] is True
+    assert items[2]["money_context_status"] == "available"
+    assert items[2]["money_context"][0]["source_relationship"] == "direct_source"
+    assert items[2]["money_context"][0]["source_indexes"]
+    assert items[2]["detail"]["bill"]["money_context_status"] == "available"
+    assert any(source["source"] == "cbo" for source in items[2]["source_trail"])
     assert "personal position" in items[2]["detail"]["bill"]["user_position_prompt"]
     assert items[2]["detail"]["bill"]["votes"][0]["canonical_id"] == vote.canonical_id
     assert items[2]["detail"]["bill"]["votes"][0]["local_representative_positions"][0]["member_name"] == "CA 37 Representative"

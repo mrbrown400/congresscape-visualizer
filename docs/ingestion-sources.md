@@ -29,6 +29,10 @@ This document outlines the primary data sources integrated into the ingestion pi
 
 Money context must be labeled by source relationship: direct source match, related entity match, topic/industry context, or unavailable. It must not imply corruption, motive, or intent.
 
+Money-source adapter contracts live in `backend/app/ingest/money.py`. M4 defines boundaries for FEC/OpenFEC, Lobbying Disclosure Act data, USAspending.gov, House/Senate disclosures, OGE, CBO, and appropriations links. Each source contract records accepted identifiers, source URLs, freshness expectations, supported relationship labels, and the unavailable/error state to show when official data is not attached yet. The first thin adapter normalizes CBO cost-estimate fixture data without live network calls.
+
+Money-context assembly lives in `backend/app/services/money_context.py`. This service assigns the relationship label for a specific card context, builds source-trail indexes, and preserves the neutral copy rule that sourced money context is not an accusation or corruption signal.
+
 ## Ingestion Workflow
 1. **Fetch** raw payloads via async HTTP clients or Juriscraper scrapers.
 2. **Normalize** into `NormalizedUpdate` dataclasses with consistent fields.

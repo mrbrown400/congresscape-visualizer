@@ -116,6 +116,7 @@ const TodayScreen = () => {
           </Text>
           <RankReasons item={topItem} />
           <SourceTrailPreview item={topItem} />
+          <MoneyContextPreview item={topItem} />
           <VotePromptForFeedItem item={topItem} compact />
         </Pressable>
       )}
@@ -158,6 +159,7 @@ const TodayScreen = () => {
                   </Text>
                 )}
                 <SourceTrailPreview item={item} compact />
+                <MoneyContextPreview item={item} compact />
                 <VotePromptForFeedItem item={item} compact />
               </Pressable>
             ))}
@@ -202,6 +204,44 @@ const SourceTrailPreview = ({ item, compact = false }: { item: FeedItem; compact
       </Text>
     </View>
   );
+};
+
+const MoneyContextPreview = ({ item, compact = false }: { item: FeedItem; compact?: boolean }) => {
+  const { neutral, branch } = useTheme();
+  const status = item.money_context_status;
+  if (!status || status === 'not_applicable') return null;
+
+  const firstItem = item.money_context?.[0];
+  const label = firstItem
+    ? `${relationshipLabel(firstItem.source_relationship)}: ${firstItem.label}`
+    : item.money_context_note;
+  if (!label) return null;
+
+  return (
+    <View style={compact ? styles.sourceCompact : styles.sourceBox}>
+      <Ionicons
+        name={status === 'available' ? 'cash-outline' : 'alert-circle-outline'}
+        size={16}
+        color={status === 'available' ? branch.agency : neutral.textMuted}
+      />
+      <Text style={[styles.sourceText, { color: neutral.textSecondary }]} numberOfLines={compact ? 1 : 2}>
+        {label}
+      </Text>
+    </View>
+  );
+};
+
+const relationshipLabel = (relationship: string) => {
+  switch (relationship) {
+    case 'direct_source':
+      return 'Direct source';
+    case 'related_entity':
+      return 'Related entity';
+    case 'topic_context':
+      return 'Topic context';
+    default:
+      return 'Unavailable';
+  }
 };
 
 const styles = StyleSheet.create({
