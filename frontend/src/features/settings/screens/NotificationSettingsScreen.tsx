@@ -178,7 +178,7 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
             </Text>
           </View>
 
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>
                 Bill Updates
@@ -192,6 +192,74 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
               onValueChange={(value) => setNotificationPreferences({ billUpdates: value })}
               trackColor={{ false: neutral.divider, true: branchColors.legislative + '80' }}
               thumbColor={preferences.notifications.billUpdates ? branchColors.legislative : neutral.textMuted}
+            />
+          </View>
+
+          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>
+                Representative Votes
+              </Text>
+              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
+                Get notified when followed representatives have sourced roll-call positions
+              </Text>
+            </View>
+            <Switch
+              value={preferences.notifications.representativeVotes}
+              onValueChange={(value) => setNotificationPreferences({ representativeVotes: value })}
+              trackColor={{ false: neutral.divider, true: branchColors.house + '80' }}
+              thumbColor={preferences.notifications.representativeVotes ? branchColors.house : neutral.textMuted}
+            />
+          </View>
+
+          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>
+                Hearing Reminders
+              </Text>
+              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
+                Get tomorrow alerts for followed committees and topics
+              </Text>
+            </View>
+            <Switch
+              value={preferences.notifications.hearingAlerts}
+              onValueChange={(value) => setNotificationPreferences({ hearingAlerts: value })}
+              trackColor={{ false: neutral.divider, true: branchColors.agency + '80' }}
+              thumbColor={preferences.notifications.hearingAlerts ? branchColors.agency : neutral.textMuted}
+            />
+          </View>
+
+          <View style={[styles.settingRow, { borderBottomColor: neutral.divider }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>
+                New Text
+              </Text>
+              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
+                Get notified when followed bills publish official text
+              </Text>
+            </View>
+            <Switch
+              value={preferences.notifications.textAlerts}
+              onValueChange={(value) => setNotificationPreferences({ textAlerts: value })}
+              trackColor={{ false: neutral.divider, true: branchColors.senate + '80' }}
+              thumbColor={preferences.notifications.textAlerts ? branchColors.senate : neutral.textMuted}
+            />
+          </View>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: neutral.textPrimary }]}>
+                Money Context
+              </Text>
+              <Text style={[styles.settingDescription, { color: neutral.textMuted }]}>
+                Get notified only when sourced money context changes
+              </Text>
+            </View>
+            <Switch
+              value={preferences.notifications.moneyContextAlerts}
+              onValueChange={(value) => setNotificationPreferences({ moneyContextAlerts: value })}
+              trackColor={{ false: neutral.divider, true: branchColors.judicial + '80' }}
+              thumbColor={preferences.notifications.moneyContextAlerts ? branchColors.judicial : neutral.textMuted}
             />
           </View>
         </View>

@@ -1,7 +1,7 @@
 """Database models for push notification subscriptions."""
 from datetime import datetime
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, PrimaryKeyMixin, TimestampMixin
@@ -15,4 +15,9 @@ class NotificationSubscription(PrimaryKeyMixin, TimestampMixin, Base):
     token: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     platform: Mapped[str] = mapped_column(String(50), nullable=False, default="expo")
     timezone: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    followed_bills: Mapped[list[str]] = mapped_column(JSON, default=list)
+    followed_members: Mapped[list[str]] = mapped_column(JSON, default=list)
+    followed_topics: Mapped[list[str]] = mapped_column(JSON, default=list)
+    followed_committees: Mapped[list[str]] = mapped_column(JSON, default=list)
+    alert_categories: Mapped[dict] = mapped_column(JSON, default=dict)
     last_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -20,6 +20,8 @@ class EntityRead(EntityBase):
 
 
 class GovernmentUpdateBase(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     external_id: str
     source: str
     branch: BranchEnum
@@ -77,6 +79,7 @@ class FeedQueryParams(BaseModel):
     followed_bills: Optional[str] = None
     followed_members: Optional[str] = None
     followed_topics: Optional[str] = None
+    followed_committees: Optional[str] = None
     state: Optional[str] = None
     district: Optional[str] = None
     limit: int = 20

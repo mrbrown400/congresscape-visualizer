@@ -1,11 +1,16 @@
 import { FeedItem } from '../types';
 
+const smokeBaseTime = Date.parse('2026-06-16T18:00:00.000Z');
+const hoursAgo = (hours: number) => new Date(smokeBaseTime - hours * 60 * 60 * 1000).toISOString();
+const daysAgo = (days: number) => new Date(smokeBaseTime - days * 24 * 60 * 60 * 1000).toISOString();
+const hoursFromNow = (hours: number) => new Date(smokeBaseTime + hours * 60 * 60 * 1000).toISOString();
+
 export const mockFeed: FeedItem[] = [
   {
     id: 1,
     headline: 'House records roll-call vote on Civic Data Transparency Act',
     summary: 'Members voted on final passage with official roll-call totals and member positions available.',
-    published_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    published_at: hoursAgo(1),
     branch: 'house',
     source: 'congress.gov',
     url: 'https://clerk.house.gov/Votes/202642',
@@ -38,7 +43,7 @@ export const mockFeed: FeedItem[] = [
         congress: 119,
         session: '2',
         roll_number: '42',
-        vote_date: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        vote_date: hoursAgo(1),
         question: 'On Passage',
         result: 'Passed',
         margin: '10',
@@ -61,8 +66,8 @@ export const mockFeed: FeedItem[] = [
     id: 2,
     headline: 'House Oversight schedules civic data access hearing',
     summary: 'The committee posted a hearing notice with schedule, jurisdiction, and source-backed availability states.',
-    published_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    event_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    published_at: hoursAgo(3),
+    event_date: hoursFromNow(18),
     branch: 'house',
     source: 'congress.gov',
     url: 'https://www.congress.gov/event/119th-congress/house-event/116500',
@@ -86,7 +91,7 @@ export const mockFeed: FeedItem[] = [
         title: 'Oversight hearing on civic data access',
         meeting_type: 'Hearing',
         status: 'Scheduled',
-        scheduled_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+        scheduled_at: hoursFromNow(18),
         location: 'Rayburn 2154',
         committee: {
           committee_code: 'hsgo',
@@ -112,7 +117,7 @@ export const mockFeed: FeedItem[] = [
     id: 3,
     headline: 'House passes Civic Data Transparency Act',
     summary: 'The bill detail includes lifecycle status, committees, text versions, related votes, and official source trail.',
-    published_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+    published_at: hoursAgo(5),
     branch: 'house',
     source: 'congress.gov',
     url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234',
@@ -162,8 +167,8 @@ export const mockFeed: FeedItem[] = [
         status: 'Passed House.',
         origin_chamber: 'House',
         policy_area: 'Government Operations and Politics',
-        introduced_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        latest_action_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+        introduced_at: daysAgo(10),
+        latest_action_at: hoursAgo(5),
         sponsors: [{ name: 'Example Sponsor' }],
         cosponsors: [{ name: 'Example Cosponsor' }],
         committees: [{ committee_code: 'hsgo', name: 'House Oversight and Accountability' }],
@@ -172,7 +177,7 @@ export const mockFeed: FeedItem[] = [
             id: 1,
             action_type: 'Passed House',
             text: 'Passed/agreed to in House.',
-            acted_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+            acted_at: hoursAgo(5),
             chamber: 'House',
             source_url: 'https://www.congress.gov/bill/119th-congress/house-bill/1234/actions'
           }
@@ -229,7 +234,7 @@ export const mockFeed: FeedItem[] = [
     id: 4,
     headline: 'Money context unavailable for newly filed disclosure topic',
     summary: 'The feed can show a clear unavailable state when no official money source has been attached yet.',
-    published_at: new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString(),
+    published_at: hoursAgo(7),
     branch: 'legislative',
     source: 'money-context',
     tags: ['money', 'disclosure'],

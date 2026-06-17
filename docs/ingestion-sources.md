@@ -39,5 +39,8 @@ Money-context assembly lives in `backend/app/services/money_context.py`. This se
 3. **Preserve provenance** with source URLs, labels, retrieval timestamps, and the claim IDs each source supports.
 4. **Enrich** with summaries, vector embeddings, entity resolution, and money context only when the source relationship is clear.
 5. **Persist** via `UpdateService` and future canonical civic-domain services.
+6. **Diagnose freshness** through `GET /api/v1/ingest/diagnostics/provenance`, which classifies recent updates as fresh, stale, missing-source, or failed.
 
 Each source module exports async generators returning normalized updates; the orchestration layer (`app.ingest.runner`) schedules these generators and routes them through the `IngestPipeline` service.
+
+Deterministic end-to-end smoke data lives in `backend/app/services/civic_feed_smoke_seed.py` and can be loaded with `backend/scripts/seed_civic_feed_smoke.py`. The seed covers bill movement, representative vote, hearing reminder, new text, and money-context alert paths with source-backed records.

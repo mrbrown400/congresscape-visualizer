@@ -12,6 +12,10 @@ export type NotificationPreferences = {
   dailyDigestTime: string; // "09:00"
   breakingNews: boolean;
   billUpdates: boolean;
+  representativeVotes: boolean;
+  hearingAlerts: boolean;
+  textAlerts: boolean;
+  moneyContextAlerts: boolean;
 };
 
 export type UserPreferences = {
@@ -52,6 +56,10 @@ const defaultPreferences: UserPreferences = {
     dailyDigestTime: '09:00',
     breakingNews: true,
     billUpdates: true,
+    representativeVotes: true,
+    hearingAlerts: true,
+    textAlerts: true,
+    moneyContextAlerts: true,
   },
   followedMembers: [],
   followedBills: [],

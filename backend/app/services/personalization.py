@@ -118,6 +118,7 @@ def _followed_object_score(update: GovernmentUpdate, context: dict[str, Any], me
     followed_bills = _normalized_set(context.get("followed_bills"))
     followed_members = _normalized_set(context.get("followed_members"))
     followed_topics = _normalized_set(context.get("followed_topics"))
+    followed_committees = _normalized_set(context.get("followed_committees"))
 
     bill_ids = {
         _normalized(value)
@@ -144,6 +145,22 @@ def _followed_object_score(update: GovernmentUpdate, context: dict[str, Any], me
     topic_values = {_normalized(tag) for tag in (update.tags or [])}
     topic_values.update(_normalized(value) for value in _metadata_values(metadata, "topics"))
     topic_values.update(_normalized(value.get("name")) for value in _metadata_values(metadata, "subjects") if isinstance(value, dict))
+    committee_ids = {
+        _normalized(value)
+        for value in _metadata_values(metadata, "committee_ids")
+        if value is not None
+    }
+    committee_ids.update(
+        _normalized(committee.get("committee_code") or committee.get("id") or committee.get("name"))
+        for committee in _metadata_values(metadata, "committees")
+        if isinstance(committee, dict)
+    )
+    hearing = getattr(update, "hearing", None)
+    hearing_committee = getattr(hearing, "committee", None) if hearing is not None else None
+    if hearing_committee is not None:
+        committee_ids.add(_normalized(getattr(hearing_committee, "committee_code", "")))
+    if bill is not None:
+        committee_ids.update(_normalized(getattr(committee, "committee_code", "")) for committee in bill.committees)
 
     score = 0.0
     if followed_bills and followed_bills.intersection(bill_ids):
@@ -151,6 +168,8 @@ def _followed_object_score(update: GovernmentUpdate, context: dict[str, Any], me
     if followed_members and followed_members.intersection(member_ids):
         score += 15
     if followed_topics and followed_topics.intersection(topic_values):
+        score += 10
+    if followed_committees and followed_committees.intersection(committee_ids):
         score += 10
     return score
 

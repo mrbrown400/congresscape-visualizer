@@ -136,8 +136,8 @@ class FeedService:
             reasons.append("Hearings are ranked for schedule and oversight relevance.")
         if update.bill_action_id:
             reasons.append("Bill lifecycle actions are ranked by official action importance.")
-        if params.followed_bills or params.followed_members or params.followed_topics:
-            reasons.append("Followed bills, members, and topics raise relevant cards when they match.")
+        if params.followed_bills or params.followed_members or params.followed_topics or params.followed_committees:
+            reasons.append("Followed bills, members, committees, and topics raise relevant cards when they match.")
         if params.state or params.district:
             reasons.append("District and state context raise local representative activity when present.")
         if update.url or metadata.get("source_trail"):
