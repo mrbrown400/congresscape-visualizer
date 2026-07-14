@@ -30,12 +30,12 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
     typography,
     spacing,
     borderRadius,
-    isDark: true // Default to dark mode aesthetic
+    isDark: false
   }), []);
 
   return (
     <ThemeContext.Provider value={value}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       {children}
     </ThemeContext.Provider>
   );

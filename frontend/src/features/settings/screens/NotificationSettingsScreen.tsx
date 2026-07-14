@@ -57,7 +57,7 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Daily Digest Section */}
-        <View style={[styles.section, { backgroundColor: neutral.card }]}>
+        <View style={[styles.section, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="sunny" size={20} color={branchColors.agency} />
             <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
@@ -143,7 +143,7 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Breaking News Section */}
-        <View style={[styles.section, { backgroundColor: neutral.card }]}>
+        <View style={[styles.section, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="alert-circle" size={20} color={branchColors.urgent} />
             <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
@@ -170,7 +170,7 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Tracking Updates Section */}
-        <View style={[styles.section, { backgroundColor: neutral.card }]}>
+        <View style={[styles.section, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
           <View style={styles.sectionHeader}>
             <Ionicons name="bookmark" size={20} color={branchColors.legislative} />
             <Text style={[styles.sectionTitle, { color: neutral.textPrimary }]}>
@@ -265,7 +265,7 @@ const NotificationSettingsScreen = ({ navigation }: Props) => {
         </View>
 
         {/* Info Section */}
-        <View style={[styles.infoSection, { backgroundColor: neutral.card }]}>
+        <View style={[styles.infoSection, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
           <Ionicons name="information-circle" size={20} color={neutral.textMuted} />
           <Text style={[styles.infoText, { color: neutral.textMuted }]}>
             You can manage system notification permissions in your device settings.
@@ -307,10 +307,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 100,
+    width: '100%',
+    maxWidth: 820,
+    alignSelf: 'center',
     gap: 16,
   },
   section: {
-    borderRadius: 20,
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 16,
     gap: 4,
   },
@@ -362,9 +366,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   timeOption: {
+    borderWidth: 1,
+    borderColor: 'transparent',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: 8,
   },
   timeOptionText: {
     fontSize: 14,
@@ -373,7 +379,8 @@ const styles = StyleSheet.create({
   infoSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 16,
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 16,
     gap: 12,
   },

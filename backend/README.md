@@ -8,7 +8,7 @@ FastAPI application for the Congresscape primary-source civic feed. It ingests, 
 - Additive civic-card schema for what happened, why it matters, involved entities, money context, and source trail
 - Source/provenance fields and unavailable-state handling for factual claims
 - Money-context contract that labels source relationships and does not infer corruption, motive, or intent
-- Filtered feeds, daily summary compatibility, followed-object alert generation, personalization, vector search, and background workers
+- Filtered feeds, daily summary compatibility, followed-object alert generation, and personalization
 - Ingestion freshness/provenance diagnostics and deterministic civic-feed smoke seed data
 
 ## Getting Started
@@ -23,7 +23,6 @@ Create a `.env` based on `.env.example`:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/congresscape
-OPENAI_API_KEY=sk-your-key
 ```
 
 Initialize the database schema:
@@ -41,7 +40,7 @@ poetry run pytest
 ## Project Structure
 
 - `app/core` – configuration and settings
-- `app/models` – SQLAlchemy models (pgvector enabled)
+- `app/models` – SQLAlchemy models
 - `app/schemas` – Pydantic request/response models
 - `app/services` – feed, summary, notification, ingestion, ranking, and enrichment helpers
 - `app/ingest` – pipelines for Congress, Courts, and Executive data

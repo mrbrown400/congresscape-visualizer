@@ -45,11 +45,11 @@ const UserVotePositionControl = ({ subject, compact = false, showPrompt = true }
       style={[
         styles.container,
         compact && styles.containerCompact,
-        { borderColor: compact ? 'rgba(255,255,255,0.2)' : neutral.divider },
+        { borderColor: neutral.divider },
       ]}
     >
       {showPrompt && (
-        <Text style={[styles.prompt, compact ? styles.promptCompact : null, { color: compact ? '#F8FAFC' : neutral.textSecondary }]}>
+        <Text style={[styles.prompt, compact ? styles.promptCompact : null, { color: neutral.textSecondary }]}>
           {subject.prompt}
         </Text>
       )}
@@ -63,13 +63,13 @@ const UserVotePositionControl = ({ subject, compact = false, showPrompt = true }
                 styles.positionButton,
                 compact && styles.positionButtonCompact,
                 {
-                  borderColor: active ? branch.agency : (compact ? 'rgba(255,255,255,0.34)' : neutral.divider),
-                  backgroundColor: active ? branch.agency : (compact ? 'rgba(255,255,255,0.12)' : neutral.card),
+                  borderColor: active ? branch.agency : neutral.divider,
+                  backgroundColor: active ? branch.agency : neutral.background,
                 },
               ]}
               onPress={event => handleSet(event, option.value)}
             >
-              <Text style={[styles.positionText, { color: active || compact ? '#FFFFFF' : neutral.textPrimary }]}>
+              <Text style={[styles.positionText, { color: active ? '#FFFFFF' : neutral.textPrimary }]}>
                 {option.label}
               </Text>
             </Pressable>
@@ -77,12 +77,12 @@ const UserVotePositionControl = ({ subject, compact = false, showPrompt = true }
         })}
       </View>
       <View style={styles.footerRow}>
-        <Text style={[styles.privacyText, compact ? styles.privacyTextCompact : null, { color: compact ? '#E2E8F0' : neutral.textMuted }]}>
+        <Text style={[styles.privacyText, compact ? styles.privacyTextCompact : null, { color: neutral.textMuted }]}>
           {saved ? `Recorded ${formatSavedPosition(saved)}. ` : ''}{localVotePrivacyCopy}
         </Text>
         {saved && (
           <Pressable onPress={handleClear}>
-            <Text style={[styles.clearText, { color: compact ? '#FFFFFF' : branch.agency }]}>
+            <Text style={[styles.clearText, { color: branch.agency }]}>
               Clear
             </Text>
           </Pressable>

@@ -26,6 +26,7 @@ import {
 import { findLedgerEntry, getRecordString as getVoteRecordString, localVotePrivacyCopy } from '@features/votes/utils/voteSubjects';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
+import CivicProgressCard, { CivicProgressItem } from '@components/CivicProgressCard';
 import dayjs from '@utils/dayjs';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -82,6 +83,28 @@ const YouScreen = () => {
   const ledgerEntries = useMemo(() => {
     return Object.values(preferences.billPositions).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }, [preferences.billPositions]);
+  const civicReadinessItems: CivicProgressItem[] = [
+    {
+      label: 'District connected',
+      detail: districtLabel ?? 'Add a ZIP or address to localize updates',
+      complete: Boolean(preferences.homeDistrict),
+    },
+    {
+      label: 'Issues followed',
+      detail: `${followedTopics.size} topic${followedTopics.size === 1 ? '' : 's'} followed`,
+      complete: followedTopics.size > 0,
+    },
+    {
+      label: 'Representatives available',
+      detail: `${preferences.currentMembers.length} current member${preferences.currentMembers.length === 1 ? '' : 's'} loaded`,
+      complete: preferences.currentMembers.length > 0,
+    },
+    {
+      label: 'Position recorded',
+      detail: `${ledgerEntries.length} private position${ledgerEntries.length === 1 ? '' : 's'} saved`,
+      complete: ledgerEntries.length > 0,
+    },
+  ];
   const selectedMemberIds = useMemo(() => new Set([
     ...preferences.currentMembers.map(member => member.bioguide_id),
     ...preferences.followedMembers,
@@ -165,6 +188,12 @@ const YouScreen = () => {
           </Pressable>
         )}
       </View>
+
+      <CivicProgressCard
+        title="Civic profile readiness"
+        subtitle="Use this to make the feed more relevant. It measures setup and understanding, not app usage."
+        items={civicReadinessItems}
+      />
 
       <View style={styles.section}>
         <View style={styles.sectionHeadingRow}>
@@ -563,6 +592,9 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 120,
+    width: '100%',
+    maxWidth: 1040,
+    alignSelf: 'center',
     gap: 18,
   },
   header: {

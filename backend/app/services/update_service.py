@@ -41,7 +41,6 @@ class UpdateService:
             hearing_id=payload.hearing_id,
             tags=payload.tags,
             metadata_json=metadata,
-            # embedding=payload.embedding, # Removed for SQLite
             entities=entities,
         )
         self.session.add(update)
@@ -70,7 +69,6 @@ class UpdateService:
             existing.hearing_id = payload.hearing_id
             existing.tags = payload.tags
             existing.metadata_json = metadata
-            # existing.embedding = payload.embedding # Removed for SQLite
             existing.entities = await self._resolve_entities(payload.entity_ids)
             await self.session.flush()
             return existing

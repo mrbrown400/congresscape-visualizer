@@ -14,17 +14,16 @@ Audit date: 2026-05-28.
 
 - Backend exposes health, feed, ingest, summary, and notification routes under `/api/v1`.
 - Frontend includes onboarding, Today, calendar, Explore, You, saved/settings/detail flows, API clients, saved-item context, and push registration.
-- Backend can run locally with SQLite through `DATABASE_URL`; Docker still provides PostgreSQL with pgvector.
-- Current model code is SQLite-compatible and comments out pgvector embedding persistence and vector indexes.
+- Backend can run locally with SQLite through `DATABASE_URL`; Docker still provides PostgreSQL.
+- Current model code is SQLite-compatible and does not persist embeddings.
 
 ## High-Signal Risks
 
-- Documentation still describes PostgreSQL/pgvector embeddings as active, while current model/update service code does not persist embeddings.
+- Request-path LLM summarization and embedding services have been removed; ingestion persists submitted/source summaries directly.
 - `DATABASE_URL` is required at import time, so clean test and cloud environments need an explicit env var or `.env`.
-- Ingest enrichment can compute embeddings, but `UpdateService` drops them in the current SQLite-compatible path.
 - Frontend defines `npm run lint`, but ESLint is not installed in `frontend/package.json`.
 - Expo SDK 50 dependencies are misaligned according to `npx expo install --check`.
-- Frontend feed calls include sort values that backend query params ignore.
+- Frontend feed calls no longer send ignored sort values.
 - `poetry run ruff check .` currently fails on existing app lint and untracked backend scripts.
 
 ## Verification Snapshot

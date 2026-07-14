@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchFeed } from '@services/feedService';
-import { mockFeed } from '@features/feed/data/mockFeed';
 import { CivicCardType, FeedItem } from '../types';
 
 type FeedState = {
@@ -42,7 +41,7 @@ export const useFeed = (contextKey: string, options: FeedContextOptions = defaul
       setState({ loading: false, error: null, items: data.items, total: data.total });
     } catch (error) {
       console.warn('Failed to load feed', error);
-      setState({ loading: false, error: 'Unable to load feed right now.', items: mockFeed, total: mockFeed.length });
+      setState({ loading: false, error: 'Unable to load feed right now.', items: [], total: 0 });
     }
   }, [contextKey, options]);
 
@@ -67,11 +66,7 @@ const mapContextToParams = (contextKey: string, options: FeedContextOptions) => 
 
   switch (contextKey) {
     case 'today':
-      return { ...base, sort: 'today', limit: options.limit ?? 20 };
-    case 'trending':
-      return { ...base, sort: 'trending', limit: options.limit ?? 20 };
-    case 'urgent':
-      return { ...base, sort: 'urgent', limit: options.limit ?? 20 };
+      return { ...base, limit: options.limit ?? 20 };
     case 'legislative':
       return { ...base, branch: 'legislative', limit: options.limit ?? 30 };
     case 'votes':
@@ -79,7 +74,7 @@ const mapContextToParams = (contextKey: string, options: FeedContextOptions) => 
     case 'hearings':
       return { ...base, branch: 'legislative', card_type: 'hearing', limit: options.limit ?? 30 };
     case 'myGovernment':
-      return { ...base, sort: 'today', limit: options.limit ?? 8 };
+      return { ...base, limit: options.limit ?? 8 };
     case 'executive':
       return { ...base, branch: 'executive', limit: options.limit ?? 30 };
     case 'judicial':

@@ -17,7 +17,7 @@ type Props = {
 };
 
 const FeedScreen = ({ contextKey }: Props) => {
-  const { neutral } = useTheme();
+  const { neutral, branch } = useTheme();
   const { items, loading, error, reload } = useFeed(contextKey);
   const navigation = useNavigation<NavigationProp>();
 
@@ -29,8 +29,10 @@ const FeedScreen = ({ contextKey }: Props) => {
     <View style={[styles.container, { backgroundColor: neutral.background }]}> 
       {loading && items.length === 0 ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#F59E0B" />
-          <Text style={styles.loaderText}>Loading {contextKey} updates…</Text>
+          <ActivityIndicator size="large" color={branch.legislative} />
+          <Text style={[styles.loaderText, { color: neutral.textSecondary }]}>
+            Loading {contextKey} updates...
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -38,12 +40,12 @@ const FeedScreen = ({ contextKey }: Props) => {
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor="#F59E0B" />}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={reload} tintColor={branch.legislative} />}
           ListEmptyComponent={
             error ? (
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={[styles.errorText, { color: '#B91C1C' }]}>{error}</Text>
             ) : (
-              <Text style={styles.emptyText}>No updates yet—check back soon.</Text>
+              <Text style={[styles.emptyText, { color: neutral.textMuted }]}>No updates yet. Check back soon.</Text>
             )
           }
         />
@@ -56,10 +58,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 12
+    paddingTop: 12,
   },
   listContent: {
-    paddingBottom: 120
+    width: '100%',
+    maxWidth: 1040,
+    alignSelf: 'center',
+    paddingBottom: 120,
   },
   loader: {
     flex: 1,
@@ -68,18 +73,15 @@ const styles = StyleSheet.create({
     gap: 12
   },
   loaderText: {
-    color: '#F8FAFC',
-    fontSize: 16
+    fontSize: 16,
   },
   errorText: {
-    color: '#FECACA',
     textAlign: 'center',
-    marginTop: 24
+    marginTop: 24,
   },
   emptyText: {
-    color: '#C7D2FE',
     textAlign: 'center',
-    marginTop: 24
+    marginTop: 24,
   }
 });
 

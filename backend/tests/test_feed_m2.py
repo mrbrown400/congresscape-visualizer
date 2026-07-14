@@ -228,7 +228,6 @@ async def test_today_feed_ranks_canonical_primary_source_events_with_detail_payl
     service = FeedService(session)
     items, total = await service.list_updates(
         FeedQueryParams(
-            sort="today",
             followed_bills=bill.canonical_id,
             followed_topics="oversight",
             state="CA",

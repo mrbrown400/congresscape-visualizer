@@ -32,6 +32,7 @@ import VoteComparisonPanel from '@features/votes/components/VoteComparisonPanel'
 import { VoteSubject, getVoteSubjectForBill, getVoteSubjectForVote } from '@features/votes/utils/voteSubjects';
 import { RootStackParamList } from '@navigation/RootNavigator';
 import { useTheme } from '@theme/ThemeProvider';
+import DisclosureSection from '@components/DisclosureSection';
 import dayjs from '@utils/dayjs';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UpdateDetail'>;
@@ -130,13 +131,13 @@ const BillDetailView = ({ item, bill }: { item: FeedItem; bill: BillDetail }) =>
         sourceUrl={bill.source_url ?? item.url}
       />
 
-      <Section title="Status">
+      <Section title="Status" summary={bill.status} defaultOpen>
         <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>{bill.status}</Text>
         <BillStatusTracker currentStep={statusStep} />
       </Section>
 
       {voteSubject && (
-        <Section title="Your Position">
+        <Section title="Your Position" summary="Record a private position for representative comparison." defaultOpen>
           <UserVotePositionControl subject={voteSubject} />
         </Section>
       )}
@@ -146,7 +147,7 @@ const BillDetailView = ({ item, bill }: { item: FeedItem; bill: BillDetail }) =>
       <RecordList title="Sponsors" records={bill.sponsors} emptyText="Official sponsor data is not published yet." />
       <RecordList title="Cosponsors" records={bill.cosponsors} emptyText="Official cosponsor data is not published yet." />
       <RecordList title="Committees" records={bill.committees} emptyText={bill.unavailable.committees ?? 'No committees are linked.'} />
-      <Section title="Lifecycle">
+      <Section title="Lifecycle" summary={`${bill.timeline.length} official action${bill.timeline.length === 1 ? '' : 's'}`}>
         {bill.timeline.length === 0 ? (
           <Unavailable text="No official lifecycle actions are published yet." />
         ) : (
@@ -195,7 +196,7 @@ const VoteDetailView = ({
   return (
     <View style={styles.detailStack}>
       <ActionRow sourceUrl={vote.source_url} />
-      <Section title="Your Position">
+      <Section title="Your Position" summary="Record a private position for comparison." defaultOpen>
         <UserVotePositionControl subject={voteSubject} />
       </Section>
       <VoteComparisonPanel
@@ -203,7 +204,7 @@ const VoteDetailView = ({
         positions={vote.positions}
         localPositions={vote.local_representative_positions}
       />
-      <Section title="Roll Call">
+      <Section title="Roll Call" summary={`${vote.chamber} roll ${vote.roll_number}`} defaultOpen>
         <FactGrid facts={[
           ['Chamber', vote.chamber],
           ['Roll', vote.roll_number],
@@ -213,15 +214,19 @@ const VoteDetailView = ({
         <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{vote.question}</Text>
       </Section>
 
-      <Section title="Totals">
+      <Section title="Totals" summary={`${Object.keys(vote.totals).length} official total field${Object.keys(vote.totals).length === 1 ? '' : 's'}`}>
         <RecordPills values={vote.totals} />
       </Section>
 
-      <Section title="Party Split">
+      <Section title="Party Split" summary={`${Object.keys(vote.party_split).length} party split field${Object.keys(vote.party_split).length === 1 ? '' : 's'}`}>
         <RecordPills values={vote.party_split} />
       </Section>
 
-      <Section title="Local Representatives">
+      <Section
+        title="Local Representatives"
+        summary={`${vote.local_representative_positions.length} local position${vote.local_representative_positions.length === 1 ? '' : 's'}`}
+        defaultOpen
+      >
         {vote.local_representative_positions.length === 0 ? (
           <Unavailable text={vote.unavailable.local_representatives ?? 'No local representative match is available.'} />
         ) : (
@@ -232,14 +237,14 @@ const VoteDetailView = ({
       </Section>
 
       {vote.linked_bill && (
-        <Section title="Linked Bill">
+        <Section title="Linked Bill" summary="Official bill connected to this vote.">
           <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>
             {recordLabel(vote.linked_bill)}
           </Text>
         </Section>
       )}
 
-      <Section title="Member Positions">
+      <Section title="Member Positions" summary={`${filteredPositions.length} member position${filteredPositions.length === 1 ? '' : 's'} match this view.`}>
         <TextInput
           value={search}
           onChangeText={onSearchChange}
@@ -307,7 +312,7 @@ const HearingDetailView = ({ hearing }: { hearing: HearingDetail }) => {
         onPrimary={committeeCode ? () => followed ? unfollowCommittee(committeeCode) : followCommittee(committeeCode) : undefined}
         sourceUrl={hearing.source_url}
       />
-      <Section title="Schedule">
+      <Section title="Schedule" summary={hearing.scheduled_at ? dayjs(hearing.scheduled_at).format('MMM D, YYYY h:mm A') : 'Schedule pending'} defaultOpen>
         <FactGrid facts={[
           ['Status', hearing.status ?? 'Unavailable'],
           ['Type', hearing.meeting_type ?? 'Unavailable'],
@@ -315,7 +320,7 @@ const HearingDetailView = ({ hearing }: { hearing: HearingDetail }) => {
           ['Location', hearing.location ?? 'Unavailable'],
         ]} />
       </Section>
-      <Section title="Committee">
+      <Section title="Committee" summary={committeeName ?? 'Committee details pending'} defaultOpen>
         {committeeName ? (
           <>
             <Text style={[styles.bodyTextStrong, { color: neutral.textPrimary }]}>{committeeName}</Text>
@@ -347,7 +352,7 @@ const GenericDetail = ({ item }: { item: FeedItem }) => {
   const { neutral } = useTheme();
   return (
     <View style={styles.detailStack}>
-      <Section title="Summary">
+      <Section title="Summary" summary="Available detail for this update." defaultOpen>
         <Text style={[styles.bodyText, { color: neutral.textSecondary }]}>
           {item.full_text ?? item.summary ?? 'No additional detail is available yet.'}
         </Text>
@@ -362,7 +367,7 @@ const RankContext = ({ item }: { item: FeedItem }) => {
   const factors = item.rank_context?.factors;
   if (!factors) return null;
   return (
-    <Section title="Why This Is Ranked Here">
+    <Section title="Why This Is Ranked Here" summary="Ranking factors are available for deeper inspection.">
       <View style={styles.factorGrid}>
         {Object.entries(factors).map(([key, value]) => (
           <View key={key} style={[styles.factor, { borderColor: neutral.divider }]}>
@@ -376,7 +381,12 @@ const RankContext = ({ item }: { item: FeedItem }) => {
 };
 
 const SourceTrail = ({ sources, note }: { sources: SourceTrailItem[]; note?: string | null }) => (
-  <Section title="Source Trail">
+  <Section
+    title="Source Trail"
+    summary={sources.length > 0
+      ? `${sources.length} official receipt${sources.length === 1 ? '' : 's'} attached.`
+      : note ?? 'Official sources are not attached yet.'}
+  >
     {sources.length === 0 ? (
       <Unavailable text={note ?? 'Official sources are not attached yet.'} />
     ) : (
@@ -407,7 +417,12 @@ const MoneyContextSection = ({
   if ((!status || status === 'not_applicable') && items.length === 0) return null;
 
   return (
-    <Section title="Money Context">
+    <Section
+      title="Money Context"
+      summary={items.length > 0
+        ? `${items.length} sourced context item${items.length === 1 ? '' : 's'} attached.`
+        : note ?? 'No sourced money context is attached yet.'}
+    >
       {note && <Unavailable text={note} />}
       {items.length === 0 ? (
         <Unavailable text="No sourced money context is attached yet." />
@@ -485,15 +500,21 @@ const SourceCategoryChip = ({ category }: { category: string }) => {
   );
 };
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => {
-  const { neutral } = useTheme();
-  return (
-    <View style={[styles.section, { borderColor: neutral.divider }]}>
-      <Text style={[styles.sectionTitle, { color: neutral.textMuted }]}>{title.toUpperCase()}</Text>
-      {children}
-    </View>
-  );
-};
+const Section = ({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  summary?: string | null;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) => (
+  <DisclosureSection title={title} summary={summary} defaultOpen={defaultOpen}>
+    {children}
+  </DisclosureSection>
+);
 
 const ActionRow = ({
   primaryLabel,
@@ -542,7 +563,12 @@ const RecordList = ({
   records: Record<string, unknown>[];
   emptyText: string;
 }) => (
-  <Section title={title}>
+  <Section
+    title={title}
+    summary={records.length > 0
+      ? `${records.length} official record${records.length === 1 ? '' : 's'} available.`
+      : emptyText}
+  >
     {records.length === 0 ? (
       <Unavailable text={emptyText} />
     ) : (
@@ -713,6 +739,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingBottom: 120,
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
     gap: 16,
   },
   kickerRow: {

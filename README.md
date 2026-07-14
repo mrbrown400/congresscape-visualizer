@@ -3,7 +3,7 @@
 Congresscape Visualizer is a full-stack platform for a primary-source civic feed: a Congress.gov-first way to follow what changed in government without relying on political social media. This repository contains the FastAPI backend, PostgreSQL/SQLite-compatible schema, ingestion modules, and React Native mobile client that power sourced civic cards for Today, My Government, Bills, Votes, Hearings, Money, and Alerts.
 
 ## Repository Layout
-- `backend/` – FastAPI app, PostgreSQL models (pgvector), ingestion services, and LLM summarization helpers.
+- `backend/` – FastAPI app, SQLAlchemy models, ingestion services, and civic-feed APIs.
 - `frontend/` – React Native (Expo) mobile app with a TikTok-style feed UI.
 - `docker-compose.yml` – Local stack for Postgres + backend service.
 - `docs/` – Architectural overview.
@@ -12,9 +12,7 @@ Congresscape Visualizer is a full-stack platform for a primary-source civic feed
 1. **Launch infrastructure**
    ```bash
    docker compose up -d db
-   docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF NOT EXISTS vector"
    ```
-   The `pgvector` extension must be enabled before initializing the schema. If you are using a local PostgreSQL instance instead of Docker, install the extension (via `CREATE EXTENSION vector;`) on the `congresscape` database manually.
 2. **Backend**
    ```bash
    cd backend

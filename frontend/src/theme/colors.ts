@@ -1,43 +1,43 @@
 export const branchPalette = {
   legislative: '#1D4ED8',
   house: '#2563EB',
-  senate: '#1E40AF',
-  judicial: '#7C3AED',
-  executive: '#10B981',
-  agency: '#F59E0B',
-  urgent: '#EF4444'
+  senate: '#123A70',
+  judicial: '#475569',
+  executive: '#047857',
+  agency: '#1D4ED8',
+  urgent: '#DC2626'
 };
 
 export const neutralPalette = {
-  background: '#040C1A',
-  surface: '#0B1D3A',
-  card: '#12294F',
-  cardHover: '#1A3562',
-  textPrimary: '#F8FAFC',
-  textSecondary: '#C7D2FE',
-  textMuted: '#94A3B8',
-  divider: '#1F3A68',
-  border: '#334155'
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  card: '#FFFFFF',
+  cardHover: '#F1F5F9',
+  textPrimary: '#071A33',
+  textSecondary: '#334155',
+  textMuted: '#64748B',
+  divider: '#E2E8F0',
+  border: '#CBD5E1'
 };
 
 // Semantic colors for status and urgency
 export const semanticPalette = {
   // Urgency levels
   urgent: '#EF4444',
-  important: '#F59E0B',
+  important: '#B45309',
   normal: '#6B7280',
 
   // Status indicators
-  passed: '#10B981',
-  pending: '#F59E0B',
-  failed: '#EF4444',
-  active: '#3B82F6',
+  passed: '#047857',
+  pending: '#B45309',
+  failed: '#DC2626',
+  active: '#1D4ED8',
 
   // UI feedback
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  info: '#3B82F6'
+  success: '#047857',
+  warning: '#B45309',
+  error: '#DC2626',
+  info: '#1D4ED8'
 };
 
 // Typography scale
@@ -86,13 +86,13 @@ export const typography = {
     fontSize: 14,
     fontWeight: '600' as const,
     lineHeight: 20,
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   },
   overline: {
     fontSize: 12,
     fontWeight: '600' as const,
     lineHeight: 16,
-    letterSpacing: 1.5,
+    letterSpacing: 0,
   }
 };
 
@@ -109,10 +109,10 @@ export const spacing = {
 
 // Border radius scale
 export const borderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 8,
   full: 999,
 };
 

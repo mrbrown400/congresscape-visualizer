@@ -35,7 +35,7 @@ Repo-local Codex skills live in `.agents/skills/`. Read the matching skill befor
 - `.agents/skills/congresscape-task-runner/SKILL.md` for normal implementation tasks.
 - `.agents/skills/congresscape-planning/SKILL.md` for task plans, migration plans, and architecture decisions.
 - `.agents/skills/congresscape-backend-api/SKILL.md` for FastAPI routes, schemas, services, DB models, and tests.
-- `.agents/skills/congresscape-ingest-data/SKILL.md` for Congress, executive, judicial, summary, embedding, and data provenance work.
+- `.agents/skills/congresscape-ingest-data/SKILL.md` for Congress, executive, judicial, summary, and data provenance work.
 - `.agents/skills/congresscape-frontend-mobile/SKILL.md` for Expo/React Native screens, navigation, theme, and mobile UX.
 - `.agents/skills/congresscape-browser-verification/SKILL.md` for Expo web or browser-facing verification.
 - `.agents/skills/congresscape-release-closeout/SKILL.md` for final verification and handoff.
@@ -95,7 +95,6 @@ Docker commands from the repository root:
 
 ```bash
 docker compose up -d db
-docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF NOT EXISTS vector"
 ```
 
 ## Architecture
@@ -103,12 +102,12 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 ### Backend (`backend/app`)
 
 - Framework: FastAPI with async SQLAlchemy 2.0.
-- Runtime database: configured by `DATABASE_URL`; current local `.env` can use SQLite, while Docker provides PostgreSQL with pgvector.
+- Runtime database: configured by `DATABASE_URL`; current local `.env` can use SQLite, while Docker provides PostgreSQL.
 - Entry point: `main.py` creates the app and registers routes under `/api/v1`.
 - API routes: `api/routes/` owns feed, ingest, summary, notification, and system endpoints.
 - Models: `models/` owns `GovernmentUpdate`, `Entity`, and notification subscriptions.
 - Schemas: `schemas/` owns Pydantic request and response contracts.
-- Services: `services/` owns feed, update, daily summary, notification, summarization, embedding, and ranking logic.
+- Services: `services/` owns feed, update, daily summary, notification, and ranking logic.
 - Ingestion: `ingest/` owns Congress, executive, judicial, and runner modules using shared `NormalizedUpdate`.
 
 ### Frontend (`frontend/src`)
@@ -117,7 +116,7 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 - Language: TypeScript in strict mode.
 - State: React Context and custom hooks.
 - Features: `features/` owns screens, hooks, types, and feature-specific components.
-- Services: `services/` owns axios API clients.
+- Services: `services/` owns fetch-based API clients.
 - Navigation: `navigation/` owns root, tab, and feed navigation.
 - Theme: `theme/` owns branch-aware colors and provider state.
 

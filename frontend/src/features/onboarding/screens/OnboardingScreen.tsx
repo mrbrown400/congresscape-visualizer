@@ -1,12 +1,12 @@
 import React, { useCallback, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useTheme } from '@theme/ThemeProvider';
 import { useUserPreferences } from '../../../context/UserPreferencesContext';
 import { RootStackParamList } from '@navigation/RootNavigator';
+import CivicProgressCard, { CivicProgressItem } from '@components/CivicProgressCard';
 
 const interestGroups = [
   {
@@ -67,115 +67,142 @@ const OnboardingScreen = ({ navigation }: Props) => {
   }, [completeOnboarding, navigation]);
 
   const isEditing = hasCompletedOnboarding;
+  const setupItems: CivicProgressItem[] = [
+    {
+      label: 'Choose interests',
+      detail: `${selectedInterests.length} topic${selectedInterests.length === 1 ? '' : 's'} selected`,
+      complete: selectedInterests.length > 0,
+    },
+    {
+      label: 'District can come next',
+      detail: preferences.homeDistrict ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}` : 'Optional in My Gov',
+      complete: true,
+    },
+    {
+      label: 'Alert controls stay optional',
+      detail: 'Tune notification intensity after setup',
+      complete: true,
+    },
+  ];
 
   return (
-    <LinearGradient colors={['#0F172A', '#020617']} style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {isEditing && (
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={neutral.textPrimary} />
-          </Pressable>
-        )}
-        <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: neutral.textPrimary }]}>
-            {isEditing ? 'Edit Your Interests' : 'Tailor Your Briefing'}
-          </Text>
-          <Text style={[styles.subtitle, { color: neutral.textSecondary }]}>
-            {isEditing
-              ? 'Update the topics you want to follow'
-              : 'Follow the branches and topics you care about. We\'ll personalize your daily briefing.'}
-          </Text>
-        </View>
-      </View>
-
-      {/* Interest Cards */}
-      <View style={styles.list}>
-        {interestGroups.map(group => {
-          const isSelected = selectedInterests.includes(group.key);
-          const accentColor = branchColors[group.key as keyof typeof branchColors] || branchColors.agency;
-
-          return (
-            <Pressable
-              key={group.key}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: isSelected ? accentColor + '15' : neutral.card,
-                  borderColor: isSelected ? accentColor : 'transparent',
-                  borderWidth: 2,
-                }
-              ]}
-              onPress={() => toggleInterest(group.key)}
-            >
-              <View style={[styles.cardIcon, { backgroundColor: accentColor + '20' }]}>
-                <Ionicons name={group.icon} size={24} color={accentColor} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={[styles.cardTitle, { color: neutral.textPrimary }]}>
-                  {group.title}
-                </Text>
-                <Text style={[styles.cardSubtitle, { color: neutral.textSecondary }]}>
-                  {group.subtitle}
-                </Text>
-              </View>
-              <View style={[
-                styles.checkbox,
-                {
-                  backgroundColor: isSelected ? accentColor : 'transparent',
-                  borderColor: isSelected ? accentColor : neutral.textMuted,
-                }
-              ]}>
-                {isSelected && (
-                  <Ionicons name="checkmark" size={16} color="#FFFFFF" />
-                )}
-              </View>
+    <View style={[styles.container, { backgroundColor: neutral.background }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          {isEditing && (
+            <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color={neutral.textPrimary} />
             </Pressable>
-          );
-        })}
-      </View>
+          )}
+          <View style={styles.titleContainer}>
+            <Text style={[styles.title, { color: neutral.textPrimary }]}>
+              {isEditing ? 'Edit Your Interests' : 'Tailor Your Briefing'}
+            </Text>
+            <Text style={[styles.subtitle, { color: neutral.textSecondary }]}>
+              {isEditing
+                ? 'Update the topics you want to follow'
+                : 'Follow the branches and topics you care about. We\'ll personalize your daily briefing.'}
+            </Text>
+          </View>
+        </View>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Pressable
-          style={[
-            styles.cta,
-            {
-              backgroundColor: selectedInterests.length > 0 ? branchColors.agency : neutral.divider,
-            }
-          ]}
-          onPress={handleContinue}
-          disabled={selectedInterests.length === 0 && !isEditing}
-        >
-          <Text style={[
-            styles.ctaText,
-            { color: selectedInterests.length > 0 ? '#0B1D3A' : neutral.textMuted }
-          ]}>
-            {isEditing ? 'Save Changes' : 'Continue to Briefing'}
-          </Text>
-        </Pressable>
+        <CivicProgressCard
+          title="Personalization setup"
+          subtitle="Choose what should shape your civic feed. You can change this later."
+          items={setupItems}
+        />
 
-        {!isEditing && (
-          <Pressable style={styles.skipButton} onPress={handleSkip}>
-            <Text style={[styles.skipText, { color: neutral.textMuted }]}>
-              Skip for now
+        {/* Interest Cards */}
+        <View style={styles.list}>
+          {interestGroups.map(group => {
+            const isSelected = selectedInterests.includes(group.key);
+            const accentColor = branchColors[group.key as keyof typeof branchColors] || branchColors.agency;
+
+            return (
+              <Pressable
+                key={group.key}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: isSelected ? accentColor + '15' : neutral.card,
+                    borderColor: isSelected ? accentColor : neutral.divider,
+                  }
+                ]}
+                onPress={() => toggleInterest(group.key)}
+              >
+                <View style={[styles.cardIcon, { backgroundColor: accentColor + '20' }]}>
+                  <Ionicons name={group.icon} size={24} color={accentColor} />
+                </View>
+                <View style={styles.cardContent}>
+                  <Text style={[styles.cardTitle, { color: neutral.textPrimary }]}>
+                    {group.title}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { color: neutral.textSecondary }]}>
+                    {group.subtitle}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.checkbox,
+                  {
+                    backgroundColor: isSelected ? accentColor : 'transparent',
+                    borderColor: isSelected ? accentColor : neutral.textMuted,
+                  }
+                ]}>
+                  {isSelected && (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Pressable
+            style={[
+              styles.cta,
+              {
+                backgroundColor: selectedInterests.length > 0 ? branchColors.agency : neutral.divider,
+              }
+            ]}
+            onPress={handleContinue}
+            disabled={selectedInterests.length === 0 && !isEditing}
+          >
+            <Text style={[
+              styles.ctaText,
+              { color: selectedInterests.length > 0 ? '#FFFFFF' : neutral.textMuted }
+            ]}>
+              {isEditing ? 'Save Changes' : 'Continue to Briefing'}
             </Text>
           </Pressable>
-        )}
 
-        {selectedInterests.length > 0 && (
-          <Text style={[styles.selectionCount, { color: neutral.textMuted }]}>
-            {selectedInterests.length} topic{selectedInterests.length !== 1 ? 's' : ''} selected
-          </Text>
-        )}
-      </View>
-    </LinearGradient>
+          {!isEditing && (
+            <Pressable style={styles.skipButton} onPress={handleSkip}>
+              <Text style={[styles.skipText, { color: neutral.textMuted }]}>
+                Skip for now
+              </Text>
+            </Pressable>
+          )}
+
+          {selectedInterests.length > 0 && (
+            <Text style={[styles.selectionCount, { color: neutral.textMuted }]}>
+              {selectedInterests.length} topic{selectedInterests.length !== 1 ? 's' : ''} selected
+            </Text>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 40,
@@ -202,20 +229,20 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   list: {
-    flex: 1,
     gap: 12,
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 16,
     gap: 14,
   },
   cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -244,7 +271,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   cta: {
-    borderRadius: 999,
+    borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
   },

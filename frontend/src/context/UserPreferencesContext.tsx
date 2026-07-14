@@ -96,6 +96,8 @@ type UserPreferencesContextType = {
   resetOnboarding: () => void;
 };
 
+type PreferenceListKey = 'followedMembers' | 'followedBills' | 'followedTopics' | 'followedCommittees';
+
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
 
 export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
@@ -159,69 +161,35 @@ export const UserPreferencesProvider = ({ children }: PropsWithChildren) => {
     }));
   }, []);
 
-  const followMember = useCallback((memberId: string) => {
+  const addToPreferenceList = useCallback((key: PreferenceListKey, value: string) => {
     setPreferences(prev => ({
       ...prev,
-      followedMembers: prev.followedMembers.includes(memberId)
-        ? prev.followedMembers
-        : [...prev.followedMembers, memberId]
+      [key]: prev[key].includes(value) ? prev[key] : [...prev[key], value],
     }));
   }, []);
 
-  const unfollowMember = useCallback((memberId: string) => {
+  const removeFromPreferenceList = useCallback((key: PreferenceListKey, value: string) => {
     setPreferences(prev => ({
       ...prev,
-      followedMembers: prev.followedMembers.filter(id => id !== memberId)
+      [key]: prev[key].filter(item => item !== value),
     }));
   }, []);
 
-  const followBill = useCallback((billId: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedBills: prev.followedBills.includes(billId)
-        ? prev.followedBills
-        : [...prev.followedBills, billId]
-    }));
-  }, []);
+  const followMember = useCallback((memberId: string) => addToPreferenceList('followedMembers', memberId), [addToPreferenceList]);
 
-  const unfollowBill = useCallback((billId: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedBills: prev.followedBills.filter(id => id !== billId)
-    }));
-  }, []);
+  const unfollowMember = useCallback((memberId: string) => removeFromPreferenceList('followedMembers', memberId), [removeFromPreferenceList]);
 
-  const followTopic = useCallback((topic: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedTopics: prev.followedTopics.includes(topic)
-        ? prev.followedTopics
-        : [...prev.followedTopics, topic]
-    }));
-  }, []);
+  const followBill = useCallback((billId: string) => addToPreferenceList('followedBills', billId), [addToPreferenceList]);
 
-  const unfollowTopic = useCallback((topic: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedTopics: prev.followedTopics.filter(t => t !== topic)
-    }));
-  }, []);
+  const unfollowBill = useCallback((billId: string) => removeFromPreferenceList('followedBills', billId), [removeFromPreferenceList]);
 
-  const followCommittee = useCallback((committeeId: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedCommittees: prev.followedCommittees.includes(committeeId)
-        ? prev.followedCommittees
-        : [...prev.followedCommittees, committeeId]
-    }));
-  }, []);
+  const followTopic = useCallback((topic: string) => addToPreferenceList('followedTopics', topic), [addToPreferenceList]);
 
-  const unfollowCommittee = useCallback((committeeId: string) => {
-    setPreferences(prev => ({
-      ...prev,
-      followedCommittees: prev.followedCommittees.filter(id => id !== committeeId)
-    }));
-  }, []);
+  const unfollowTopic = useCallback((topic: string) => removeFromPreferenceList('followedTopics', topic), [removeFromPreferenceList]);
+
+  const followCommittee = useCallback((committeeId: string) => addToPreferenceList('followedCommittees', committeeId), [addToPreferenceList]);
+
+  const unfollowCommittee = useCallback((committeeId: string) => removeFromPreferenceList('followedCommittees', committeeId), [removeFromPreferenceList]);
 
   const setBillPosition = useCallback((
     billId: string,

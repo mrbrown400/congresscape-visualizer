@@ -77,9 +77,6 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     tags: Mapped[List[str]] = mapped_column(JSON, default=list)
     metadata_json: Mapped[dict | None] = JSONBMixin.jsonb_column(default=dict)
 
-    # Embedding removed for SQLite
-    # embedding: Mapped[Optional[List[float]]] = mapped_column(Vector(dim=1536), nullable=True)
-
     entities: Mapped[List["Entity"]] = relationship(
         back_populates="updates",
         secondary=update_entity_association,
@@ -89,18 +86,6 @@ class GovernmentUpdate(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     bill_action: Mapped[Optional["BillAction"]] = relationship(lazy="selectin")
     vote: Mapped[Optional["CongressionalVote"]] = relationship(lazy="selectin")
     hearing: Mapped[Optional["CongressionalHearing"]] = relationship(lazy="selectin")
-
-    # Indexes removed for SQLite
-    # __table_args__ = (
-    #     Index("ix_updates_branch_published", "branch", "published_at"),
-    #     Index(
-    #         "ix_updates_embedding",
-    #         "embedding",
-    #         postgresql_using="ivfflat",
-    #         postgresql_ops={"embedding": "vector_ip_ops"},
-    #     ),
-    # )
-
 
 class Entity(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     """Entities (people, agencies, committees) linked to updates."""

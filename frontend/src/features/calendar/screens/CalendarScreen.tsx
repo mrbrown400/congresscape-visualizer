@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import dayjs from 'dayjs';
 import { useNavigation } from '@react-navigation/native';
@@ -8,8 +7,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useTheme } from '@theme/ThemeProvider';
 import { RootStackParamList } from '@navigation/RootNavigator';
-import { fetchUpdates, GovernmentUpdate } from '@services/updatesService';
 import { FeedItem } from '@features/feed/types';
+import { fetchFeed } from '@services/feedService';
 import YearView from './YearView';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -22,9 +21,10 @@ const CalendarScreen = () => {
 
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [updates, setUpdates] = useState<GovernmentUpdate[]>([]);
+  const [updates, setUpdates] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
+  const calendarWidth = Math.min(Dimensions.get('window').width, 1040) - 32;
 
   const startOfMonth = useMemo(() => currentDate.startOf('month'), [currentDate]);
   const endOfMonth = useMemo(() => currentDate.endOf('month'), [currentDate]);
@@ -45,8 +45,8 @@ const CalendarScreen = () => {
         end = currentDate.endOf('year').toISOString();
       }
 
-      const data = await fetchUpdates(start, end, 500);
-      setUpdates(data);
+      const data = await fetchFeed({ start_date: start, end_date: end, limit: 500 });
+      setUpdates(data.items);
       setLoading(false);
     };
     loadUpdates();
@@ -87,25 +87,13 @@ const CalendarScreen = () => {
   }, [updates, selectedDate]);
 
   // Convert GovernmentUpdate to FeedItem for navigation
-  const convertToFeedItem = useCallback((update: GovernmentUpdate): FeedItem => ({
-    id: update.id,
-    headline: update.headline,
-    summary: update.summary || '',
-    published_at: update.published_at,
-    branch: update.branch as FeedItem['branch'],
-    source: update.source,
-    url: update.url,
-    tags: update.tags || [],
-    metadata: update.metadata,
-  }), []);
-
-  const handleUpdatePress = useCallback((update: GovernmentUpdate) => {
-    navigation.navigate('UpdateDetail', { item: convertToFeedItem(update) });
-  }, [navigation, convertToFeedItem]);
+  const handleUpdatePress = useCallback((update: FeedItem) => {
+    navigation.navigate('UpdateDetail', { item: update });
+  }, [navigation]);
 
   const renderDay = (date: dayjs.Dayjs | null, index: number) => {
     if (!date) {
-      return <View key={`empty-${index}`} style={styles.dayCell} />;
+      return <View key={`empty-${index}`} style={[styles.dayCell, { width: calendarWidth / 7 }]} />;
     }
 
     const dateKey = date.format('YYYY-MM-DD');
@@ -118,6 +106,7 @@ const CalendarScreen = () => {
         key={dateKey}
         style={[
           styles.dayCell,
+          { width: calendarWidth / 7 },
           isSelected && [styles.selectedDayCell, { borderColor: branchColors.agency }],
           isToday && !isSelected && styles.todayCell
         ]}
@@ -145,7 +134,7 @@ const CalendarScreen = () => {
   };
 
   return (
-    <LinearGradient colors={[neutral.surface, neutral.background]} style={styles.container}>
+    <View style={[styles.container, { backgroundColor: neutral.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.navContainer}>
@@ -167,7 +156,7 @@ const CalendarScreen = () => {
         </View>
 
         <Pressable
-          style={[styles.viewToggle, { backgroundColor: neutral.card }]}
+          style={[styles.viewToggle, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
           onPress={() => setViewMode(viewMode === 'month' ? 'year' : 'month')}
         >
           <Ionicons
@@ -209,14 +198,14 @@ const CalendarScreen = () => {
           {/* Calendar Grid */}
           <View style={styles.calendarGrid}>
             {loading ? (
-              <ActivityIndicator size="large" color={branchColors.agency} style={{ margin: 20 }} />
+              <ActivityIndicator size="large" color={branchColors.legislative} style={{ margin: 20 }} />
             ) : (
               calendarDays.map((date, index) => renderDay(date, index))
             )}
           </View>
 
           {/* Selected Day Summary */}
-          <View style={[styles.summaryContainer, { backgroundColor: neutral.card }]}>
+          <View style={[styles.summaryContainer, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
             <View style={styles.summaryHeader}>
               <Text style={[styles.summaryTitle, { color: neutral.textPrimary }]}>
                 {selectedDate.format('MMM D, YYYY')}
@@ -230,7 +219,7 @@ const CalendarScreen = () => {
                 selectedDayUpdates.map(update => (
                   <Pressable
                     key={update.id}
-                    style={[styles.card, { backgroundColor: neutral.surface }]}
+                    style={[styles.card, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
                     onPress={() => handleUpdatePress(update)}
                   >
                     <View style={[styles.cardBar, { backgroundColor: getBranchColor(update.branch) }]} />
@@ -277,7 +266,7 @@ const CalendarScreen = () => {
           }}
         />
       )}
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -286,6 +275,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 60,
     paddingHorizontal: 16,
+    width: '100%',
+    maxWidth: 1040,
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -303,9 +295,10 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 16,
+    borderRadius: 8,
     gap: 6,
   },
   viewToggleText: {
@@ -354,7 +347,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   dayCell: {
-    width: (Dimensions.get('window').width - 32) / 7,
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
@@ -362,11 +354,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   selectedDayCell: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: 'rgba(29, 78, 216, 0.08)',
     borderWidth: 1,
   },
   todayCell: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#EFF6FF',
   },
   dayText: {
     fontSize: 16,
@@ -390,10 +382,9 @@ const styles = StyleSheet.create({
   summaryContainer: {
     flex: 1,
     marginTop: 16,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderRadius: 8,
     padding: 20,
-    marginHorizontal: -16,
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -414,7 +405,8 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderWidth: 1,
+    borderRadius: 8,
     marginBottom: 10,
     overflow: 'hidden',
   },

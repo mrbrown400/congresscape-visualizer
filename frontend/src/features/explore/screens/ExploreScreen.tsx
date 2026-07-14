@@ -16,13 +16,13 @@ import { useTheme } from '@theme/ThemeProvider';
 import { useFeed } from '@features/feed/hooks/useFeed';
 import { FeedItem, Branch } from '@features/feed/types';
 import { useSavedItems } from '../../../context/SavedItemsContext';
-import UpdateCard from '../../../components/UpdateCard';
+import FeedCard from '@features/feed/components/FeedCard';
 import { RootStackParamList } from '@navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 type FilterKey = 'all' | 'legislative' | 'executive' | 'judicial';
-type QuickFilter = 'trending' | 'urgent' | 'hearings' | 'votes';
+type QuickFilter = 'hearings' | 'votes';
 
 const branchFilters: { key: FilterKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'all', label: 'All', icon: 'apps' },
@@ -32,8 +32,6 @@ const branchFilters: { key: FilterKey; label: string; icon: keyof typeof Ionicon
 ];
 
 const quickFilters: { key: QuickFilter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'trending', label: 'Trending', icon: 'trending-up' },
-  { key: 'urgent', label: 'Urgent', icon: 'alert-circle' },
   { key: 'hearings', label: 'Hearings', icon: 'calendar' },
   { key: 'votes', label: 'Votes', icon: 'checkmark-circle' },
 ];
@@ -47,7 +45,7 @@ const trendingTopics = [
 ];
 
 const ExploreScreen = () => {
-  const { neutral, branch: branchColors, semantic } = useTheme();
+  const { neutral, branch: branchColors } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { isSaved, toggleSave } = useSavedItems();
 
@@ -57,8 +55,6 @@ const ExploreScreen = () => {
 
   // Determine context key for useFeed based on filters
   const contextKey = useMemo(() => {
-    if (activeQuickFilter === 'trending') return 'trending';
-    if (activeQuickFilter === 'urgent') return 'urgent';
     if (activeQuickFilter === 'hearings') return 'hearings';
     if (activeQuickFilter === 'votes') return 'votes';
     if (activeBranch === 'legislative') return 'legislative';
@@ -100,7 +96,7 @@ const ExploreScreen = () => {
   };
 
   const renderItem = useCallback(({ item }: { item: FeedItem }) => (
-    <UpdateCard
+    <FeedCard
       item={item}
       onPress={handleItemPress}
       onSave={toggleSave}
@@ -110,8 +106,15 @@ const ExploreScreen = () => {
 
   const ListHeader = (
     <View style={styles.headerContainer}>
+      <View style={styles.pageHeader}>
+        <Text style={[styles.pageTitle, { color: neutral.textPrimary }]}>Explore</Text>
+        <Text style={[styles.pageSubtitle, { color: neutral.textSecondary }]}>
+          Search bills, votes, hearings, and official source trails.
+        </Text>
+      </View>
+
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { backgroundColor: neutral.card }]}>
+      <View style={[styles.searchContainer, { backgroundColor: neutral.card, borderColor: neutral.divider }]}>
         <Ionicons name="search" size={20} color={neutral.textMuted} />
         <TextInput
           style={[styles.searchInput, { color: neutral.textPrimary }]}
@@ -136,7 +139,7 @@ const ExploreScreen = () => {
           {branchFilters.map(filter => {
             const isActive = activeBranch === filter.key;
             const color = filter.key === 'all'
-              ? branchColors.agency
+              ? branchColors.legislative
               : branchColors[filter.key as Branch] || branchColors.legislative;
 
             return (
@@ -174,7 +177,7 @@ const ExploreScreen = () => {
         <View style={styles.filterRow}>
           {quickFilters.map(filter => {
             const isActive = activeQuickFilter === filter.key;
-            const color = filter.key === 'urgent' ? semantic.urgent : branchColors.agency;
+            const color = branchColors.legislative;
 
             return (
               <Pressable
@@ -213,10 +216,10 @@ const ExploreScreen = () => {
             {trendingTopics.map(topic => (
               <Pressable
                 key={topic}
-                style={[styles.topicChip, { backgroundColor: neutral.card }]}
+                style={[styles.topicChip, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
                 onPress={() => handleTopicPress(topic)}
               >
-                <Ionicons name="flame" size={14} color={semantic.important} />
+                <Ionicons name="pricetag-outline" size={14} color={branchColors.legislative} />
                 <Text style={[styles.topicText, { color: neutral.textPrimary }]}>{topic}</Text>
               </Pressable>
             ))}
@@ -249,7 +252,7 @@ const ExploreScreen = () => {
         ListEmptyComponent={
           loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={branchColors.agency} />
+              <ActivityIndicator size="large" color={branchColors.legislative} />
             </View>
           ) : (
             <View style={styles.emptyContainer}>
@@ -273,17 +276,33 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 16,
     paddingBottom: 100,
+    width: '100%',
+    maxWidth: 1040,
+    alignSelf: 'center',
   },
   headerContainer: {
-    gap: 20,
+    gap: 18,
     marginBottom: 20,
+  },
+  pageHeader: {
+    gap: 6,
+  },
+  pageTitle: {
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '800',
+  },
+  pageSubtitle: {
+    fontSize: 15,
+    lineHeight: 21,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 16,
+    borderWidth: 1,
+    borderRadius: 8,
     gap: 12,
   },
   searchInput: {
@@ -295,8 +314,8 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.5,
+    fontWeight: '800',
+    letterSpacing: 0,
   },
   filterRow: {
     flexDirection: 'row',
@@ -308,7 +327,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     gap: 6,
   },
@@ -324,9 +343,10 @@ const styles = StyleSheet.create({
   topicChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 8,
     gap: 6,
   },
   topicText: {
@@ -341,8 +361,8 @@ const styles = StyleSheet.create({
   },
   resultsLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 1.5,
+    fontWeight: '800',
+    letterSpacing: 0,
   },
   resultsCount: {
     fontSize: 12,

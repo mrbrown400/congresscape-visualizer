@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import dayjs from 'dayjs';
-import { GovernmentUpdate } from '@services/updatesService';
+import { FeedItem } from '@features/feed/types';
+import { useTheme } from '@theme/ThemeProvider';
 
 interface Props {
     year: number;
-    updates: GovernmentUpdate[];
+    updates: FeedItem[];
     onMonthSelect: (month: number) => void;
 }
 
@@ -15,6 +16,8 @@ const MONTHS = [
 ];
 
 const YearView = ({ year, updates, onMonthSelect }: Props) => {
+    const { neutral } = useTheme();
+
     // Group updates by date string "YYYY-MM-DD"
     const activityMap = useMemo(() => {
         const map: Record<string, number> = {};
@@ -37,10 +40,10 @@ const YearView = ({ year, updates, onMonthSelect }: Props) => {
         return (
             <Pressable
                 key={monthIndex}
-                style={styles.monthContainer}
+                style={[styles.monthContainer, { backgroundColor: neutral.card, borderColor: neutral.divider }]}
                 onPress={() => onMonthSelect(monthIndex)}
             >
-                <Text style={styles.monthTitle}>{MONTHS[monthIndex]}</Text>
+                <Text style={[styles.monthTitle, { color: neutral.textMuted }]}>{MONTHS[monthIndex]}</Text>
                 <View style={styles.monthGrid}>
                     {days.map((day, idx) => {
                         if (!day) return <View key={`empty-${idx}`} style={styles.dayPixelEmpty} />;
@@ -48,10 +51,10 @@ const YearView = ({ year, updates, onMonthSelect }: Props) => {
                         const dateKey = date.date(day).format('YYYY-MM-DD');
                         const count = activityMap[dateKey] || 0;
 
-                        let backgroundColor = '#334155'; // default slate-700
-                        if (count > 0) backgroundColor = '#93C5FD'; // light blue
-                        if (count > 2) backgroundColor = '#3B82F6'; // blue
-                        if (count > 5) backgroundColor = '#1D4ED8'; // dark blue
+                        let backgroundColor = '#E2E8F0';
+                        if (count > 0) backgroundColor = '#BFDBFE';
+                        if (count > 2) backgroundColor = '#60A5FA';
+                        if (count > 5) backgroundColor = '#1D4ED8';
 
                         return (
                             <View
@@ -87,13 +90,15 @@ const styles = StyleSheet.create({
     },
     monthContainer: {
         width: '30%',
+        borderWidth: 1,
+        borderRadius: 8,
+        padding: 8,
         marginBottom: 16,
     },
     monthTitle: {
-        color: '#94A3B8',
         fontSize: 12,
-        fontWeight: '600',
-        marginBottom: 4,
+        fontWeight: '800',
+        marginBottom: 6,
     },
     monthGrid: {
         flexDirection: 'row',

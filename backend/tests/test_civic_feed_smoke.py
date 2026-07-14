@@ -28,7 +28,6 @@ async def test_deterministic_civic_feed_smoke_seed_covers_mvp_surfaces(session) 
 
     items, total = await FeedService(session).list_updates(
         FeedQueryParams(
-            sort="today",
             followed_bills=seed["bill_canonical_id"],
             followed_members=seed["member_id"],
             followed_topics=seed["topic"],

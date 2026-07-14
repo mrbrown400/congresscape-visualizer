@@ -1,4 +1,4 @@
-import api from './api';
+import { apiPost } from './api';
 
 type RegisterPushPayload = {
   token: string;
@@ -18,5 +18,5 @@ type RegisterPushPayload = {
 };
 
 export const registerPushToken = async (payload: RegisterPushPayload) => {
-  await api.post('/notifications/register', payload);
+  await apiPost('/notifications/register', payload);
 };

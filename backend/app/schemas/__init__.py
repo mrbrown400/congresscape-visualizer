@@ -1,11 +1,4 @@
 """Pydantic schemas."""
-from .civic_card import (
-    CivicCard,
-    CivicClaim,
-    CivicEntity,
-    CivicMoneyContextItem,
-    CivicSource,
-)
 from .notification import (
     AlertCategoryPreferences,
     FollowedAlertRead,
@@ -26,11 +19,6 @@ from .update import (
 )
 
 __all__ = [
-    "CivicCard",
-    "CivicClaim",
-    "CivicEntity",
-    "CivicMoneyContextItem",
-    "CivicSource",
     "EntityRead",
     "FeedQueryParams",
     "FeedResponse",

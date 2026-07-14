@@ -10,7 +10,6 @@ Backend environment variables:
 
 ```text
 DATABASE_URL
-OPENAI_API_KEY
 CONGRESS_API_KEY
 BACKEND_CORS_ORIGINS
 ```
@@ -45,14 +44,11 @@ Leave that unset for normal setup if you only want dependency installation.
 
 For fast local smoke tests, `DATABASE_URL` may point at SQLite with `sqlite+aiosqlite:///./congresscape.db`.
 
-For production-like checks, use PostgreSQL with pgvector:
+For production-like checks, use PostgreSQL:
 
 ```bash
 docker compose up -d db
-docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF NOT EXISTS vector"
 ```
-
-The current code has SQLite-compatible model changes, so verify pgvector-specific behavior before relying on vector search or persisted embeddings.
 
 ## Verification Commands
 

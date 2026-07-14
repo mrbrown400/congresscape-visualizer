@@ -40,7 +40,6 @@ class GovernmentUpdateBase(BaseModel):
 
 
 class GovernmentUpdateCreate(GovernmentUpdateBase):
-    embedding: Optional[List[float]] = None
     entity_ids: List[int] = []
 
 
@@ -74,7 +73,6 @@ class FeedQueryParams(BaseModel):
     search: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-    sort: Optional[str] = None
     card_type: Optional[str] = None
     followed_bills: Optional[str] = None
     followed_members: Optional[str] = None

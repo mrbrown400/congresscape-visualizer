@@ -1,6 +1,6 @@
 """Application settings and configuration helpers."""
 from functools import lru_cache
-from typing import List, Optional
+from typing import List
 
 from pydantic import AnyHttpUrl, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        extra="ignore",
     )
 
     project_name: str = "Congresscape API"
@@ -22,15 +23,8 @@ class Settings(BaseSettings):
     database_url: str = Field(..., alias="DATABASE_URL")
     database_pool_size: int = 10
 
-    # pgvector settings
-    vector_dimensions: int = Field(1536, description="Embedding vector size")
-
-    # OpenAI / LLM provider
-    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
-    openai_model: str = "gpt-4.1-mini"
-
     # Congress.gov / data.gov API key
-    congress_api_key: Optional[str] = Field(default=None, alias="CONGRESS_API_KEY")
+    congress_api_key: str | None = Field(default=None, alias="CONGRESS_API_KEY")
 
     # CORS and client apps
     backend_cors_origins: List[AnyHttpUrl] = []

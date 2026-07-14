@@ -31,22 +31,21 @@ EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 npm run start  # With cust
 
 ### Docker (from root)
 ```bash
-docker compose up -d db                     # Start PostgreSQL with pgvector
-docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF NOT EXISTS vector"
+docker compose up -d db                     # Start PostgreSQL
 ```
 
 ## Architecture
 
 ### Backend (`/backend/app`)
 - **Framework**: FastAPI with async SQLAlchemy 2.0
-- **Database**: PostgreSQL with pgvector (SQLite for local dev)
+- **Database**: PostgreSQL (SQLite for local dev)
 - **Entry point**: `main.py` creates FastAPI app, registers routes under `/api/v1`
 
 **Key directories**:
 - `api/routes/` - REST endpoints (feeds, ingest, summary, notifications, system)
 - `models/` - SQLAlchemy ORM models (GovernmentUpdate, Entity, NotificationSubscription)
 - `schemas/` - Pydantic request/response validation, including additive civic-card contracts
-- `services/` - Business logic (daily_summary_service, feed_service, notification_service, embedding, summarization)
+- `services/` - Business logic (daily_summary_service, feed_service, notification_service, ranking)
 - `ingest/` - Data source connectors (congress.py, executive.py, judicial.py) with shared `NormalizedUpdate` dataclass
 - `core/config.py` - Pydantic settings from environment variables
 - `db/` - Database session management and initialization
@@ -60,7 +59,7 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 
 **Key directories**:
 - `features/` - Feature modules (dailyBrief, calendar, feed, onboarding) each with screens/, hooks/, types
-- `services/` - API client layer (axios-based, talks to `/api/v1`)
+- `services/` - API client layer (fetch-based, talks to `/api/v1`)
 - `navigation/` - React Navigation stack configuration
 - `theme/` - Color palettes and ThemeProvider context
 
@@ -87,7 +86,6 @@ docker compose exec db psql -U postgres -d congresscape -c "CREATE EXTENSION IF 
 
 ### Backend (`.env`)
 - `DATABASE_URL` - PostgreSQL connection string
-- `OPENAI_API_KEY` - For summarization and embeddings
 - `BACKEND_CORS_ORIGINS` - Allowed origins for CORS
 
 ### Frontend

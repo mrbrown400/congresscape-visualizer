@@ -19,7 +19,7 @@ This is the static relationship map for agent work. Use it with `docs/agentic/re
 - Backend response schemas and frontend TypeScript types must move together.
 - `DATABASE_URL` is read at backend import time, so tests and cloud setup need an explicit database URL or `.env`.
 - Summary and feed ranking currently share placeholder personalization logic; future feed ranking should preserve source transparency and avoid outrage-oriented engagement heuristics.
-- Ingestion enrichment can compute summaries and embeddings, but current SQLite-compatible update models do not persist embeddings.
+- Ingestion persists source-backed summaries directly; embeddings are not part of the current local model.
 - Frontend path aliases must stay synchronized between `frontend/tsconfig.json` and `frontend/babel.config.js`.
 - Browser-facing frontend changes should be checked through Expo web or an equivalent local browser smoke test when the dependency set can run.
 

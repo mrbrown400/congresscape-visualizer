@@ -2,28 +2,41 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 
 import { defaultFilters } from '@constants/filters';
+import { useTheme } from '@theme/ThemeProvider';
 
 type Props = {
   active: string;
   onChange: (key: string) => void;
 };
 
-const FilterPills = ({ active, onChange }: Props) => (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.container}>
-    {defaultFilters.map(filter => {
-      const isActive = filter.key === active;
-      return (
-        <Pressable
-          key={filter.key}
-          onPress={() => onChange(filter.key)}
-          style={[styles.pill, isActive && styles.activePill]}
-        >
-          <Text style={[styles.label, isActive && styles.activeLabel]}>{filter.label}</Text>
-        </Pressable>
-      );
-    })}
-  </ScrollView>
-);
+const FilterPills = ({ active, onChange }: Props) => {
+  const { neutral, branch } = useTheme();
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.container}>
+      {defaultFilters.map(filter => {
+        const isActive = filter.key === active;
+        return (
+          <Pressable
+            key={filter.key}
+            onPress={() => onChange(filter.key)}
+            style={[
+              styles.pill,
+              {
+                backgroundColor: isActive ? branch.legislative : neutral.card,
+                borderColor: isActive ? branch.legislative : neutral.divider,
+              },
+            ]}
+          >
+            <Text style={[styles.label, { color: isActive ? '#FFFFFF' : neutral.textSecondary }]}>
+              {filter.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -33,18 +46,11 @@ const styles = StyleSheet.create({
   pill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.1)'
-  },
-  activePill: {
-    backgroundColor: '#F59E0B'
+    borderRadius: 8,
+    borderWidth: 1,
   },
   label: {
-    color: '#E0F2FE',
-    fontWeight: '500'
-  },
-  activeLabel: {
-    color: '#0B1D3A'
+    fontWeight: '700',
   }
 });
 

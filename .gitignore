@@ -28,3 +28,9 @@ frontend/.expo-shared/
 # Editor
 .vscode/
 .idea/
+
+# Local private artifacts
+private/
+.stitch/
+output/
+backend/.poetry-venvs/

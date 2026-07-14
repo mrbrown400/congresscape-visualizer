@@ -5,7 +5,7 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 
 ## High-Level Components
 - **SQLAlchemy Storage**: Stores current `government_updates` records and will expand to canonical bill, action, vote, hearing, member, committee, and source-link tables.
-- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and serving civic-feed card data. Includes services for summarization, ranking, personalization, provenance diagnostics, and followed-object alert generation.
+- **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and serving civic-feed card data. Includes services for ranking, personalization, provenance diagnostics, and followed-object alert generation.
 - **Civic Card Contract**: Defines shared backend/frontend fields for what happened, why it matters, involved entities, sourced money context, and source trails with unavailable-state handling.
 - **Ingestion Workers**: Congress.gov API workers are the MVP backbone. Official page scraping is fallback only; executive and judicial workers remain future feed inputs rather than M0 blockers.
 - **Money Context Adapters**: `backend/app/ingest/money.py` defines official-source boundaries for CBO, FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, and appropriations links. `backend/app/services/money_context.py` labels direct, related-entity, topic, and unavailable context before feed cards render it.
@@ -33,14 +33,13 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 ## Modularity & Extensibility
 - Backend service layers are split into API routes, schemas, services, and repositories (`db`).
 - Ingestion uses a plug-in architecture: each source defines `fetch_updates()` and `map_to_update()` functions.
-- Summarization provider interface allows swapping OpenAI with alternative LLMs.
-- Vector search prepared with pgvector; service exposes a stub API to be implemented when needed.
+- Summaries arrive from source ingestion or submitted payloads; no paid LLM enrichment runs in the request path.
 - Mobile app uses feature-based structure (`features/dailyBrief`, `features/onboarding`, etc.) to scale to web and desktop clients.
 
 ## Deployment Considerations
 - Containerized services (Dockerfile placeholders) ready for local dev with docker-compose.
 - Background workers scheduled via Celery/Redis or serverless CRON depending on deployment target.
-- Observability hooks for logging/metrics included via `structlog` and `OpenTelemetry` placeholders.
+- Observability hooks can be added when deployment needs them.
 
 ## Future Enhancements
 - Production push scheduling for the source-backed followed-object alert candidates.
@@ -48,4 +47,3 @@ Congresscape Visualizer is moving toward a primary-source civic feed: a Congress
 - Money-source adapters for FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, CBO, and appropriations context.
 - Graph relationships between agencies and entities for explainable civic context.
 - User account system for syncing granular notification preferences across devices.
-- Vector-powered "Full Coverage" deep dives and conversational RAG exploration.

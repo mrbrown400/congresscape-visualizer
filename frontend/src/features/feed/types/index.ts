@@ -57,31 +57,6 @@ export type CivicMoneyContextItem = {
   source_category?: SourceCategory | null;
 };
 
-export type CivicCard = {
-  id: string;
-  card_type: CivicCardType;
-  branch: Branch;
-  source: string;
-  headline: string;
-  summary: string;
-  what_happened: string;
-  published_at: string;
-  last_updated_at: string;
-  event_date?: string | null;
-  primary_update_id?: number | null;
-  why_it_matters?: string | null;
-  involved: CivicEntity[];
-  key_claims: CivicClaim[];
-  money_context_status: MoneyContextStatus;
-  money_context_note?: string | null;
-  money_context: CivicMoneyContextItem[];
-  source_trail_status: SourceTrailStatus;
-  source_trail_note?: string | null;
-  source_trail: CivicSource[];
-  tags: string[];
-  metadata?: Record<string, unknown> | null;
-};
-
 export type RankContext = {
   score: number;
   factors: Record<string, number>;

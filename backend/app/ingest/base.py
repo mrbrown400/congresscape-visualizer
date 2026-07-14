@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import AsyncIterator, Iterable, Protocol
 
 
 def utcnow() -> datetime:
@@ -24,17 +23,3 @@ class NormalizedUpdate:
     tags: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
     entities: list[str] = field(default_factory=list)
-
-
-class IngestSource(Protocol):
-    """Protocol for async ingest implementations."""
-
-    async def fetch(self) -> AsyncIterator[NormalizedUpdate]:
-        ...
-
-
-class SyncIngestSource(Protocol):
-    """Protocol for sync generators to be wrapped as async."""
-
-    def fetch(self) -> Iterable[NormalizedUpdate]:
-        ...

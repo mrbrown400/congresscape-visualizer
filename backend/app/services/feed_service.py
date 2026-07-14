@@ -45,7 +45,6 @@ class FeedService:
         if params.tag:
             query = query.where(GovernmentUpdate.tags.contains([params.tag]))
         if params.search:
-            # Placeholder for vector search; fallback to case-insensitive headline match.
             pattern = f"%{params.search.lower()}%"
             query = query.where(func.lower(GovernmentUpdate.headline).like(pattern))
         if params.start_date:
