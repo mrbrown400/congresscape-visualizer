@@ -58,6 +58,12 @@ const FeedCard = ({ item, onPress, onSave, isSaved = false }: Props) => {
           {item.summary ?? 'Official summary has not been published yet.'}
         </Text>
 
+        {item.source_trail_status && item.source_trail_status !== 'available' && (
+          <Text style={[styles.sourceStatus, { color: neutral.textMuted }]}>
+            {item.source_trail_status === 'pending' ? 'Official source trail pending.' : 'Official source trail unavailable.'}
+          </Text>
+        )}
+
         <VotePromptForFeedItem item={item} />
         <MoneyContextPreview item={item} />
 
@@ -148,6 +154,10 @@ const styles = StyleSheet.create({
   summary: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  sourceStatus: {
+    fontSize: 12,
+    fontStyle: 'italic',
   },
   moneyPreview: {
     borderTopWidth: StyleSheet.hairlineWidth,
