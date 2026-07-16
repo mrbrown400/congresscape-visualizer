@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint .",
-    "test:vote-comparison": "node scripts/run-vote-comparison-tests.mjs"
+    "test:vote-comparison": "node scripts/run-vote-comparison-tests.mjs",
+    "test:regression": "node scripts/accessibility-privacy-regression.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",
