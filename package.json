@@ -8,6 +8,7 @@
     "dev:frontend": "cd frontend && EXPO_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 npm run web",
     "quality:backend": "cd backend && poetry run pytest && poetry run ruff check .",
     "quality:frontend": "cd frontend && npx tsc --noEmit && npm run lint && npm run test:regression",
+    "release:check": "node scripts/release-check.mjs",
     "quality": "npm run quality:backend && npm run quality:frontend"
   }
 }
