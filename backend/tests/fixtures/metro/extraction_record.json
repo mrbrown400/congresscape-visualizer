@@ -1,0 +1,22 @@
+{
+  "canonical_id": "la.metro:report:2026-0308",
+  "native_id": "MatterFile:2026-0308",
+  "source_location": {"page": 4, "text": "Recommendation and fiscal impact"},
+  "fields": {
+    "report_identifier": "2026-0308",
+    "requested_action": "Adopt the service plan",
+    "recommendation": "Approve",
+    "date": "2026-06-25",
+    "amount": "1250000.00",
+    "project": "Regional Service Plan",
+    "vendor": "Metro Operations",
+    "location": "Los Angeles County",
+    "body": "Metro Board",
+    "final_outcome": "Adopted"
+  },
+  "lifecycle_events": [
+    {"event_type": "final_action", "occurred_at": "2026-06-25T15:00:00Z", "sequence": 2},
+    {"event_type": "introduced", "occurred_at": "2026-06-01T15:00:00Z", "sequence": 1},
+    {"event_type": "published", "occurred_at": "2026-05-28T15:00:00Z", "sequence": 0}
+  ]
+}
