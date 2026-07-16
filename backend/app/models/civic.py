@@ -476,6 +476,66 @@ class Geography(CivicIdentityMixin, PrimaryKeyMixin, TimestampMixin, JSONBMixin,
     source_links: Mapped[List["SourceLink"]] = relationship(back_populates="geography", cascade="all, delete-orphan")
 
 
+class AddressResolution(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
+    """Privacy-minimized result of resolving one address on demand."""
+
+    __tablename__ = "civic_address_resolutions"
+    __table_args__ = (UniqueConstraint("address_hash", name="uq_civic_address_resolutions_address_hash"),)
+
+    address_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    lookup_type: Mapped[str] = mapped_column(String(32), nullable=False, default="address")
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    source_dataset: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    source_service: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    source_layer: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    source_native_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    hse_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    pin: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    match_score: Mapped[Optional[Decimal]] = mapped_column(Numeric(6, 2), nullable=True)
+    interpolation_status: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    latitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    longitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    boundary_version: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    geometry_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    retrieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    benchmark: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    vintage: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    distance_method: Mapped[str] = mapped_column(String(80), nullable=False, default="haversine")
+    crs: Mapped[str] = mapped_column(String(40), nullable=False, default="EPSG:4326")
+    ambiguity_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolved_geographies: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class NearbyEntityMatch(PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
+    """A nearby route, stop, station, or project from a versioned snapshot."""
+
+    __tablename__ = "civic_nearby_entity_matches"
+    __table_args__ = (
+        UniqueConstraint("resolution_id", "entity_type", "source_native_id", name="uq_civic_nearby_entity_match"),
+        Index("ix_civic_nearby_entity_resolution", "resolution_id"),
+    )
+
+    resolution_id: Mapped[int] = mapped_column(
+        ForeignKey("civic_address_resolutions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    entity_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    source_dataset: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    source_service: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    source_layer: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    source_native_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str] = mapped_column(String(500), nullable=False)
+    distance_meters: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    source_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)
+    route_id: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    route_branch: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    boundary_version: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    distance_method: Mapped[str] = mapped_column(String(80), nullable=False, default="haversine")
+    crs: Mapped[str] = mapped_column(String(40), nullable=False, default="EPSG:4326")
+    geometry_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+
+    resolution: Mapped[AddressResolution] = relationship()
+
+
 class ExtractedClaim(CivicIdentityMixin, PrimaryKeyMixin, TimestampMixin, JSONBMixin, Base):
     """A source-backed assertion extracted from a document or record."""
 

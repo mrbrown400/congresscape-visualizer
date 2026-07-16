@@ -1,5 +1,6 @@
 """Database models package."""
 from .civic import (
+    AddressResolution,
     AgendaItem,
     ClaimRevision,
     DocumentVersion,
@@ -9,6 +10,7 @@ from .civic import (
     GovernmentBody,
     Jurisdiction,
     Meeting,
+    NearbyEntityMatch,
     Official,
     PolicyAction,
     PolicyItem,
@@ -33,6 +35,7 @@ from .notification import NotificationSubscription
 from .update import BranchEnum, Entity, GovernmentUpdate
 
 __all__ = [
+    "AddressResolution",
     "AgendaItem",
     "BillAction",
     "BillTextVersion",
@@ -54,6 +57,7 @@ __all__ = [
     "Jurisdiction",
     "LegislativeSourceLink",
     "Meeting",
+    "NearbyEntityMatch",
     "MemberVotePosition",
     "NotificationSubscription",
     "Official",
