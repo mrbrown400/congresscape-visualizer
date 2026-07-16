@@ -13,6 +13,7 @@ from app.schemas.provenance import ProvenanceDiagnosticsResponse
 from app.services.provenance_diagnostics import DEFAULT_STALE_AFTER_HOURS, ProvenanceDiagnosticsService
 from app.services.update_service import UpdateService
 from app.services.runtime_reliability import RuntimeReliabilityService
+from app.services.output_validation import validate_public_item
 
 router = APIRouter()
 
@@ -95,3 +96,13 @@ async def runtime_diagnostics(session: AsyncSession = Depends(get_db)) -> dict[s
     for run in runs:
         counts[run.status] = counts.get(run.status, 0) + 1
     return {"runs": counts, "recent_runs": len(runs), "open_review_items": int(review_count or 0)}
+
+
+@router.post("/validate-output")
+async def validate_output(payload: dict[str, Any]) -> dict[str, Any]:
+    sanitized, report = validate_public_item(payload)
+    return {
+        "valid": report.valid,
+        "issues": [{"code": issue.code, "message": issue.message, "severity": issue.severity} for issue in report.issues],
+        "payload": sanitized,
+    }

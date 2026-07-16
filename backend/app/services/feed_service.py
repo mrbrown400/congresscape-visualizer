@@ -26,6 +26,7 @@ from app.services.money_context import (
     money_source_trail_from_payload,
 )
 from app.services.personalization import rank_updates, ranking_factors
+from app.services.output_validation import sanitize_public_payload
 
 
 class FeedService:
@@ -58,7 +59,7 @@ class FeedService:
 
         result = await self.session.execute(query)
         ranked = rank_updates(result.scalars().all(), context=self._ranking_context(params))
-        feed_items = [self._to_feed_item(update, params) for update in ranked]
+        feed_items = [sanitize_public_payload(self._to_feed_item(update, params)) for update in ranked]
 
         if params.card_type:
             feed_items = [item for item in feed_items if item["card_type"] == params.card_type]
