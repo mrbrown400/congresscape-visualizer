@@ -12,7 +12,7 @@ const files = {
 
 const checks = [
   ['quality command is defined', files.package.includes('"quality":')],
-  ['release checklist is tracked', files.operations.includes('Backup and restore')],
+  ['release checklist is tracked', files.operations.includes('Backup and restore') && files.operations.includes('backup-restore-verification.md')],
   ['database has a healthcheck', files.compose.includes('pg_isready')],
   ['database data uses a named volume', files.compose.includes('pgdata:')],
   ['backend waits for a healthy database', files.compose.includes('condition: service_healthy')],

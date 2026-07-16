@@ -22,6 +22,7 @@ This repository owns the application checks; managed database, hosting, secret, 
 - Enable managed database point-in-time recovery and a daily snapshot with a documented retention period.
 - Before launch, restore the latest snapshot into an isolated database, initialize the application against it, and run the backend quality suite plus health check.
 - Record snapshot ID, restore timestamp, schema version, row-count checks, and the operator who approved the restore.
+- Run the deterministic manifest check described in [backup-restore-verification.md](backup-restore-verification.md) before approving the release.
 - A rollback disables new writes or the affected feature and preserves source history; it does not delete prior documents or federal projections.
 
 ## Controlled live checks
