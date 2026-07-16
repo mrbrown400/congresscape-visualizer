@@ -1,0 +1,25 @@
+{
+  "case_id": "lac:2026:001",
+  "original_case_id": "lac:2026:001",
+  "court": "Los Angeles Superior Court",
+  "case_number": "26STCV00001",
+  "title": "Transit project contract dispute",
+  "status": "appealed",
+  "parties": [{"name": "Verified Contractor", "role": "plaintiff", "verified_stakeholder": true}],
+  "project_links": ["la.metro:project:people-mover"],
+  "contract_links": ["la.metro:contract:linxs-1"],
+  "source_coverage_note": "Fixture only; official court coverage requires a live, measured discovery run.",
+  "documents": [
+    {"native_id": "doc-complaint", "document_type": "complaint", "source_url": "https://lacourt.org/case/1", "retrieval_time": "2026-07-14T20:00:00Z", "content_hash": "sha256:111", "access_state": "available"},
+    {"native_id": "doc-motion", "document_type": "motion", "source_url": "https://lacourt.org/case/1", "retrieval_time": "2026-07-14T20:01:00Z", "content_hash": "sha256:222", "access_state": "available"},
+    {"native_id": "doc-order", "document_type": "order", "source_url": "https://lacourt.org/case/1", "retrieval_time": "2026-07-14T20:02:00Z", "content_hash": "sha256:333", "access_state": "available"},
+    {"native_id": "doc-sealed", "document_type": "filing", "source_url": "https://lacourt.org/case/1", "retrieval_time": "2026-07-14T20:03:00Z", "content_hash": null, "access_state": "sealed"},
+    {"native_id": "doc-amended", "document_type": "complaint", "source_url": "https://lacourt.org/case/1", "retrieval_time": "2026-07-14T20:04:00Z", "content_hash": "sha256:444", "access_state": "available", "revision_of": "doc-complaint"}
+  ],
+  "events": [
+    {"native_id": "docket-1", "event_type": "complaint_filed", "occurred_at": "2026-06-01T12:00:00Z", "status": "filed", "source_url": "https://lacourt.org/case/1"},
+    {"native_id": "docket-2", "event_type": "motion_filed", "occurred_at": "2026-06-10T12:00:00Z", "status": "active", "source_url": "https://lacourt.org/case/1"},
+    {"native_id": "docket-3", "event_type": "order_entered", "occurred_at": "2026-06-20T12:00:00Z", "status": "judgment_entered", "source_url": "https://lacourt.org/case/1"},
+    {"native_id": "docket-4", "event_type": "appeal_filed", "occurred_at": "2026-07-01T12:00:00Z", "status": "appealed", "source_url": "https://courtlistener.com/docket/1"}
+  ]
+}
