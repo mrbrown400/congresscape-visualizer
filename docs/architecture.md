@@ -1,5 +1,7 @@
 # Congresscape Visualizer Architecture
 
+The current shared-core migration decision is documented in [M6 Shared Civic Core Architecture Decision Record](m6-shared-civic-core.md). The companion [M6 database migration field map](m6-migration-field-map.md) and [schema rollout plan](m6-schema-rollout.md) define the additive generic domain, federal projection boundary, lifecycle semantics, provenance/version rules, compatibility contract, validation queries, and rollback sequence for CON-27 through CON-54.
+
 ## Overview
 Congresscape Visualizer is moving toward a primary-source civic feed: a Congress.gov-first product that packages government activity into sourced cards instead of political social media posts. The platform consists of a modular FastAPI backend, SQLAlchemy storage, ingestion pipelines, provenance-aware card contracts, and a React Native mobile client for Today, My Government, Bills, Votes, Hearings, Money, and Alerts.
 
