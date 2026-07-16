@@ -32,6 +32,7 @@ from .legislative import (
     MemberVotePosition,
 )
 from .notification import NotificationBatch, NotificationDelivery, NotificationSubscription, SavedFeedFilter
+from .runtime import IngestionRun, ReviewQueueItem, RuntimeLock, SourceCheckpoint
 from .update import BranchEnum, Entity, GovernmentUpdate
 
 __all__ = [
@@ -63,6 +64,10 @@ __all__ = [
     "NotificationBatch",
     "NotificationDelivery",
     "SavedFeedFilter",
+    "IngestionRun",
+    "ReviewQueueItem",
+    "RuntimeLock",
+    "SourceCheckpoint",
     "Official",
     "PolicyAction",
     "PolicyItem",
