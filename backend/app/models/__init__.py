@@ -31,7 +31,7 @@ from .legislative import (
     LegislativeSourceLink,
     MemberVotePosition,
 )
-from .notification import NotificationSubscription
+from .notification import NotificationBatch, NotificationDelivery, NotificationSubscription, SavedFeedFilter
 from .update import BranchEnum, Entity, GovernmentUpdate
 
 __all__ = [
@@ -60,6 +60,9 @@ __all__ = [
     "NearbyEntityMatch",
     "MemberVotePosition",
     "NotificationSubscription",
+    "NotificationBatch",
+    "NotificationDelivery",
+    "SavedFeedFilter",
     "Official",
     "PolicyAction",
     "PolicyItem",

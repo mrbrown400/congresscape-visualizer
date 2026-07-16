@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import select
 
 from app import models as _models  # noqa: F401
 from app.db.base import Base
 from app.models.update import BranchEnum
+from app.models.notification import NotificationDelivery
 from app.schemas.notification import AlertCategoryPreferences, FollowedAlertRequest, PushTokenCreate
 from app.schemas.update import GovernmentUpdateCreate
+from app.schemas.summary import DailyBriefResponse
 from app.services.civic_feed_smoke_seed import SMOKE_NOW, seed_civic_feed_smoke
 from app.services.notification_service import NotificationService
 from app.services.update_service import UpdateService
@@ -119,3 +122,56 @@ async def test_followed_alerts_respect_category_settings_and_skip_unsourced_mone
 
     assert "money_context" not in {item.category for item in response.items}
     assert all(item.update_id for item in response.items)
+
+
+@pytest.mark.asyncio
+async def test_saved_filters_match_explicit_query_fields(session) -> None:
+    service = NotificationService(session)
+    device_key = "filter-device"
+    await service.save_filter(device_key, "oversight", {"branch": "legislative", "tags": ["oversight"]})
+    items = [
+        {"headline": "Oversight hearing", "branch": "legislative", "tags": ["oversight", "hearing"]},
+        {"headline": "Court opinion", "branch": "judicial", "tags": ["oversight"]},
+    ]
+    assert [item["headline"] for item in await service.filter_items(device_key, "oversight", items)] == [
+        "Oversight hearing"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_daily_delivery_is_idempotent_and_retries_failed_batches(session) -> None:
+    service = NotificationService(session)
+    device_key = "delivery-device"
+    await service.register_token(PushTokenCreate(token=device_key))
+    brief = DailyBriefResponse(
+        summary_date=date(2026, 7, 16),
+        generated_at=datetime(2026, 7, 16, tzinfo=timezone.utc),
+        headline="Daily brief",
+        narrative="A source-backed brief.",
+        highlights=[],
+        top_updates=[],
+    )
+    sent: list[list[dict]] = []
+
+    async def sender(payload: list[dict]) -> None:
+        sent.append(payload)
+
+    assert await service.dispatch_daily_brief(brief, now=datetime(2026, 7, 16, tzinfo=timezone.utc), sender=sender) == 1
+    assert await service.dispatch_daily_brief(brief, now=datetime(2026, 7, 16, 0, 5, tzinfo=timezone.utc), sender=sender) == 0
+    assert len(sent) == 1
+
+    retry_brief = brief.model_copy(update={"summary_date": date(2026, 7, 17)})
+
+    async def fail(_payload: list[dict]) -> None:
+        raise RuntimeError("temporary transport failure")
+
+    with pytest.raises(RuntimeError, match="temporary transport"):
+        await service.dispatch_daily_brief(retry_brief, now=datetime(2026, 7, 17, tzinfo=timezone.utc), sender=fail)
+    failed = await session.scalar(select(NotificationDelivery).where(NotificationDelivery.status == "failed"))
+    assert failed is not None
+    assert failed.attempts == 1
+    assert await service.dispatch_daily_brief(
+        retry_brief,
+        now=failed.next_attempt_at + timedelta(seconds=1),
+        sender=sender,
+    ) == 1

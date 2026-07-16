@@ -30,6 +30,7 @@ class PushTokenCreate(BaseModel):
     followed_topics: list[str] = Field(default_factory=list)
     followed_committees: list[str] = Field(default_factory=list)
     alert_categories: AlertCategoryPreferences = Field(default_factory=AlertCategoryPreferences)
+    delivery_preferences: dict[str, Any] = Field(default_factory=dict)
 
 
 class PushTokenRead(BaseModel):
@@ -46,6 +47,21 @@ class PushTokenRead(BaseModel):
     followed_topics: list[str] = Field(default_factory=list)
     followed_committees: list[str] = Field(default_factory=list)
     alert_categories: dict = Field(default_factory=dict)
+    delivery_preferences: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
+
+class SavedFeedFilterCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    filters: dict[str, Any] = Field(default_factory=dict)
+
+
+class SavedFeedFilterRead(SavedFeedFilterCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    token: str
+    enabled: bool = True
     created_at: datetime
 
 

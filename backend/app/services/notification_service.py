@@ -2,19 +2,20 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Iterable, Sequence
+from typing import Any, Awaitable, Callable, Iterable, Sequence
 
 import httpx
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.notification import NotificationSubscription
+from app.models.notification import NotificationBatch, NotificationDelivery, NotificationSubscription, SavedFeedFilter
 from app.models.update import GovernmentUpdate
 from app.schemas.notification import FollowedAlertRead, FollowedAlertRequest, FollowedAlertResponse, PushTokenCreate
 from app.schemas.summary import DailyBriefResponse
 from app.schemas.update import FeedQueryParams
 from app.services.feed_service import FeedService
+from app.services.delivery_workflow import batch_key_for_date, delivery_dedupe_key, matches_saved_filter, retry_at, unique_tokens
 
 
 class NotificationService:
@@ -35,6 +36,7 @@ class NotificationService:
             followed_topics=payload.followed_topics,
             followed_committees=payload.followed_committees,
             alert_categories=payload.alert_categories.model_dump(),
+            delivery_preferences=payload.delivery_preferences,
         )
         self.session.add(subscription)
         try:
@@ -51,6 +53,7 @@ class NotificationService:
                 existing.followed_topics = payload.followed_topics
                 existing.followed_committees = payload.followed_committees
                 existing.alert_categories = payload.alert_categories.model_dump()
+                existing.delivery_preferences = payload.delivery_preferences
                 self.session.add(existing)
                 await self.session.commit()
                 await self.session.refresh(existing)
@@ -64,25 +67,116 @@ class NotificationService:
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def dispatch_daily_brief(self, brief: DailyBriefResponse) -> int:
-        """Send a lightweight ping with today's headline to every registered device."""
+    async def save_filter(self, token: str, name: str, filters: dict[str, Any]) -> SavedFeedFilter:
+        """Create or replace a named device-scoped saved filter."""
+
+        record = await self.session.scalar(
+            select(SavedFeedFilter).where(SavedFeedFilter.token == token, SavedFeedFilter.name == name)
+        )
+        if record is None:
+            record = SavedFeedFilter(token=token, name=name, filters=filters)
+            self.session.add(record)
+        else:
+            record.filters = filters
+            record.enabled = True
+        await self.session.commit()
+        await self.session.refresh(record)
+        return record
+
+    async def list_filters(self, token: str) -> list[SavedFeedFilter]:
+        result = await self.session.execute(
+            select(SavedFeedFilter).where(SavedFeedFilter.token == token, SavedFeedFilter.enabled.is_(True)).order_by(SavedFeedFilter.name)
+        )
+        return list(result.scalars().all())
+
+    async def filter_items(self, token: str, name: str, items: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+        record = await self.session.scalar(
+            select(SavedFeedFilter).where(SavedFeedFilter.token == token, SavedFeedFilter.name == name, SavedFeedFilter.enabled.is_(True))
+        )
+        if record is None:
+            return []
+        return [item for item in items if matches_saved_filter(item, record.filters or {})]
+
+    async def dispatch_daily_brief(
+        self,
+        brief: DailyBriefResponse,
+        *,
+        now: datetime | None = None,
+        sender: Callable[[list[dict[str, Any]]], Awaitable[None]] | None = None,
+    ) -> int:
+        """Deliver one idempotent batch, recording failures for exponential retry."""
 
         tokens = await self._all_tokens()
         if not tokens:
             return 0
 
-        message = self._build_push_payload(tokens, brief)
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(self.EXPO_PUSH_URL, json=message)
-            response.raise_for_status()
+        current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+        batch_key = batch_key_for_date(datetime.combine(brief.summary_date, datetime.min.time(), tzinfo=timezone.utc))
+        batch = await self.session.scalar(select(NotificationBatch).where(NotificationBatch.batch_key == batch_key))
+        if batch is None:
+            batch = NotificationBatch(batch_key=batch_key, scheduled_for=current, status="pending")
+            self.session.add(batch)
+            await self.session.flush()
 
+        due: list[NotificationDelivery] = []
+        for token in unique_tokens(tokens):
+            dedupe_key = delivery_dedupe_key(batch_key, token)
+            delivery = await self.session.scalar(
+                select(NotificationDelivery).where(NotificationDelivery.dedupe_key == dedupe_key)
+            )
+            if delivery is None:
+                delivery = NotificationDelivery(
+                    batch_id=batch.id,
+                    token=token,
+                    dedupe_key=dedupe_key,
+                    payload=self._build_push_payload([token], brief)[0],
+                )
+                self.session.add(delivery)
+            elif delivery.status == "sent":
+                continue
+            elif delivery.next_attempt_at and _aware(delivery.next_attempt_at) > current:
+                continue
+            due.append(delivery)
+
+        if not due:
+            await self.session.commit()
+            return 0
+
+        payload = [delivery.payload for delivery in due]
+        try:
+            if sender is not None:
+                await sender(payload)
+            else:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    response = await client.post(self.EXPO_PUSH_URL, json=payload)
+                    response.raise_for_status()
+        except Exception as exc:
+            batch.status = "failed"
+            batch.attempts = (batch.attempts or 0) + 1
+            batch.last_error = str(exc)[:500]
+            batch.next_attempt_at = retry_at(current, batch.attempts)
+            for delivery in due:
+                delivery.status = "failed"
+                delivery.attempts = (delivery.attempts or 0) + 1
+                delivery.last_error = str(exc)[:500]
+                delivery.next_attempt_at = retry_at(current, delivery.attempts)
+            await self.session.commit()
+            raise
+
+        sent_at = current
+        for delivery in due:
+            delivery.status = "sent"
+            delivery.sent_at = sent_at
+            delivery.next_attempt_at = None
+        batch.status = "completed"
+        batch.completed_at = sent_at
         await self.session.execute(
             NotificationSubscription.__table__.update()
-            .where(NotificationSubscription.token.in_(tokens))
-            .values(last_notified_at=datetime.now(timezone.utc))
+            .where(NotificationSubscription.token.in_([delivery.token for delivery in due]))
+            .values(last_notified_at=sent_at)
         )
         await self.session.commit()
-        return len(tokens)
+        return len(due)
 
     async def _all_tokens(self) -> Sequence[str]:
         stmt = select(NotificationSubscription.token)
