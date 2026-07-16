@@ -1,0 +1,10 @@
+{
+  "external_id": "metro-board-2026-001",
+  "source": "la.metro",
+  "branch": "agency",
+  "headline": "Metro Board adopts service plan",
+  "summary": "The board adopted a sourced service plan.",
+  "url": "https://example.metro.net/board/2026-001",
+  "tags": ["metro", "board"],
+  "metadata": {"agency": "Los Angeles County Metropolitan Transportation Authority"}
+}

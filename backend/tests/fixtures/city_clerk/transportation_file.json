@@ -1,0 +1,50 @@
+{
+  "council_file_number": "CF-26-0308",
+  "title": "Regional transportation service plan",
+  "mover": "Councilmember A",
+  "seconder": "Councilmember B",
+  "district": "13",
+  "committee": "Transportation Committee",
+  "department": "Department of Transportation",
+  "documents": [
+    {
+      "native_id": "cfms-doc-1",
+      "url": "https://cityclerk.lacity.org/onlinedocs/CF-26-0308.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-07-14T19:00:00Z",
+      "byte_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "revision_key": "1",
+      "source": "cfms"
+    },
+    {
+      "native_id": "journal-1",
+      "url": "https://ens.lacity.org/journals/2026-07-14.pdf",
+      "content_type": "application/pdf",
+      "retrieved_at": "2026-07-14T19:01:00Z",
+      "byte_hash": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "revision_key": "1",
+      "source": "journal"
+    },
+    {
+      "native_id": "packet-1",
+      "url": "https://lacity.primegov.com/Portal/Meeting/packet-1",
+      "content_type": "text/html",
+      "retrieved_at": "2026-07-14T19:02:00Z",
+      "byte_hash": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "revision_key": "1",
+      "source": "primegov",
+      "state": "revised"
+    }
+  ],
+  "events": [
+    {"event_type": "introduced", "occurred_at": "2026-06-01T12:00:00Z", "text": "File introduced", "sequence": 1},
+    {"event_type": "mayoral_transmission", "occurred_at": "2026-06-10T12:00:00Z", "text": "Transmitted by Mayor", "sequence": 2},
+    {"event_type": "continued", "occurred_at": "2026-06-20T12:00:00Z", "text": "Continued to next meeting", "sequence": 3},
+    {"event_type": "amended", "occurred_at": "2026-06-25T12:00:00Z", "text": "Amended in committee", "sequence": 4},
+    {"event_type": "related", "occurred_at": "2026-06-26T12:00:00Z", "text": "Related file CF-26-0309", "sequence": 5},
+    {"event_type": "closed", "occurred_at": "2026-07-14T12:00:00Z", "text": "Final action recorded", "sequence": 6}
+  ],
+  "source_disagreements": [
+    {"field": "final_action", "sources": ["packet-1", "journal-1"], "values": ["recommended", "adopted"]}
+  ]
+}
