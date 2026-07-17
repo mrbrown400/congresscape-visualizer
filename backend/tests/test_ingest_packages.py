@@ -12,7 +12,6 @@ from app.ingest.packages import (
     PackageRegistry,
     build_los_angeles_packages,
 )
-from app.services.package_ingest_service import PackageIngestService
 
 
 FIXTURE = Path(__file__).parent / "fixtures" / "los_angeles" / "policy_item.json"
@@ -30,14 +29,6 @@ def test_registry_requires_explicit_enablement() -> None:
         registry.get("los_angeles")
 
 
-def test_package_capabilities_cover_m6_surface() -> None:
-    package = FederalPackage()
-    assert all(
-        getattr(package.capabilities, field)
-        for field in package.capabilities.__dataclass_fields__
-    )
-
-
 @pytest.mark.asyncio
 async def test_los_angeles_fixture_normalizes_deterministically() -> None:
     payload = json.loads(FIXTURE.read_text())
@@ -48,7 +39,9 @@ async def test_los_angeles_fixture_normalizes_deterministically() -> None:
     )
     registry = PackageRegistry((package,), enabled=(package.key,))
 
-    updates = await PackageIngestService(registry).fetch_and_normalize(package.key)
+    selected = registry.get(package.key)
+    updates = [selected.normalize(payload) async for payload in selected.fetch()]
+    updates = selected.persist(updates)
 
     assert len(updates) == 1
     assert updates[0].external_id == "metro-board-2026-001"

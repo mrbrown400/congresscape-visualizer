@@ -30,18 +30,6 @@ class SnapshotComparison:
     changed: tuple[str, ...]
 
 
-class SnapshotStore:
-    def __init__(self) -> None:
-        self._snapshots: dict[str, DatasetSnapshot] = {}
-
-    def add(self, snapshot: DatasetSnapshot) -> DatasetSnapshot:
-        self._snapshots.setdefault(snapshot.snapshot_id, snapshot)
-        return self._snapshots[snapshot.snapshot_id]
-
-    def all(self) -> tuple[DatasetSnapshot, ...]:
-        return tuple(self._snapshots.values())
-
-
 def make_snapshot(
     *, source_url: str, retrieved_at: datetime, content: bytes, source_kind: str, metadata: dict[str, Any], freshness_state: str = "unknown"
 ) -> DatasetSnapshot:

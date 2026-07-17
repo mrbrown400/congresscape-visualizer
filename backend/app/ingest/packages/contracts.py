@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable, Mapping
-from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ingest.base import NormalizedUpdate
@@ -11,20 +10,26 @@ Payload = Mapping[str, Any] | NormalizedUpdate
 Fetcher = Callable[[], AsyncIterator[Payload]]
 
 
-@dataclass(frozen=True, slots=True)
-class PackageCapabilities:
-    """Feature surface exposed by an ingestion package."""
-
-    fetch: bool = True
-    normalize: bool = True
-    persist: bool = True
-    lifecycle_mapping: bool = True
-    documents: bool = True
-    entities: bool = True
-    money_context: bool = True
-    ranking: bool = True
-    diagnostics: bool = True
-    alerts: bool = True
+def normalize_payload(
+    payload: Payload, *, default_source: str, default_branch: str
+) -> NormalizedUpdate:
+    if isinstance(payload, NormalizedUpdate):
+        return payload
+    values = {
+        "external_id": str(payload["external_id"]),
+        "source": str(payload.get("source", default_source)),
+        "branch": str(payload.get("branch", default_branch)),
+        "headline": str(payload.get("headline", "")),
+        "summary": str(payload.get("summary", "")),
+        "full_text": str(payload.get("full_text", "")),
+        "url": str(payload.get("url", "")),
+        "tags": list(payload.get("tags", [])),
+        "metadata": dict(payload.get("metadata", {})),
+        "entities": list(payload.get("entities", [])),
+    }
+    if payload.get("published_at") is not None:
+        values["published_at"] = payload["published_at"]
+    return NormalizedUpdate(**values)
 
 
 class JurisdictionPackage(Protocol):
@@ -32,24 +37,9 @@ class JurisdictionPackage(Protocol):
 
     key: str
     label: str
-    capabilities: PackageCapabilities
 
     async def fetch(self) -> AsyncIterator[Payload]: ...
 
     def normalize(self, payload: Payload) -> NormalizedUpdate: ...
 
     def persist(self, updates: list[NormalizedUpdate]) -> list[NormalizedUpdate]: ...
-
-    def lifecycle_mapping(self, payload: Payload) -> Mapping[str, Any]: ...
-
-    def documents(self, payload: Payload) -> list[Mapping[str, Any]]: ...
-
-    def entities(self, payload: Payload) -> list[Mapping[str, Any]]: ...
-
-    def money_context(self, payload: Payload) -> Mapping[str, Any]: ...
-
-    def ranking(self, payload: Payload) -> Mapping[str, Any]: ...
-
-    def diagnostics(self, payload: Payload) -> Mapping[str, Any]: ...
-
-    def alerts(self, payload: Payload) -> list[Mapping[str, Any]]: ...

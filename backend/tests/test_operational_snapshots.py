@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.services.operational_snapshots import SnapshotStore, compare_records, make_snapshot
+from app.services.operational_snapshots import compare_records, make_snapshot
 
 
-def test_snapshots_are_append_only_and_identical_downloads_deduplicate() -> None:
+def test_identical_downloads_have_the_same_snapshot_id() -> None:
     kwargs = {
         "source_url": "https://gitlab.com/LACMTA/gtfs_bus/-/raw/master/gtfs_bus.zip",
         "retrieved_at": datetime(2026, 7, 14, tzinfo=timezone.utc),
@@ -15,11 +15,8 @@ def test_snapshots_are_append_only_and_identical_downloads_deduplicate() -> None
     }
     first = make_snapshot(**kwargs)
     second = make_snapshot(**kwargs)
-    store = SnapshotStore()
-
-    assert store.add(first) == first
-    assert store.add(second) == first
-    assert len(store.all()) == 1
+    assert first == second
+    assert first.snapshot_id == second.snapshot_id
 
 
 def test_operational_comparison_reports_ids_method_and_crs() -> None:

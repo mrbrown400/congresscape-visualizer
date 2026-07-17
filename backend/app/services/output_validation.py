@@ -47,32 +47,6 @@ def validate_source_support(item: dict[str, Any]) -> ValidationReport:
     return report
 
 
-def verify_translation(payload: dict[str, Any]) -> ValidationReport:
-    report = ValidationReport()
-    locale = str(payload.get("locale") or "en").lower()
-    if locale != "en" and payload.get("translation_status") != "verified":
-        report.add("unverified_translation", "Non-English output must carry a verified translation status.")
-    if locale != "en" and payload.get("source_text") and not payload.get("translated_text"):
-        report.add("missing_translation", "A translated output must include translated text.")
-    return report
-
-
-def validate_accessibility(elements: list[dict[str, Any]]) -> ValidationReport:
-    report = ValidationReport()
-    for index, element in enumerate(elements):
-        role = element.get("role")
-        if role in {"button", "link", "input", "tab"} and not element.get("label"):
-            report.add("missing_accessible_label", f"Interactive element {index} is missing an accessible label.")
-    return report
-
-
-def validate_authorization(*, requested_scope: str, granted_scopes: set[str]) -> ValidationReport:
-    report = ValidationReport()
-    if requested_scope not in granted_scopes and "admin" not in granted_scopes:
-        report.add("forbidden_scope", f"Requested scope '{requested_scope}' is not granted.", severity="error")
-    return report
-
-
 def sanitize_public_payload(value: Any) -> Any:
     """Recursively remove raw/private fields before a payload crosses the API boundary."""
 
