@@ -23,7 +23,12 @@ class LosAngelesPackage:
             yield self.fixture
 
     def normalize(self, payload: Payload) -> NormalizedUpdate:
-        return normalize_payload(payload, default_source=self.key, default_branch="agency")
+        return normalize_payload(
+            payload,
+            default_source=self.key,
+            default_branch="agency",
+            default_jurisdiction=self.key,
+        )
 
     def persist(self, updates: list[NormalizedUpdate]) -> list[NormalizedUpdate]:
         return updates

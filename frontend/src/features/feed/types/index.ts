@@ -2,6 +2,8 @@ export type Branch = 'house' | 'senate' | 'legislative' | 'judicial' | 'executiv
 
 export type CivicCardType = 'bill' | 'vote' | 'hearing' | 'money' | 'alert';
 
+export type FeedScope = 'all' | 'local' | 'federal';
+
 export type SourceTrailStatus = 'available' | 'pending' | 'unavailable';
 
 export type MoneyContextStatus = 'available' | 'not_applicable' | 'pending' | 'unavailable';
@@ -173,6 +175,11 @@ export type FeedItem = {
   event_date?: string | null;
   branch: Branch;
   source: string;
+  jurisdiction?: string | null;
+  body?: string | null;
+  item_type?: string | null;
+  stage?: string | null;
+  topic?: string | null;
   url?: string;
   bill_id?: number | null;
   bill_action_id?: number | null;

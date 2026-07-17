@@ -29,7 +29,7 @@ const [tabs, saved, storage, card, colors, types] = await Promise.all([
 ]);
 
 const checks = [
-  ['all main tabs expose a button role', ['Today', 'Calendar', 'Explore', 'My Gov'].every((label) => tabs.includes(label)) && tabs.includes('accessibilityRole="button"')],
+  ['all main tabs expose a button role', ['Today', 'Calendar', 'Explore', 'My LA'].every((label) => tabs.includes(label)) && tabs.includes('accessibilityRole="button"')],
   ['saved data has a clear-all path', storage.includes('AsyncStorage') && storage.includes('clearAll') && saved.includes('onPress={clearAll}')],
   ['feed source states remain visible', card.includes('source_trail_status') && card.includes('Official source trail pending')],
   ['text scaling is not disabled', !tabs.includes('allowFontScaling={false}') && !saved.includes('allowFontScaling={false}')],

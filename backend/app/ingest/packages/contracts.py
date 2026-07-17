@@ -11,10 +11,23 @@ Fetcher = Callable[[], AsyncIterator[Payload]]
 
 
 def normalize_payload(
-    payload: Payload, *, default_source: str, default_branch: str
+    payload: Payload,
+    *,
+    default_source: str,
+    default_branch: str,
+    default_jurisdiction: str | None = None,
 ) -> NormalizedUpdate:
     if isinstance(payload, NormalizedUpdate):
         return payload
+    metadata = dict(payload.get("metadata", {}))
+    classification = {
+        key: payload.get(key)
+        for key in ("jurisdiction", "body", "item_type", "stage", "topic")
+    }
+    if default_jurisdiction and not classification["jurisdiction"]:
+        classification["jurisdiction"] = default_jurisdiction
+    metadata.update({key: value for key, value in classification.items() if value is not None})
+
     values = {
         "external_id": str(payload["external_id"]),
         "source": str(payload.get("source", default_source)),
@@ -24,8 +37,9 @@ def normalize_payload(
         "full_text": str(payload.get("full_text", "")),
         "url": str(payload.get("url", "")),
         "tags": list(payload.get("tags", [])),
-        "metadata": dict(payload.get("metadata", {})),
+        "metadata": metadata,
         "entities": list(payload.get("entities", [])),
+        **classification,
     }
     if payload.get("published_at") is not None:
         values["published_at"] = payload["published_at"]

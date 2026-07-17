@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchFeed } from '@services/feedService';
-import { CivicCardType, FeedItem } from '../types';
+import { CivicCardType, FeedItem, FeedScope } from '../types';
 
 type FeedState = {
   loading: boolean;
@@ -18,6 +18,8 @@ export type FeedContextOptions = {
   state?: string | null;
   district?: string | null;
   cardType?: CivicCardType;
+  scope?: FeedScope;
+  jurisdiction?: string | null;
   limit?: number;
 };
 
@@ -61,20 +63,47 @@ const mapContextToParams = (contextKey: string, options: FeedContextOptions) => 
     state: options.state ?? undefined,
     district: options.district ?? undefined,
     card_type: options.cardType,
+    scope: options.scope,
+    jurisdiction: options.jurisdiction ?? undefined,
     limit: options.limit,
   };
 
   switch (contextKey) {
     case 'today':
-      return { ...base, limit: options.limit ?? 20 };
+      return {
+        ...base,
+        scope: options.scope ?? 'local',
+        jurisdiction: options.jurisdiction ?? 'la',
+        limit: options.limit ?? 20,
+      };
+    case 'local':
+    case 'all':
+    case 'forYou':
+    case 'myGovernment':
+      return {
+        ...base,
+        scope: options.scope ?? 'local',
+        jurisdiction: options.jurisdiction ?? 'la',
+        limit: options.limit ?? 20,
+      };
+    case 'city':
+      return { ...base, scope: 'local', jurisdiction: 'la.city', limit: options.limit ?? 30 };
+    case 'county':
+      return { ...base, scope: 'local', jurisdiction: 'la.county', limit: options.limit ?? 30 };
+    case 'metro':
+      return { ...base, scope: 'local', jurisdiction: 'la.metro', limit: options.limit ?? 30 };
+    case 'federal':
+      return { ...base, scope: 'federal', limit: options.limit ?? 30 };
+    case 'meetings':
+      return { ...base, scope: 'local', jurisdiction: options.jurisdiction ?? 'la', card_type: 'hearing', limit: options.limit ?? 30 };
+    case 'actions':
+      return { ...base, scope: 'local', jurisdiction: options.jurisdiction ?? 'la', card_type: 'vote', limit: options.limit ?? 30 };
     case 'legislative':
       return { ...base, branch: 'legislative', limit: options.limit ?? 30 };
     case 'votes':
       return { ...base, branch: 'legislative', card_type: 'vote', limit: options.limit ?? 30 };
     case 'hearings':
       return { ...base, branch: 'legislative', card_type: 'hearing', limit: options.limit ?? 30 };
-    case 'myGovernment':
-      return { ...base, limit: options.limit ?? 8 };
     case 'executive':
       return { ...base, branch: 'executive', limit: options.limit ?? 30 };
     case 'judicial':

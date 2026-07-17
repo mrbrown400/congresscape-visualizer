@@ -23,3 +23,8 @@ class NormalizedUpdate:
     tags: list[str] = field(default_factory=list)
     metadata: dict = field(default_factory=dict)
     entities: list[str] = field(default_factory=list)
+    jurisdiction: str | None = None
+    body: str | None = None
+    item_type: str | None = None
+    stage: str | None = None
+    topic: str | None = None

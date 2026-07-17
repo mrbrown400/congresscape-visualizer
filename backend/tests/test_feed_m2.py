@@ -255,6 +255,49 @@ async def test_today_feed_ranks_canonical_primary_source_events_with_detail_payl
     assert items[2]["detail"]["bill"]["votes"][0]["local_representative_positions"][0]["member_name"] == "CA 37 Representative"
 
 
+@pytest.mark.asyncio
+async def test_feed_supports_local_first_scope_and_jurisdiction_fields(session) -> None:
+    now = datetime(2026, 7, 17, 18, tzinfo=timezone.utc)
+    updates = UpdateService(session)
+
+    await updates.upsert_update(
+        GovernmentUpdateCreate(
+            external_id="metro-report-1",
+            source="la.metro",
+            branch=BranchEnum.AGENCY,
+            headline="Metro Board advances station project",
+            summary="The Board advanced a sourced local policy item.",
+            full_text=None,
+            published_at=now,
+            url="https://boardagendas.metro.net/board-report/2026-0001/",
+            metadata={"body": "metro_board", "item_type": "board_report", "stage": "adopted", "topic": "transit"},
+        )
+    )
+    await updates.upsert_update(
+        GovernmentUpdateCreate(
+            external_id="federal-bill-1",
+            source="congress.gov",
+            branch=BranchEnum.LEGISLATIVE,
+            headline="Federal bill",
+            summary="Federal compatibility record.",
+            full_text=None,
+            published_at=now,
+            url="https://www.congress.gov/bill/119th-congress/house-bill/1",
+        )
+    )
+    await session.commit()
+
+    items, total = await FeedService(session).list_updates(FeedQueryParams(scope="local", jurisdiction="la"))
+
+    assert total == 1
+    assert len(items) == 1
+    assert items[0]["jurisdiction"] == "la.metro"
+    assert items[0]["body"] == "metro_board"
+    assert items[0]["item_type"] == "board_report"
+    assert items[0]["stage"] == "adopted"
+    assert items[0]["topic"] == "transit"
+
+
 def _update(
     external_id: str,
     headline: str,

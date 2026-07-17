@@ -40,6 +40,8 @@ const TodayScreen = () => {
   const isWide = width >= 900;
   const { preferences } = useUserPreferences();
   const feedOptions = useMemo(() => ({
+    scope: 'local' as const,
+    jurisdiction: 'la',
     followedBills: preferences.followedBills,
     followedMembers: preferences.followedMembers,
     followedTopics: preferences.followedTopics,
@@ -63,9 +65,9 @@ const TodayScreen = () => {
   }, [navigation]);
 
   const topItem = items[0];
-  const districtBrief = preferences.homeDistrict?.state && preferences.homeDistrict?.district
+  const localContext = preferences.homeDistrict?.state && preferences.homeDistrict?.district
     ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}`
-    : 'Add district';
+    : 'Add address';
   const sourcedCount = items.filter(item => (item.source_trail?.length ?? 0) > 0).length;
   const readinessItems: CivicProgressItem[] = [
     {
@@ -79,8 +81,8 @@ const TodayScreen = () => {
       complete: sourcedCount > 0,
     },
     {
-      label: 'District context',
-      detail: districtBrief,
+      label: 'Local context',
+      detail: localContext,
       complete: Boolean(preferences.homeDistrict),
     },
     {
@@ -100,16 +102,16 @@ const TodayScreen = () => {
     >
       <View style={styles.header}>
         <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>
-          {dayjs().format('dddd, MMMM D').toUpperCase()}
+          {`LOS ANGELES CIVIC ACTIVITY · ${dayjs().format('dddd, MMMM D')}`.toUpperCase()}
         </Text>
-        <Text style={[styles.title, { color: neutral.textPrimary }]}>Today</Text>
+        <Text style={[styles.title, { color: neutral.textPrimary }]}>LA Today</Text>
       </View>
 
       {loading && items.length === 0 && (
         <View style={styles.stateBlock}>
           <ActivityIndicator size="large" color={branchColors.legislative} />
           <Text style={[styles.stateText, { color: neutral.textSecondary }]}>
-            Loading primary-source events...
+            Loading local government records...
           </Text>
         </View>
       )}
@@ -125,7 +127,7 @@ const TodayScreen = () => {
         <View style={styles.stateBlock}>
           <Ionicons name="newspaper-outline" size={36} color={neutral.textMuted} />
           <Text style={[styles.stateText, { color: neutral.textSecondary }]}>
-            No source-backed events are available for today yet.
+            No local government records are available for today yet.
           </Text>
         </View>
       )}
@@ -133,14 +135,14 @@ const TodayScreen = () => {
       {items.length > 0 && (
         <View style={styles.briefGrid}>
           <BriefMetric label="Top change" value={topItem?.card_type ?? 'Update'} />
-          <BriefMetric label="District" value={districtBrief} />
+          <BriefMetric label="Local context" value={localContext} />
           <BriefMetric label="Sourced" value={`${sourcedCount}/${items.length}`} />
         </View>
       )}
 
       {items.length > 0 && (
         <CivicProgressCard
-          title="Civic readiness"
+          title="Local civic readiness"
           subtitle="Progress here reflects setup and source comprehension, not time spent in the app."
           items={readinessItems}
         />
@@ -155,7 +157,7 @@ const TodayScreen = () => {
                 onPress={() => openItem(topItem)}
               >
                 <View style={styles.topRow}>
-                  <Text style={[styles.sectionLabel, { color: branchColors.legislative }]}>PRIMARY SOURCE</Text>
+                  <Text style={[styles.sectionLabel, { color: branchColors.legislative }]}>LOCAL SOURCE</Text>
                   <Text style={[styles.scoreText, { color: neutral.textMuted }]}>
                     Rank {Math.round(topItem.rank_context?.score ?? 0)}
                   </Text>

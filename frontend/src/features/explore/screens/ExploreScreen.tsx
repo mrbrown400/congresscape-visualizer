@@ -14,34 +14,35 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useTheme } from '@theme/ThemeProvider';
 import { useFeed } from '@features/feed/hooks/useFeed';
-import { FeedItem, Branch } from '@features/feed/types';
+import { FeedItem } from '@features/feed/types';
 import { useSavedItems } from '../../../context/SavedItemsContext';
 import FeedCard from '@features/feed/components/FeedCard';
 import { RootStackParamList } from '@navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type FilterKey = 'all' | 'legislative' | 'executive' | 'judicial';
-type QuickFilter = 'hearings' | 'votes';
+type FilterKey = 'all' | 'city' | 'county' | 'metro' | 'federal';
+type QuickFilter = 'meetings' | 'actions';
 
-const branchFilters: { key: FilterKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'all', label: 'All', icon: 'apps' },
-  { key: 'legislative', label: 'Legislative', icon: 'business' },
-  { key: 'executive', label: 'Executive', icon: 'document-text' },
-  { key: 'judicial', label: 'Judicial', icon: 'scale' },
+const scopeFilters: { key: FilterKey; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'all', label: 'All local', icon: 'apps' },
+  { key: 'city', label: 'City', icon: 'business' },
+  { key: 'county', label: 'County', icon: 'map' },
+  { key: 'metro', label: 'Metro', icon: 'train' },
+  { key: 'federal', label: 'Federal', icon: 'flag' },
 ];
 
 const quickFilters: { key: QuickFilter; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'hearings', label: 'Hearings', icon: 'calendar' },
-  { key: 'votes', label: 'Votes', icon: 'checkmark-circle' },
+  { key: 'meetings', label: 'Meetings', icon: 'calendar' },
+  { key: 'actions', label: 'Actions', icon: 'checkmark-circle' },
 ];
 
 const trendingTopics = [
-  'Budget negotiations',
-  'Supreme Court term',
-  'Cabinet nominations',
-  'Infrastructure bill',
-  'Tax reform',
+  'Housing',
+  'Transit',
+  'Public safety',
+  'Budget and contracts',
+  'Climate resilience',
 ];
 
 const ExploreScreen = () => {
@@ -50,18 +51,13 @@ const ExploreScreen = () => {
   const { isSaved, toggleSave } = useSavedItems();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeBranch, setActiveBranch] = useState<FilterKey>('all');
+  const [activeScope, setActiveScope] = useState<FilterKey>('all');
   const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilter | null>(null);
 
-  // Determine context key for useFeed based on filters
   const contextKey = useMemo(() => {
-    if (activeQuickFilter === 'hearings') return 'hearings';
-    if (activeQuickFilter === 'votes') return 'votes';
-    if (activeBranch === 'legislative') return 'legislative';
-    if (activeBranch === 'executive') return 'executive';
-    if (activeBranch === 'judicial') return 'judicial';
-    return 'forYou';
-  }, [activeBranch, activeQuickFilter]);
+    if (activeQuickFilter) return activeQuickFilter;
+    return activeScope;
+  }, [activeQuickFilter, activeScope]);
 
   const { items, loading, reload } = useFeed(contextKey);
 
@@ -81,14 +77,14 @@ const ExploreScreen = () => {
     navigation.navigate('UpdateDetail', { item });
   }, [navigation]);
 
-  const handleBranchSelect = (key: FilterKey) => {
-    setActiveBranch(key);
+  const handleScopeSelect = (key: FilterKey) => {
+    setActiveScope(key);
     setActiveQuickFilter(null);
   };
 
   const handleQuickFilterSelect = (key: QuickFilter) => {
     setActiveQuickFilter(activeQuickFilter === key ? null : key);
-    setActiveBranch('all');
+    setActiveScope('all');
   };
 
   const handleTopicPress = (topic: string) => {
@@ -109,7 +105,7 @@ const ExploreScreen = () => {
       <View style={styles.pageHeader}>
         <Text style={[styles.pageTitle, { color: neutral.textPrimary }]}>Explore</Text>
         <Text style={[styles.pageSubtitle, { color: neutral.textSecondary }]}>
-          Search bills, votes, hearings, and official source trails.
+          Search City, County, Metro, and federal records with their official source trails.
         </Text>
       </View>
 
@@ -118,7 +114,7 @@ const ExploreScreen = () => {
         <Ionicons name="search" size={20} color={neutral.textMuted} />
         <TextInput
           style={[styles.searchInput, { color: neutral.textPrimary }]}
-          placeholder="Search bills, members, topics..."
+          placeholder="Search agencies, projects, meetings, topics..."
           placeholderTextColor={neutral.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -132,15 +128,13 @@ const ExploreScreen = () => {
         )}
       </View>
 
-      {/* Branch Filters */}
+      {/* Jurisdiction Filters */}
       <View style={styles.filterSection}>
-        <Text style={[styles.filterLabel, { color: neutral.textMuted }]}>BRANCHES</Text>
+        <Text style={[styles.filterLabel, { color: neutral.textMuted }]}>JURISDICTION</Text>
         <View style={styles.filterRow}>
-          {branchFilters.map(filter => {
-            const isActive = activeBranch === filter.key;
-            const color = filter.key === 'all'
-              ? branchColors.legislative
-              : branchColors[filter.key as Branch] || branchColors.legislative;
+          {scopeFilters.map(filter => {
+            const isActive = activeScope === filter.key;
+            const color = branchColors.legislative;
 
             return (
               <Pressable
@@ -152,7 +146,7 @@ const ExploreScreen = () => {
                     borderColor: isActive ? color : neutral.border,
                   }
                 ]}
-                onPress={() => handleBranchSelect(filter.key)}
+                onPress={() => handleScopeSelect(filter.key)}
               >
                 <Ionicons
                   name={filter.icon}

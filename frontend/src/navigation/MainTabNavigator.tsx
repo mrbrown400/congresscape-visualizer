@@ -29,7 +29,7 @@ const tabLabels: Record<keyof MainTabParamList, string> = {
   Today: 'Today',
   Calendar: 'Calendar',
   Explore: 'Explore',
-  You: 'My Gov',
+  You: 'My LA',
 };
 
 const MainTabNavigator = () => {
@@ -79,7 +79,7 @@ const MainTabNavigator = () => {
         name="You"
         component={YouScreen}
         options={{
-          title: 'My Gov',
+          title: 'My LA',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="business" size={size} color={color} />
           ),

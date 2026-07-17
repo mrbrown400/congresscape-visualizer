@@ -85,8 +85,8 @@ const YouScreen = () => {
   }, [preferences.billPositions]);
   const civicReadinessItems: CivicProgressItem[] = [
     {
-      label: 'District connected',
-      detail: districtLabel ?? 'Add a ZIP or address to localize updates',
+      label: 'Address context',
+      detail: districtLabel ?? 'Add a ZIP or address for local coverage',
       complete: Boolean(preferences.homeDistrict),
     },
     {
@@ -95,7 +95,7 @@ const YouScreen = () => {
       complete: followedTopics.size > 0,
     },
     {
-      label: 'Representatives available',
+      label: 'Federal context available',
       detail: `${preferences.currentMembers.length} current member${preferences.currentMembers.length === 1 ? '' : 's'} loaded`,
       complete: preferences.currentMembers.length > 0,
     },
@@ -138,7 +138,7 @@ const YouScreen = () => {
     >
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
-          <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>MY GOVERNMENT</Text>
+          <Text style={[styles.eyebrow, { color: neutral.textMuted }]}>MY LA</Text>
           <Pressable
             style={[styles.headerAction, { borderColor: neutral.divider }]}
             onPress={() => navigation.navigate('NotificationSettings')}
@@ -148,7 +148,7 @@ const YouScreen = () => {
           </Pressable>
         </View>
         <Text style={[styles.title, { color: neutral.textPrimary }]}>
-          {districtLabel ?? 'Add Your District'}
+          My LA
         </Text>
       </View>
 
@@ -157,7 +157,7 @@ const YouScreen = () => {
           <TextInput
             value={lookupText}
             onChangeText={setLookupText}
-            placeholder="ZIP or address"
+            placeholder="Address or ZIP for local context"
             placeholderTextColor={neutral.textMuted}
             style={[styles.lookupInput, { color: neutral.textPrimary, borderColor: neutral.divider }]}
             autoCapitalize="words"
@@ -182,9 +182,10 @@ const YouScreen = () => {
             {preferences.districtLookupAmbiguity}
           </Text>
         )}
+        <Text style={[styles.helperText, { color: neutral.textSecondary }]}>Local coverage starts with City, County, and Metro sources. Address lookup currently also loads federal representative context.</Text>
         {preferences.homeDistrict && (
           <Pressable onPress={clearDistrictMemberMapping}>
-            <Text style={[styles.linkText, { color: branchColors.agency }]}>Clear district mapping</Text>
+            <Text style={[styles.linkText, { color: branchColors.agency }]}>Clear address context</Text>
           </Pressable>
         )}
       </View>
@@ -655,6 +656,10 @@ const styles = StyleSheet.create({
   warningText: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  helperText: {
+    fontSize: 12,
+    lineHeight: 17,
   },
   linkText: {
     fontSize: 13,

@@ -10,33 +10,33 @@ import CivicProgressCard, { CivicProgressItem } from '@components/CivicProgressC
 
 const interestGroups = [
   {
-    key: 'legislative',
-    title: 'Congress',
-    subtitle: 'House & Senate bills, votes, and hearings',
+    key: 'city',
+    title: 'City government',
+    subtitle: 'City Council actions, departments, and local projects',
     icon: 'business' as keyof typeof Ionicons.glyphMap,
   },
   {
-    key: 'judicial',
-    title: 'Courts',
-    subtitle: 'Supreme Court decisions and federal rulings',
+    key: 'county',
+    title: 'County services',
+    subtitle: 'County Board actions, health, and public services',
     icon: 'scale' as keyof typeof Ionicons.glyphMap,
   },
   {
-    key: 'executive',
-    title: 'Executive',
-    subtitle: 'Executive orders and White House actions',
+    key: 'metro',
+    title: 'Metro and transit',
+    subtitle: 'Regional transportation, meetings, and projects',
     icon: 'document-text' as keyof typeof Ionicons.glyphMap,
   },
   {
-    key: 'budget',
-    title: 'Budget',
-    subtitle: 'Appropriations and spending bills',
+    key: 'housing',
+    title: 'Housing and planning',
+    subtitle: 'Housing policy, planning, and development',
     icon: 'cash' as keyof typeof Ionicons.glyphMap,
   },
   {
-    key: 'oversight',
-    title: 'Oversight',
-    subtitle: 'Investigations and committee hearings',
+    key: 'budget',
+    title: 'Budget and contracts',
+    subtitle: 'Public spending, contracts, and oversight',
     icon: 'eye' as keyof typeof Ionicons.glyphMap,
   },
 ];
@@ -74,8 +74,8 @@ const OnboardingScreen = ({ navigation }: Props) => {
       complete: selectedInterests.length > 0,
     },
     {
-      label: 'District can come next',
-      detail: preferences.homeDistrict ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}` : 'Optional in My Gov',
+      label: 'Add local context next',
+      detail: preferences.homeDistrict ? `${preferences.homeDistrict.state}-${preferences.homeDistrict.district}` : 'Optional in My LA',
       complete: true,
     },
     {
@@ -97,12 +97,12 @@ const OnboardingScreen = ({ navigation }: Props) => {
           )}
           <View style={styles.titleContainer}>
             <Text style={[styles.title, { color: neutral.textPrimary }]}>
-              {isEditing ? 'Edit Your Interests' : 'Tailor Your Briefing'}
+              {isEditing ? 'Edit Your Local Interests' : 'Start With Los Angeles'}
             </Text>
             <Text style={[styles.subtitle, { color: neutral.textSecondary }]}>
               {isEditing
                 ? 'Update the topics you want to follow'
-                : 'Follow the branches and topics you care about. We\'ll personalize your daily briefing.'}
+                : 'Follow the City, County, Metro, and topics you care about. We\'ll personalize your local briefing.'}
             </Text>
           </View>
         </View>

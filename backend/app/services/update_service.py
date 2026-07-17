@@ -11,6 +11,9 @@ from app.schemas.update import GovernmentUpdateCreate
 from app.services.provenance_diagnostics import stamp_ingest_provenance
 
 
+_CLASSIFICATION_KEYS = ("jurisdiction", "body", "item_type", "stage", "topic")
+
+
 class UpdateService:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -24,7 +27,8 @@ class UpdateService:
 
     async def create_update(self, payload: GovernmentUpdateCreate) -> GovernmentUpdate:
         entities = await self._resolve_entities(payload.entity_ids)
-        metadata = stamp_ingest_provenance(payload.metadata, source_url=str(payload.url) if payload.url else None)
+        metadata = self._metadata(payload)
+        metadata = stamp_ingest_provenance(metadata, source_url=str(payload.url) if payload.url else None)
         update = GovernmentUpdate(
             external_id=payload.external_id,
             source=payload.source,
@@ -56,7 +60,8 @@ class UpdateService:
         existing: Optional[GovernmentUpdate] = result.scalar_one_or_none()
 
         if existing:
-            metadata = stamp_ingest_provenance(payload.metadata, source_url=str(payload.url) if payload.url else None)
+            metadata = self._metadata(payload)
+            metadata = stamp_ingest_provenance(metadata, source_url=str(payload.url) if payload.url else None)
             existing.headline = payload.headline
             existing.summary = payload.summary
             existing.full_text = payload.full_text
@@ -74,3 +79,13 @@ class UpdateService:
             return existing
 
         return await self.create_update(payload)
+
+    def _metadata(self, payload: GovernmentUpdateCreate) -> dict:
+        metadata = dict(payload.metadata or {})
+        for key in _CLASSIFICATION_KEYS:
+            value = getattr(payload, key, None)
+            if value is not None:
+                metadata[key] = value
+        if "jurisdiction" not in metadata:
+            metadata["jurisdiction"] = "federal" if not payload.source.startswith("la.") else payload.source
+        return metadata

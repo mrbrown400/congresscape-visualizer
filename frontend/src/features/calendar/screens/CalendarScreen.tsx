@@ -45,7 +45,13 @@ const CalendarScreen = () => {
         end = currentDate.endOf('year').toISOString();
       }
 
-      const data = await fetchFeed({ start_date: start, end_date: end, limit: 500 });
+      const data = await fetchFeed({
+        start_date: start,
+        end_date: end,
+        scope: 'local',
+        jurisdiction: 'la',
+        limit: 500,
+      });
       setUpdates(data.items);
       setLoading(false);
     };

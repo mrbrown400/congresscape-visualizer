@@ -3,26 +3,28 @@
 The current shared-core migration decision is documented in [M6 Shared Civic Core Architecture Decision Record](m6-shared-civic-core.md). The companion [M6 database migration field map](m6-migration-field-map.md) and [schema rollout plan](m6-schema-rollout.md) define the additive generic domain, federal projection boundary, lifecycle semantics, provenance/version rules, compatibility contract, validation queries, and rollback sequence for CON-27 through CON-54.
 
 ## Overview
-Congresscape Visualizer is moving toward a primary-source civic feed: a Congress.gov-first product that packages government activity into sourced cards instead of political social media posts. The platform consists of a modular FastAPI backend, SQLAlchemy storage, ingestion pipelines, provenance-aware card contracts, and a React Native mobile client for Today, My Government, Bills, Votes, Hearings, Money, and Alerts.
+Congresscape Visualizer is a local-first primary-source civic feed. The MVP starts with Los Angeles city, county, and regional-government activity—especially City Council, County Board, Metro, meetings, agenda items, projects, documents, actions, money, and geography—before expanding upward to state and federal government. The platform packages government activity into sourced cards instead of political social media posts.
+
+The application remains one shared civic engine rather than separate local and federal products. Local jurisdiction packages are the product center of gravity; federal records remain compatibility projections and a later expansion layer until local coverage and the LA MVP are complete.
 
 ## High-Level Components
-- **SQLAlchemy Storage**: Stores current `government_updates` records and will expand to canonical bill, action, vote, hearing, member, committee, and source-link tables.
+- **SQLAlchemy Storage**: Stores the shared jurisdiction-neutral civic core alongside compatibility projections such as `government_updates` and federal bill, action, vote, hearing, member, committee, and source-link tables.
 - **FastAPI Backend**: Provides REST APIs for ingesting, querying, filtering, and serving civic-feed card data. Includes services for ranking, personalization, provenance diagnostics, and followed-object alert generation.
 - **Civic Card Contract**: Defines shared backend/frontend fields for what happened, why it matters, involved entities, sourced money context, and source trails with unavailable-state handling.
-- **Ingestion Workers**: Congress.gov API workers are the MVP backbone. Official page scraping is fallback only; executive and judicial workers remain future feed inputs rather than M0 blockers.
+- **Ingestion Workers**: Los Angeles source packages are the MVP backbone, beginning with Metro Board and then City Clerk, County, planning, public-safety, money, transit, and geography sources. Official structured endpoints are preferred; official HTML/PDF retrieval is fallback only. State and federal packages remain later expansion layers.
 - **Money Context Adapters**: `backend/app/ingest/money.py` defines official-source boundaries for CBO, FEC/OpenFEC, LDA, USAspending, House/Senate disclosures, OGE, and appropriations links. `backend/app/services/money_context.py` labels direct, related-entity, topic, and unavailable context before feed cards render it.
-- **React Native App**: Presents branch-aware feed surfaces, detail views, notification preferences, and My Government views that can show source trails, money context, and alert-worthy lifecycle changes. Built to share UI modules with a future web client.
+- **React Native App**: Presents local-first LA Today, meetings, policy items, projects, money context, source trails, notifications, and My LA views. Federal browsing remains available through jurisdiction configuration and shared UI modules.
 - **Shared Utilities**: Feature flagging, analytics publishing, and background task orchestration prepared for future expansion.
 
 ## Data Flow
-1. **Fetch**: Source-specific ingestion modules pull raw official data, starting with Congress.gov API endpoints for bills, actions, text, committees, hearings, votes, and members.
+1. **Fetch**: Source-specific jurisdiction packages pull raw official data, starting with Los Angeles Metro and City/County sources. State and federal packages are added behind the same boundary later.
 2. **Normalize**: Raw payloads map to `NormalizedUpdate` objects today and canonical civic domain records in future M1/M2 work.
 3. **Preserve Provenance**: Source URLs, retrieval timestamps, source labels, and unavailable states travel with each factual claim.
 4. **Enrich Carefully**: Summaries, rankings, and money context may explain relevance, but they must not invent facts or infer corruption, motive, or intent.
 5. **Persist**: Data is saved through SQLAlchemy models, starting with `government_updates` and expanding to canonical civic tables.
 6. **Diagnose**: Provenance diagnostics classify recent ingested updates as fresh, stale, missing-source, or failed so alert/feed reliability can be inspected.
 7. **Serve**: FastAPI endpoints expose current feed/summary APIs, provenance diagnostics, followed-object alert candidates, and the additive civic card contract that future feed endpoints can adopt.
-8. **Present**: React Native surfaces cards with what happened, why it matters, involved entities, money context, source trail affordances, and granular notification settings.
+8. **Present**: React Native surfaces local cards with what happened, who decides next, what changed, affected places/projects, money context, source trails, and granular notification settings.
 
 ## Provenance Requirements
 - Every factual card claim needs source indexes into the card source trail or an explicit unavailable reason.

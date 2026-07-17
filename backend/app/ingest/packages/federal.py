@@ -21,7 +21,12 @@ class FederalPackage:
             yield update
 
     def normalize(self, payload: Payload) -> NormalizedUpdate:
-        return normalize_payload(payload, default_source="congress.gov", default_branch="legislative")
+        return normalize_payload(
+            payload,
+            default_source="congress.gov",
+            default_branch="legislative",
+            default_jurisdiction="federal",
+        )
 
     def persist(self, updates: list[NormalizedUpdate]) -> list[NormalizedUpdate]:
         return updates

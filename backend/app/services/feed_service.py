@@ -58,7 +58,8 @@ class FeedService:
         query = self._apply_filters(self._base_query(), params)
 
         result = await self.session.execute(query)
-        ranked = rank_updates(result.scalars().all(), context=self._ranking_context(params))
+        updates = [update for update in result.scalars().all() if self._matches_context(update, params)]
+        ranked = rank_updates(updates, context=self._ranking_context(params))
         feed_items = [sanitize_public_payload(self._to_feed_item(update, params)) for update in ranked]
 
         if params.card_type:
@@ -72,6 +73,7 @@ class FeedService:
 
     def _to_feed_item(self, update: GovernmentUpdate, params: FeedQueryParams) -> dict[str, Any]:
         metadata = update.metadata_json or {}
+        classification = self._classification(update)
         card_type = self._card_type(update, metadata)
         source_trail = self._source_trail(update)
         source_trail_status = "available" if source_trail else "pending"
@@ -95,6 +97,7 @@ class FeedService:
             "hearing_id": update.hearing_id,
             "tags": update.tags or [],
             "metadata": metadata,
+            **classification,
             "entities": [
                 {"id": entity.id, "name": entity.name, "type": entity.type, "slug": entity.slug}
                 for entity in update.entities
@@ -109,6 +112,29 @@ class FeedService:
             **money_context,
             "detail": self._detail(update, params, card_type, source_trail),
         }
+
+    def _classification(self, update: GovernmentUpdate) -> dict[str, str | None]:
+        metadata = update.metadata_json or {}
+        return {
+            key: metadata.get(key)
+            for key in ("jurisdiction", "body", "item_type", "stage", "topic")
+        }
+
+    def _matches_context(self, update: GovernmentUpdate, params: FeedQueryParams) -> bool:
+        classification = self._classification(update)
+        jurisdiction = str(classification.get("jurisdiction") or "").lower()
+        source = update.source.lower()
+        is_local = jurisdiction.startswith("la") or source.startswith("la.") or bool((update.metadata_json or {}).get("local"))
+
+        if params.scope == "local" and not is_local:
+            return False
+        if params.scope == "federal" and is_local:
+            return False
+        if params.jurisdiction:
+            requested = params.jurisdiction.lower()
+            if not jurisdiction.startswith(requested):
+                return False
+        return True
 
     def _card_type(self, update: GovernmentUpdate, metadata: dict[str, Any]) -> str:
         metadata_type = metadata.get("card_type") or metadata.get("event_type")
@@ -140,6 +166,8 @@ class FeedService:
             reasons.append("Followed bills, members, committees, and topics raise relevant cards when they match.")
         if params.state or params.district:
             reasons.append("District and state context raise local representative activity when present.")
+        if params.scope == "local":
+            reasons.append("Local jurisdiction records are prioritized for this view.")
         if update.url or metadata.get("source_trail"):
             reasons.append("Official source links are available on the card.")
 

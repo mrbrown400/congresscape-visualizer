@@ -58,6 +58,12 @@ const FeedCard = ({ item, onPress, onSave, isSaved = false }: Props) => {
           {item.summary ?? 'Official summary has not been published yet.'}
         </Text>
 
+        {(item.body || item.jurisdiction || item.item_type) && (
+          <Text style={[styles.localContext, { color: neutral.textMuted }]} numberOfLines={1}>
+            {[item.body, item.jurisdiction, item.item_type].filter(Boolean).join(' · ').toUpperCase()}
+          </Text>
+        )}
+
         {item.source_trail_status && item.source_trail_status !== 'available' && (
           <Text style={[styles.sourceStatus, { color: neutral.textMuted }]}>
             {item.source_trail_status === 'pending' ? 'Official source trail pending.' : 'Official source trail unavailable.'}
@@ -154,6 +160,12 @@ const styles = StyleSheet.create({
   summary: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  localContext: {
+    marginTop: 8,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   sourceStatus: {
     fontSize: 12,

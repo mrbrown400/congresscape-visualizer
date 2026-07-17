@@ -1,6 +1,6 @@
 """Pydantic schemas for API requests/responses."""
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -37,6 +37,11 @@ class GovernmentUpdateBase(BaseModel):
     hearing_id: Optional[int] = None
     tags: List[str] = []
     metadata: dict | None = Field(default=None, alias="metadata_json")
+    jurisdiction: str | None = None
+    body: str | None = None
+    item_type: str | None = None
+    stage: str | None = None
+    topic: str | None = None
 
 
 class GovernmentUpdateCreate(GovernmentUpdateBase):
@@ -67,6 +72,8 @@ class FeedItemRead(GovernmentUpdateRead):
 
 
 class FeedQueryParams(BaseModel):
+    scope: Literal["all", "local", "federal"] = "all"
+    jurisdiction: Optional[str] = None
     branch: Optional[BranchEnum] = None
     source: Optional[str] = None
     tag: Optional[str] = None
